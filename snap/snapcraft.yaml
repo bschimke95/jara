@@ -1,0 +1,36 @@
+name: jara
+summary: Juju management at your fingertips
+description: |-
+   TODO
+license: MIT
+grade: stable
+# TODO: use 'confinement: strict'
+confinement: classic
+base: core24
+environment:
+  REAL_PATH: $PATH
+  REAL_LD_LIBRARY_PATH: $LD_LIBRARY_PATH
+  SNAPCRAFT_ARCH_TRIPLET: $SNAPCRAFT_ARCH_TRIPLET
+
+architectures:
+  - build-on: [amd64]
+
+
+parts:
+  build:
+    plugin: go
+    source: https://github.com/derailed/k9s
+    source-type: git
+    source-tag: $SNAPCRAFT_PROJECT_VERSION
+    override-build: |
+      make test
+      make build
+      install $SNAPCRAFT_PART_BUILD/execs/k9s -D $SNAPCRAFT_PART_INSTALL/bin/k9s
+    build-packages:
+      - build-essential
+    build-snaps:
+      - go
+
+apps:
+  jara:
+    command: bin/jara
