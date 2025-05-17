@@ -1,6 +1,8 @@
 package startup
 
 import (
+	"time"
+
 	"github.com/bschimke95/jara/pkg/app"
 	"github.com/bschimke95/jara/pkg/pages/model"
 	"github.com/charmbracelet/bubbles/key"
@@ -35,16 +37,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, key.NewBinding(key.WithKeys("ctrl+c"))):
 			return m, tea.Quit
 		}
-
 	case tea.WindowSizeMsg:
-		m.spinner, _ = m.spinner.Update(msg)
-
 	case spinner.TickMsg:
 		m.spinner, _ = m.spinner.Update(msg)
+		return m, tea.Tick(100*time.Millisecond, func(t time.Time) tea.Msg {
+			return spinner.TickMsg{Time: t}
+		})
 
 	case setupMsg:
 		// Setup completed - return the new model
-		return model.New(m.provider), nil
+		model := model.New(m.provider)
+		return model, model.Init()
 	}
 
 	return m, nil
@@ -57,6 +60,7 @@ type setupMsg struct{}
 // TODO(ben): Setup should load the last used model or default model and startup configuration.
 func startup() tea.Cmd {
 	return func() tea.Msg {
+		// TODO(ben): Should return spinner.TickMsg while loading
 		return setupMsg{}
 	}
 }
