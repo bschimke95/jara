@@ -19,7 +19,7 @@ type JujuClient struct {
 }
 
 // NewClient creates and returns a new Juju client.
-func NewClient() *JujuClient {
+func NewJujuClient() *JujuClient {
 	return &JujuClient{
 		store: jujuclient.NewFileClientStore(),
 	}

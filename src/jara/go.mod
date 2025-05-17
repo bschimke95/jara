@@ -1,4 +1,4 @@
-module github.com/canonical/k8s
+module github.com/bschimke95/jara
 
 go 1.23.3
 
@@ -6,20 +6,24 @@ toolchain go1.23.4
 
 require (
 	github.com/charmbracelet/bubbles v0.10.0
-	github.com/charmbracelet/bubbletea v0.26.0
-	github.com/charmbracelet/lipgloss v0.10.0
+	github.com/charmbracelet/bubbletea v1.1.1
+	github.com/charmbracelet/lipgloss v0.13.0
 	github.com/juju/errors v1.0.0
 	github.com/juju/juju v0.0.0-20241217043219-71c798187c49
 	github.com/juju/names/v5 v5.0.0
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.19.0
+	golang.org/x/term v0.27.0
 )
 
 replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20241206012308-a4fef0638583
 
 require (
+	github.com/76creates/stickers v1.4.1 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
 	github.com/canonical/lxd v0.0.0-20240822122218-e7b2a7a83230 // indirect
+	github.com/charmbracelet/x/ansi v0.2.3 // indirect
+	github.com/charmbracelet/x/term v0.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
 	github.com/distribution/reference v0.5.0 // indirect
 	github.com/docker/distribution v2.8.3+incompatible // indirect
@@ -114,7 +118,6 @@ require (
 	golang.org/x/oauth2 v0.24.0 // indirect
 	golang.org/x/sync v0.10.0 // indirect
 	golang.org/x/sys v0.28.0 // indirect
-	golang.org/x/term v0.27.0 // indirect
 	golang.org/x/text v0.21.0 // indirect
 	golang.org/x/time v0.8.0 // indirect
 	google.golang.org/protobuf v1.35.2 // indirect
@@ -139,3 +142,5 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
+
+replace github.com/76creates/stickers v1.4.1 => github.com/76creates/stickers v1.4.1

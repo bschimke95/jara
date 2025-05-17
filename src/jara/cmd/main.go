@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/canonical/k8s/pkg/views"
+	"github.com/bschimke95/jara/pkg/pages/startup"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -17,15 +17,15 @@ It provides an interactive interface for deploying, scaling, and managing Juju a
 	Run: func(cmd *cobra.Command, args []string) {
 		// Default behavior when no subcommand is provided
 		// This will start the TUI application
-		if err := startTUI(); err != nil {
+		if err := run(); err != nil {
 			os.Exit(1)
 		}
 	},
 }
 
-func startTUI() error {
+func run() error {
 	// Initialize the Bubble Tea program
-	model := views.InitialModel()
+	model := startup.New()
 	p := tea.NewProgram(model, tea.WithAltScreen())
 
 	// Run the program
@@ -39,11 +39,6 @@ func init() {
 	// Initialize Viper for configuration
 	viper.SetConfigName("config")
 	viper.AddConfigPath("$HOME/.jara")
-	viper.AddConfigPath(".")
-
-	// Cobra also supports local flags, which will only run
-	// when this action is called directly.
-	rootCmd.Flags().BoolP("toggle", "t", false, "Help message for toggle")
 }
 
 func main() {
