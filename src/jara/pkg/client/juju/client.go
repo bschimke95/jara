@@ -1,92 +1,62 @@
+// Package juju provides a client for interacting with Juju models and controllers.
 package juju
 
 import (
 	"context"
-	"fmt"
-	"log"
 
+	"github.com/bschimke95/jara/pkg/types/juju"
 	"github.com/juju/errors"
-	"github.com/juju/juju/api"
-	"github.com/juju/juju/api/base"
-	"github.com/juju/juju/api/client/modelmanager"
-	"github.com/juju/juju/jujuclient"
-	"github.com/juju/names/v5"
 )
 
-// JujuClient wraps the jujuclient.Client and adds functionality for our application.
+// JujuClient provides methods to interact with Juju models and controllers.
 type JujuClient struct {
-	store jujuclient.ClientStore
+	store JujuStore
 }
 
-// NewClient creates and returns a new Juju client.
-func NewJujuClient() *JujuClient {
+// NewJujuClient creates a new JujuClient with the given store.
+func NewJujuClient(store JujuStore) *JujuClient {
 	return &JujuClient{
-		store: jujuclient.NewFileClientStore(),
+		store: store,
 	}
 }
 
-func (c *JujuClient) CurrentController() (*jujuclient.ControllerDetails, error) {
-	controllerName, err := c.store.CurrentController()
-	if err != nil {
-		return nil, errors.Annotate(err, "failed to get current controller from local store")
-	}
-	controller, err := c.store.ControllerByName(controllerName)
-	if err != nil {
-		return nil, errors.Annotate(err, fmt.Sprintf("failed to get controller by name %s from local store", controllerName))
-	}
-
-	return controller, nil
+// JujuStore defines the interface for Juju store operations.
+type JujuStore interface {
+	// CurrentController returns the name of the current controller.
+	CurrentController() (string, error)
+	// ControllerByName returns the controller with the given name.
+	ControllerByName(string) (*juju.Controller, error)
+	// CurrentModel returns the name of the current model for the given controller.
+	CurrentModel(controllerName string) (string, error)
+	// ModelByName returns the model with the given name from the specified controller.
+	ModelByName(controllerName, modelName string) (*juju.Model, error)
+	// AccountDetails returns the account details for the given controller.
+	AccountDetails(controllerName string) (*juju.Account, error)
 }
 
-func (c *JujuClient) CurrentModel() (base.ModelStatus, error) {
+// CurrentModel retrieves the current model's basic information.
+// TODO: Implement full model status retrieval once the Juju API integration is complete.
+func (c *JujuClient) CurrentModel(ctx context.Context) (juju.Model, error) {
+	emptyModel := juju.Model{}
+
+	// Get current controller
 	controllerName, err := c.store.CurrentController()
 	if err != nil {
-		return base.ModelStatus{}, errors.Annotate(err, "failed to get current controller from local store")
+		return emptyModel, errors.Annotate(err, "getting current controller")
 	}
 
-	controller, err := c.store.ControllerByName(controllerName)
-	if err != nil {
-		return base.ModelStatus{}, errors.Annotate(err, fmt.Sprintf("failed to get controller by name %s from local store", controllerName))
-	}
-
+	// Get current model name
 	modelName, err := c.store.CurrentModel(controllerName)
 	if err != nil {
-		return base.ModelStatus{}, errors.Annotate(err, "failed to get current model from local store")
+		return emptyModel, errors.Annotate(err, "getting current model")
 	}
 
-	// Retrieve account credentials for controller (from ~/.local/share/juju/accounts.yml)
-	account, err := c.store.AccountDetails(controllerName)
-	if err != nil {
-		panic(err)
-	}
-	log.Printf("Using default user: %s\n", account.User)
-
+	// Get model details from store
 	model, err := c.store.ModelByName(controllerName, modelName)
 	if err != nil {
-		return base.ModelStatus{}, errors.Annotate(err, "failed to get model by name from local store")
+		return emptyModel, errors.Annotatef(err, "getting model %q", modelName)
 	}
 
-	conn, err := api.Open(context.Background(), &api.Info{
-		Addrs:       controller.APIEndpoints,
-		CACert:      controller.CACert,
-		SNIHostName: controller.PublicDNSName, // optional
-		Tag:         names.NewUserTag(account.User),
-		Password:    account.Password,
-	}, api.DefaultDialOpts())
-	if err != nil {
-		return base.ModelStatus{}, errors.Annotate(err, "failed to create API connection")
-	}
-
-	// Access the ModelManager API
-	mgr := modelmanager.NewClient(conn)
-	defer mgr.Close()
-
-	// Retrieve list of models
-	ctx := context.Background()
-	modelStatus, err := mgr.ModelStatus(ctx, names.NewModelTag(model.ModelUUID))
-	if err != nil {
-		log.Fatalf("failed to fetch models: %v", err)
-	}
-
-	return modelStatus[0], nil
+	// Return basic model information for now
+	return *model, nil
 }

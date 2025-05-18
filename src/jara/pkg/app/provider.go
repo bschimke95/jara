@@ -2,6 +2,7 @@ package app
 
 import (
 	"github.com/bschimke95/jara/pkg/client/juju"
+	"github.com/juju/juju/jujuclient"
 )
 
 // ProviderImpl implements the Provider interface
@@ -22,8 +23,9 @@ func (p *ProviderImpl) JujuClient() *juju.JujuClient {
 
 // NewProvider creates a new Provider implementation
 func DefaultProvider() Provider {
+	clientStore := jujuclient.NewFileClientStore()
 	return &ProviderImpl{
 		config:     DefaultConfig,
-		jujuClient: juju.NewJujuClient(),
+		jujuClient: juju.NewJujuClient(juju.NewJujuClientStoreAdapter(clientStore)),
 	}
 }

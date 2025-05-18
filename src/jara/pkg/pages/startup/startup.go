@@ -11,8 +11,7 @@ import (
 )
 
 type Model struct {
-	spinner  spinner.Model
-	provider app.Provider
+	spinner spinner.Model
 }
 
 func New() Model {
@@ -46,7 +45,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case setupMsg:
 		// Setup completed - return the new model
-		model := model.New(m.provider)
+		model := model.New(msg.App)
 		return model, model.Init()
 	}
 
