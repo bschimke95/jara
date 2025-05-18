@@ -2,9 +2,11 @@ package model
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/bschimke95/jara/pkg/app"
 	"github.com/bschimke95/jara/pkg/types/juju"
+	"github.com/bschimke95/jara/pkg/ui"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -25,9 +27,10 @@ func (m Model) Init() tea.Cmd {
 }
 
 func (m *Model) View() string {
-	var content string
+	layout := ui.NewLayout()
 
 	// Model name and status
+	var content string
 	content += fmt.Sprintf("Model: %s\n", m.model.Name)
 	content += fmt.Sprintf("Status: %s\n", m.model.Status)
 
@@ -37,7 +40,10 @@ func (m *Model) View() string {
 		content += fmt.Sprintf("- %s\n", app.Name)
 	}
 
-	return content
+	// Remove trailing newline
+	content = strings.TrimSuffix(content, "\n")
+
+	return layout.Render("header", content, "footer")
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {

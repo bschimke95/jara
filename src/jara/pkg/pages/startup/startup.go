@@ -54,13 +54,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 // setupMsg is a custom message type to indicate setup completion
-type setupMsg struct{}
+type setupMsg struct {
+	App app.Provider
+}
 
 // startup is a command to refresh Juju model data
 // TODO(ben): Setup should load the last used model or default model and startup configuration.
 func startup() tea.Cmd {
 	return func() tea.Msg {
 		// TODO(ben): Should return spinner.TickMsg while loading
-		return setupMsg{}
+		return setupMsg{
+			App: app.DefaultProvider(),
+		}
 	}
 }
