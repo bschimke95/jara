@@ -1,32 +1,48 @@
 package main
 
 import (
-	"github.com/canonical/k8s/pkg/client/juju"
-	"github.com/rivo/tview"
+	"os"
+
+	"github.com/bschimke95/jara/pkg/pages/startup"
+	tea "github.com/charmbracelet/bubbletea"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
 )
 
+var rootCmd = &cobra.Command{
+	Use:   "jara",
+	Short: "JARA - Juju Application Runner and Analyzer",
+	Long: `JARA is a TUI application for managing Juju models and applications.
+It provides an interactive interface for deploying, scaling, and managing Juju applications.`,
+	Run: func(cmd *cobra.Command, args []string) {
+		// Default behavior when no subcommand is provided
+		// This will start the TUI application
+		if err := run(); err != nil {
+			os.Exit(1)
+		}
+	},
+}
+
+func run() error {
+	// Initialize the Bubble Tea program
+	model := startup.New()
+	p := tea.NewProgram(model, tea.WithAltScreen())
+
+	// Run the program
+	if _, err := p.Run(); err != nil {
+		return err
+	}
+	return nil
+}
+
+func init() {
+	// Initialize Viper for configuration
+	viper.SetConfigName("config")
+	viper.AddConfigPath("$HOME/.jara")
+}
+
 func main() {
-
-	client := juju.NewClient()
-
-	modelStatus, err := client.CurrentModel()
-	if err != nil {
-		panic(err)
-	}
-
-	flex := tview.NewFlex()
-	applicationList := tview.NewList()
-
-	for _, application := range modelStatus.Applications {
-		applicationList.AddItem(application.Name, "", 0, nil)
-	}
-
-	flex.SetTitle("Applications")
-	flex.SetTitleAlign(tview.AlignLeft)
-	flex.SetBorder(true)
-	flex.AddItem(applicationList, 0, 1, true)
-
-	if err := tview.NewApplication().SetRoot(flex, true).Run(); err != nil {
-		panic(err)
+	if err := rootCmd.Execute(); err != nil {
+		os.Exit(1)
 	}
 }
