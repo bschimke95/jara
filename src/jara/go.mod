@@ -5,23 +5,19 @@ go 1.23.3
 toolchain go1.23.4
 
 require (
+	github.com/76creates/stickers v1.4.1
 	github.com/charmbracelet/bubbles v0.10.0
 	github.com/charmbracelet/bubbletea v1.1.1
 	github.com/charmbracelet/lipgloss v0.13.0
 	github.com/juju/errors v1.0.0
 	github.com/juju/juju v0.0.0-20241217043219-71c798187c49
-	github.com/juju/names/v5 v5.0.0
 	github.com/spf13/cobra v1.9.1
 	github.com/spf13/viper v1.19.0
 	golang.org/x/term v0.27.0
 )
 
-replace google.golang.org/genproto => google.golang.org/genproto v0.0.0-20241206012308-a4fef0638583
-
 require (
-	github.com/76creates/stickers v1.4.1 // indirect
 	github.com/aymanbagabas/go-osc52/v2 v2.0.1 // indirect
-	github.com/canonical/lxd v0.0.0-20240822122218-e7b2a7a83230 // indirect
 	github.com/charmbracelet/x/ansi v0.2.3 // indirect
 	github.com/charmbracelet/x/term v0.2.0 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
@@ -58,15 +54,13 @@ require (
 	github.com/juju/idmclient/v2 v2.0.0 // indirect
 	github.com/juju/loggo v1.0.0 // indirect
 	github.com/juju/loggo/v2 v2.1.1-0.20240509163806-ebdeb290b961 // indirect
-	github.com/juju/lru v1.0.0 // indirect
 	github.com/juju/mgo/v3 v3.0.4 // indirect
 	github.com/juju/mutex/v2 v2.0.0 // indirect
+	github.com/juju/names/v5 v5.0.0 // indirect
 	github.com/juju/os/v2 v2.2.5 // indirect
 	github.com/juju/persistent-cookiejar v1.0.0 // indirect
-	github.com/juju/proxy v1.0.0 // indirect
 	github.com/juju/retry v1.0.1 // indirect
 	github.com/juju/schema v1.2.0 // indirect
-	github.com/juju/txn/v3 v3.0.2 // indirect
 	github.com/juju/usso v1.0.1 // indirect
 	github.com/juju/utils/v3 v3.2.0 // indirect
 	github.com/juju/utils/v4 v4.0.2 // indirect
@@ -74,8 +68,6 @@ require (
 	github.com/juju/webbrowser v1.0.0 // indirect
 	github.com/juju/worker/v4 v4.0.0 // indirect
 	github.com/julienschmidt/httprouter v1.3.0 // indirect
-	github.com/kr/pretty v0.3.1 // indirect
-	github.com/kr/text v0.2.0 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/magiconair/properties v1.8.9 // indirect
 	github.com/mailru/easyjson v0.7.7 // indirect
@@ -86,7 +78,6 @@ require (
 	github.com/moby/spdystream v0.2.0 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
 	github.com/modern-go/reflect2 v1.0.2 // indirect
-	github.com/mohae/deepcopy v0.0.0-20170929034955-c48cc78d4826 // indirect
 	github.com/muesli/ansi v0.0.0-20230316100256-276c6243b2f6 // indirect
 	github.com/muesli/cancelreader v0.2.2 // indirect
 	github.com/muesli/reflow v0.3.0 // indirect
@@ -99,7 +90,6 @@ require (
 	github.com/pelletier/go-toml/v2 v2.2.3 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 	github.com/rogpeppe/fastuuid v1.2.0 // indirect
-	github.com/rogpeppe/go-internal v1.13.1 // indirect
 	github.com/rs/xid v1.6.0 // indirect
 	github.com/sagikazarmark/locafero v0.6.0 // indirect
 	github.com/sagikazarmark/slog-shim v0.1.0 // indirect
@@ -110,7 +100,6 @@ require (
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/vishvananda/netlink v1.3.0 // indirect
 	github.com/vishvananda/netns v0.0.5 // indirect
-	github.com/xdg-go/stringprep v1.0.4 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	golang.org/x/crypto v0.30.0 // indirect
 	golang.org/x/exp v0.0.0-20241204233417-43b7b7cde48d // indirect
@@ -128,7 +117,6 @@ require (
 	gopkg.in/juju/environschema.v1 v1.0.1 // indirect
 	gopkg.in/macaroon.v2 v2.1.0 // indirect
 	gopkg.in/retry.v1 v1.0.3 // indirect
-	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/tomb.v2 v2.0.0-20161208151619-d5d1b5820637 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
@@ -142,5 +130,3 @@ require (
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
 )
-
-replace github.com/76creates/stickers v1.4.1 => github.com/76creates/stickers v1.4.1

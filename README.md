@@ -4,7 +4,7 @@
 
 A terminal-based Juju client for managing your Juju models and applications with a modern, user-friendly interface.
 
-> ⚠️ **Note:** This project is currently in active development and not yet ready for production use.
+> ⚠️ **Note:** This project is currently in active development and not yet ready for ~production~ any use.
 
 ## Features
 
