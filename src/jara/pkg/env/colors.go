@@ -1,4 +1,4 @@
-package app
+package env
 
 // Theme represents a color theme for the application
 // It defines all the necessary colors for different UI elements

@@ -3,8 +3,8 @@ package startup
 import (
 	"time"
 
-	"github.com/bschimke95/jara/pkg/app"
-	"github.com/bschimke95/jara/pkg/pages/model"
+	"github.com/bschimke95/jara/pkg/app/model"
+	"github.com/bschimke95/jara/pkg/env"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
 	tea "github.com/charmbracelet/bubbletea"
@@ -54,7 +54,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 // setupMsg is a custom message type to indicate setup completion
 type setupMsg struct {
-	App app.Provider
+	App env.Provider
 }
 
 // startup is a command to refresh Juju model data
@@ -63,7 +63,7 @@ func startup() tea.Cmd {
 	return func() tea.Msg {
 		// TODO(ben): Should return spinner.TickMsg while loading
 		return setupMsg{
-			App: app.DefaultProvider(),
+			App: env.DefaultProvider(),
 		}
 	}
 }

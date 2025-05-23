@@ -1,21 +1,20 @@
 package model
 
 import (
-	"context"
 	"fmt"
 
-	"github.com/bschimke95/jara/pkg/app"
+	"github.com/bschimke95/jara/pkg/env"
 	"github.com/bschimke95/jara/pkg/types/juju"
 	"github.com/bschimke95/jara/pkg/ui"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 type Model struct {
-	provider app.Provider
+	provider env.Provider
 	model    juju.Model
 }
 
-func New(provider app.Provider) *Model {
+func New(provider env.Provider) *Model {
 	return &Model{
 		provider: provider,
 	}
@@ -40,7 +39,7 @@ func (m *Model) View() string {
 		content += fmt.Sprintf("- %s\n", app.Name)
 	}
 
-	return layout.Render("header", content, "footer")
+	return layout.Render(content)
 }
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -73,7 +72,7 @@ func (m *Model) refresh() tea.Cmd {
 		}
 
 		// Get the current model
-		model, err := jujuClient.CurrentModel(context.Background())
+		model, err := jujuClient.CurrentModel(m.provider.Context(), "")
 		if err != nil {
 			// Return an empty model if there's an error
 			// TODO(ben): Handle error

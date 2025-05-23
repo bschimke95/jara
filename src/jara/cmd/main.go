@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/bschimke95/jara/pkg/pages/startup"
+	"github.com/bschimke95/jara/pkg/app"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -25,7 +25,7 @@ It provides an interactive interface for deploying, scaling, and managing Juju a
 
 func run() error {
 	// Initialize the Bubble Tea program
-	model := startup.New()
+	model := app.New()
 	p := tea.NewProgram(model, tea.WithAltScreen())
 
 	// Run the program
