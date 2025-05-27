@@ -1,4 +1,4 @@
-package app
+package env
 
 type Config struct {
 	Theme  Theme
