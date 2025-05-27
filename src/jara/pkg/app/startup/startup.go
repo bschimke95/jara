@@ -3,7 +3,8 @@ package startup
 import (
 	"time"
 
-	"github.com/bschimke95/jara/pkg/app/model"
+	"github.com/bschimke95/jara/pkg/app/models"
+	"github.com/bschimke95/jara/pkg/app/navigation"
 	"github.com/bschimke95/jara/pkg/env"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/spinner"
@@ -44,9 +45,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		})
 
 	case setupMsg:
-		// Setup completed - return the new model
-		model := model.New(msg.App)
-		return model, model.Init()
+		// Setup completed - navigate to models view without adding startup to history
+		models := models.New(msg.App)
+		return nil, navigation.GoTo(models, navigation.GoToOpts{
+			SkipHistory: true,
+		})
 	}
 
 	return m, nil

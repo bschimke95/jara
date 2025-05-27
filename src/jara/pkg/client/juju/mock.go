@@ -100,13 +100,13 @@ func (m *MockClient) CurrentController(ctx context.Context) (juju.Controller, er
 }
 
 // Models implements the JujuClient interface
-func (m *MockClient) Models(ctx context.Context, controllerName string) ([]juju.Model, error) {
+func (m *MockClient) Models(ctx context.Context) ([]juju.Model, error) {
 	m.ModelsCalls++
 	return m.Mock.Models, m.Mock.ModelsErr
 }
 
 // CurrentModel implements the JujuClient interface
-func (m *MockClient) CurrentModel(ctx context.Context, controllerName string) (juju.Model, error) {
+func (m *MockClient) CurrentModel(ctx context.Context) (juju.Model, error) {
 	m.CurrentModelCalls++
 	return m.Mock.CurrentModel, m.Mock.CurrentModelErr
 }

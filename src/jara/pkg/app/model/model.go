@@ -13,6 +13,7 @@ type Model struct {
 	provider   env.Provider
 	controller juju.Controller
 	model      juju.Model
+	modelUUID  string // Store the model UUID for refreshing
 }
 
 func New(provider env.Provider) *Model {
@@ -47,14 +48,9 @@ func (m *Model) View() string {
 
 func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tea.KeyMsg:
-		// TODO(ben): Create a "handleKeyInput" function that handles default + model specific actions.
-		switch msg.Type {
-		case tea.KeyCtrlC, tea.KeyEsc:
-			return m, tea.Quit
-		}
 	case jujuModelMsg:
 		m.model = msg.model
+		m.controller = msg.controller
 		return m, nil
 	}
 
@@ -62,7 +58,8 @@ func (m *Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 type jujuModelMsg struct {
-	model juju.Model
+	model      juju.Model
+	controller juju.Controller
 }
 
 func (m *Model) refresh() tea.Cmd {
@@ -74,16 +71,47 @@ func (m *Model) refresh() tea.Cmd {
 			return jujuModelMsg{model: juju.Model{}}
 		}
 
-		// Get the current model
-		model, err := jujuClient.CurrentModel(m.provider.Context(), "")
+		// First, get the current controller
+		controller, err := jujuClient.CurrentController(m.provider.Context())
 		if err != nil {
 			// Return an empty model if there's an error
 			// TODO(ben): Handle error
 			return jujuModelMsg{model: juju.Model{}}
 		}
 
-		return jujuModelMsg{
-			model: model,
+		// If no specific model UUID is requested, use the current model
+		if m.modelUUID == "" {
+			model, err := jujuClient.CurrentModel(m.provider.Context())
+			if err != nil {
+				return jujuModelMsg{model: juju.Model{}}
+			}
+			return jujuModelMsg{
+				model:      model,
+				controller: controller,
+			}
 		}
+
+		// Get all models and find the one with matching UUID
+		models, err := jujuClient.Models(m.provider.Context())
+		if err != nil {
+			return jujuModelMsg{model: juju.Model{}}
+		}
+
+		for _, model := range models {
+			if model.ModelUUID == m.modelUUID {
+				return jujuModelMsg{
+					model:      model,
+					controller: controller,
+				}
+			}
+		}
+
+		// If we get here, the model wasn't found
+		return jujuModelMsg{model: juju.Model{}}
 	}
+}
+
+// SetModelUUID sets the model UUID to be loaded
+func (m *Model) SetModelUUID(uuid string) {
+	m.modelUUID = uuid
 }

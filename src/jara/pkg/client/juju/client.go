@@ -22,11 +22,11 @@ func (c *Client) CurrentController(ctx context.Context) (juju.Controller, error)
 	return juju.Controller{}, nil
 }
 
-func (c *Client) Models(ctx context.Context, controllerName string) ([]juju.Model, error) {
+func (c *Client) Models(ctx context.Context) ([]juju.Model, error) {
 	return []juju.Model{}, nil
 }
 
-func (c *Client) CurrentModel(ctx context.Context, controllerName string) (juju.Model, error) {
+func (c *Client) CurrentModel(ctx context.Context) (juju.Model, error) {
 	return juju.Model{}, nil
 }
 
