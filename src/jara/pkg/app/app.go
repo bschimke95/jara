@@ -8,12 +8,16 @@ import (
 
 type Model struct {
 	currentPage tea.Model
-	history     []tea.Model // Navigation history stack
+	history     []tea.Model
 }
 
-func New() Model {
+// New creates a new application model with the given initial page
+func New(initialPage tea.Model) Model {
+	if initialPage == nil {
+		initialPage = startup.New()
+	}
 	return Model{
-		currentPage: startup.New(),
+		currentPage: initialPage,
 		history:     make([]tea.Model, 0),
 	}
 }
@@ -26,21 +30,26 @@ func (m Model) View() string {
 	return m.currentPage.View()
 }
 
+// CurrentPage returns the current page model
+func (m Model) CurrentPage() tea.Model {
+	return m.currentPage
+}
+
 // PushToHistory adds the current page to the history and sets a new current page
 func (m *Model) PushToHistory(page tea.Model) {
 	m.history = append(m.history, m.currentPage)
 	m.currentPage = page
 }
 
-// PopFromHistory returns to the previous page in the history
-func (m *Model) PopFromHistory() (tea.Model, bool) {
+// PopFromHistory returns the previous page in the history, or nil if there is none
+func (m *Model) PopFromHistory() tea.Model {
 	if len(m.history) == 0 {
-		return nil, false
+		return nil
 	}
 	lastIdx := len(m.history) - 1
 	prevPage := m.history[lastIdx]
 	m.history = m.history[:lastIdx]
-	return prevPage, true
+	return prevPage
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -54,8 +63,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyEsc:
 			return m, navigation.GoBack()
 		}
+	// TODO(ben): The history should probably be handled in the navigation package instead.
+	// Right now, we have an implicit dependency on the app model in the navigation package.
 	case navigation.GoBackMsg:
-		if prevPage, ok := m.PopFromHistory(); ok {
+		if prevPage := m.PopFromHistory(); prevPage != nil {
 			m.currentPage = prevPage
 		}
 		return m, nil
