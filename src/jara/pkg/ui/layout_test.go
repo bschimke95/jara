@@ -30,7 +30,7 @@ func TestLayout(t *testing.T) {
 			method func() lipgloss.Style
 		}{
 			{"HeaderStyle", func() lipgloss.Style { return layout.HeaderStyle }},
-			{"FooterStyle", func() lipgloss.Style { return layout.FooterStyle }},
+			{"BodyStyle", func() lipgloss.Style { return layout.BodyStyle }},
 		}
 
 		for _, tt := range tests {
