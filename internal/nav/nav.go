@@ -1,0 +1,127 @@
+package nav
+
+// ViewID identifies a view type.
+type ViewID int
+
+const (
+	ControllerView ViewID = iota
+	ModelView
+	ApplicationsView
+	UnitsView
+	MachinesView
+	RelationsView
+	DebugLogView
+	ModelsView
+)
+
+// String returns the human-readable name of the view.
+func (v ViewID) String() string {
+	switch v {
+	case ControllerView:
+		return "Controllers"
+	case ModelView:
+		return "Model"
+	case ApplicationsView:
+		return "Applications"
+	case UnitsView:
+		return "Units"
+	case MachinesView:
+		return "Machines"
+	case RelationsView:
+		return "Relations"
+	case DebugLogView:
+		return "Debug Log"
+	case ModelsView:
+		return "Models"
+	default:
+		return "Unknown"
+	}
+}
+
+// CommandAliases maps command strings to view IDs.
+var CommandAliases = map[string]ViewID{
+	"controllers":  ControllerView,
+	"controller":   ControllerView,
+	"ctrl":         ControllerView,
+	"model":        ModelView,
+	"mod":          ModelView,
+	"applications": ApplicationsView,
+	"app":          ApplicationsView,
+	"apps":         ApplicationsView,
+	"units":        UnitsView,
+	"unit":         UnitsView,
+	"machines":     MachinesView,
+	"machine":      MachinesView,
+	"mach":         MachinesView,
+	"relations":    RelationsView,
+	"relation":     RelationsView,
+	"rel":          RelationsView,
+	"debug-log":    DebugLogView,
+	"debuglog":     DebugLogView,
+	"log":          DebugLogView,
+	"logs":         DebugLogView,
+	"models":       ModelsView,
+	"model-list":   ModelsView,
+}
+
+// ResolveCommand looks up a command string and returns the matching ViewID.
+func ResolveCommand(cmd string) (ViewID, bool) {
+	v, ok := CommandAliases[cmd]
+	return v, ok
+}
+
+// Stack implements a simple navigation stack (view history).
+type Stack struct {
+	entries []StackEntry
+}
+
+// StackEntry records a view and optional context.
+type StackEntry struct {
+	View    ViewID
+	Context string
+}
+
+// NewStack creates a stack with the initial view.
+func NewStack(initial ViewID) *Stack {
+	return &Stack{
+		entries: []StackEntry{{View: initial}},
+	}
+}
+
+// Push adds a view to the stack.
+func (s *Stack) Push(entry StackEntry) {
+	s.entries = append(s.entries, entry)
+}
+
+// Pop removes and returns the top entry. Returns false if only one entry remains.
+func (s *Stack) Pop() (StackEntry, bool) {
+	if len(s.entries) <= 1 {
+		return StackEntry{}, false
+	}
+	top := s.entries[len(s.entries)-1]
+	s.entries = s.entries[:len(s.entries)-1]
+	return top, true
+}
+
+// Current returns the current (top) entry.
+func (s *Stack) Current() StackEntry {
+	return s.entries[len(s.entries)-1]
+}
+
+// Breadcrumbs returns the display names of all entries in the stack.
+func (s *Stack) Breadcrumbs() []string {
+	crumbs := make([]string, len(s.entries))
+	for i, e := range s.entries {
+		name := e.View.String()
+		if e.Context != "" {
+			name += "(" + e.Context + ")"
+		}
+		crumbs[i] = name
+	}
+	return crumbs
+}
+
+// Depth returns the current stack depth.
+func (s *Stack) Depth() int {
+	return len(s.entries)
+}
