@@ -115,3 +115,15 @@ func (m Model) pollModels(controllerName string) tea.Cmd {
 		return view.ModelsUpdatedMsg{Models: models}
 	}
 }
+
+// scaleApplication returns a Cmd that calls ScaleApplication on the API client.
+func (m Model) scaleApplication(appName string, delta int) tea.Cmd {
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+		if err := m.client.ScaleApplication(ctx, appName, delta); err != nil {
+			return errMsg{err}
+		}
+		return nil
+	}
+}
