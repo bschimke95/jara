@@ -2,8 +2,8 @@ package view
 
 import (
 	"charm.land/bubbles/v2/table"
-	"github.com/charmbracelet/x/ansi"
 	tea "charm.land/bubbletea/v2"
+	"github.com/charmbracelet/x/ansi"
 
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/render"
