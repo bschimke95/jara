@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/juju/juju/api"
+	"github.com/juju/juju/api/client/application"
 	"github.com/juju/juju/api/client/client"
 	"github.com/juju/juju/api/common"
 	"github.com/juju/juju/api/connector"
@@ -267,6 +268,26 @@ func (c *JujuClient) Status(ctx context.Context) (*model.FullStatus, error) {
 	}
 
 	return convertFullStatus(result), nil
+}
+
+// ScaleApplication adjusts the unit count for an application by delta
+// (positive to scale up, negative to scale down).
+func (c *JujuClient) ScaleApplication(ctx context.Context, appName string, delta int) error {
+	conn, err := c.connect(ctx)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	appClient := application.NewClient(conn)
+	_, err = appClient.ScaleApplication(ctx, application.ScaleApplicationParams{
+		ApplicationName: appName,
+		ScaleChange:     delta,
+	})
+	if err != nil {
+		return fmt.Errorf("scaling %q by %+d: %w", appName, delta, err)
+	}
+	return nil
 }
 
 // DebugLog connects to the controller and streams debug log messages.

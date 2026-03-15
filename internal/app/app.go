@@ -135,6 +135,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.err = msg.err
 		return m, nil
 
+	case view.ScaleRequestMsg:
+		return m, m.scaleApplication(msg.AppName, msg.Delta)
+
 	case view.NavigateMsg:
 		return m.handleNavigate(msg)
 

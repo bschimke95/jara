@@ -296,6 +296,7 @@ func HintsForView(viewName string) []KeyHint {
 		return append([]KeyHint{
 			{Key: "U", Desc: "units"},
 			{Key: "R", Desc: "relations"},
+			{Key: "+/-", Desc: "scale"},
 		}, common...)
 	case "Applications":
 		return append([]KeyHint{
@@ -304,6 +305,7 @@ func HintsForView(viewName string) []KeyHint {
 	case "Units":
 		return append([]KeyHint{
 			{Key: "esc", Desc: "back"},
+			{Key: "+/-", Desc: "scale"},
 		}, common...)
 	case "Debug Log":
 		return append([]KeyHint{

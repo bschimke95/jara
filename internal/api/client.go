@@ -18,6 +18,9 @@ type Client interface {
 	// context is cancelled. On transient errors the implementation should
 	// reconnect with backoff rather than closing the channel.
 	WatchStatus(ctx context.Context, interval time.Duration) (<-chan StatusUpdate, error)
+	// ScaleApplication adjusts the unit count for an application by delta
+	// (positive to scale up, negative to scale down).
+	ScaleApplication(ctx context.Context, appName string, delta int) error
 	Close() error
 }
 
@@ -215,3 +218,6 @@ func (c *MockClient) WatchStatus(ctx context.Context, interval time.Duration) (<
 
 	return ch, nil
 }
+
+// ScaleApplication is a no-op for the mock client.
+func (c *MockClient) ScaleApplication(_ context.Context, _ string, _ int) error { return nil }

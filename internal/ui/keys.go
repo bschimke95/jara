@@ -20,6 +20,8 @@ type KeyMap struct {
 	Bottom      key.Binding
 	CancelInput key.Binding
 	Tab         key.Binding
+	ScaleUp     key.Binding
+	ScaleDown   key.Binding
 }
 
 // DefaultKeyMap returns the default vim-style keybindings.
@@ -80,6 +82,14 @@ func DefaultKeyMap() KeyMap {
 		Tab: key.NewBinding(
 			key.WithKeys("tab"),
 			key.WithHelp("tab", "switch pane"),
+		),
+		ScaleUp: key.NewBinding(
+			key.WithKeys("+"),
+			key.WithHelp("+", "scale up"),
+		),
+		ScaleDown: key.NewBinding(
+			key.WithKeys("-"),
+			key.WithHelp("-", "scale down"),
 		),
 	}
 }

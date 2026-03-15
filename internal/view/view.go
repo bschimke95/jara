@@ -20,6 +20,12 @@ type NavigateMsg struct {
 // GoBackMsg requests navigation back to the previous view.
 type GoBackMsg struct{}
 
+// ScaleRequestMsg requests that an application be scaled by the given delta.
+type ScaleRequestMsg struct {
+	AppName string
+	Delta   int
+}
+
 // View is the interface all resource views must implement.
 type View interface {
 	tea.Model
