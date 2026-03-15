@@ -1,0 +1,7 @@
+* Controller with empty model should prompt for new models
+* Application scaling
+* deploy new application
+* relate applications
+* relation view
+* units view
+* Should the local juju cli state (controller selection) be updated by Jara or not?

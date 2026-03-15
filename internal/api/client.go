@@ -13,7 +13,19 @@ type Client interface {
 	Controllers(ctx context.Context) ([]model.Controller, error)
 	Models(ctx context.Context, controllerName string) ([]model.ModelSummary, error)
 	DebugLog(ctx context.Context) (<-chan model.LogEntry, error)
+	// WatchStatus starts a background loop that pushes status snapshots onto
+	// the returned channel at the given interval. The stream runs until the
+	// context is cancelled. On transient errors the implementation should
+	// reconnect with backoff rather than closing the channel.
+	WatchStatus(ctx context.Context, interval time.Duration) (<-chan StatusUpdate, error)
 	Close() error
+}
+
+// StatusUpdate carries either a successful status snapshot or an error from
+// the watch loop. Consumers should check Err first.
+type StatusUpdate struct {
+	Status *model.FullStatus
+	Err    error
 }
 
 // MockClient returns synthetic data for UI development.
@@ -172,6 +184,31 @@ func (c *MockClient) DebugLog(ctx context.Context) (<-chan model.LogEntry, error
 					return
 				}
 				i++
+			}
+		}
+	}()
+
+	return ch, nil
+}
+
+// WatchStatus returns a channel of synthetic status snapshots for UI development.
+func (c *MockClient) WatchStatus(ctx context.Context, interval time.Duration) (<-chan StatusUpdate, error) {
+	ch := make(chan StatusUpdate)
+
+	go func() {
+		defer close(ch)
+		for {
+			status, err := c.Status(ctx)
+			update := StatusUpdate{Status: status, Err: err}
+			select {
+			case ch <- update:
+			case <-ctx.Done():
+				return
+			}
+			select {
+			case <-time.After(interval):
+			case <-ctx.Done():
+				return
 			}
 		}
 	}()

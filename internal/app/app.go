@@ -6,7 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -20,14 +19,6 @@ import (
 )
 
 const pollInterval = 3 * time.Second
-
-type inputMode int
-
-const (
-	modeNormal inputMode = iota
-	modeCommand
-	modeFilter
-)
 
 // Model is the root Bubble Tea model.
 type Model struct {
@@ -45,7 +36,9 @@ type Model struct {
 	width  int
 	height int
 
-	logCancel context.CancelFunc // cancels the debug-log stream
+	statusCancel context.CancelFunc      // cancels the status stream
+	statusCh     <-chan api.StatusUpdate // receives status snapshots
+	logCancel    context.CancelFunc      // cancels the debug-log stream
 
 	err   error
 	ready bool
@@ -77,57 +70,8 @@ func New(client api.Client) Model {
 }
 
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(m.pollStatus(), m.pollControllers(), tea.RequestWindowSize)
+	return tea.Batch(m.startStatusStream(), m.pollControllers(), tea.RequestWindowSize)
 }
-
-func (m Model) pollStatus() tea.Cmd {
-	return func() tea.Msg {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		status, err := m.client.Status(ctx)
-		if err != nil {
-			if strings.Contains(err.Error(), "No selected model") {
-				return noModelMsg{}
-			}
-			return errMsg{err}
-		}
-		return view.StatusUpdatedMsg{Status: status}
-	}
-}
-
-func (m Model) pollControllers() tea.Cmd {
-	return func() tea.Msg {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		controllers, err := m.client.Controllers(ctx)
-		if err != nil {
-			return errMsg{err}
-		}
-		return view.ControllersUpdatedMsg{Controllers: controllers}
-	}
-}
-
-func (m Model) pollModels(controllerName string) tea.Cmd {
-	return func() tea.Msg {
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-		defer cancel()
-		models, err := m.client.Models(ctx, controllerName)
-		if err != nil {
-			return errMsg{err}
-		}
-		return view.ModelsUpdatedMsg{Models: models}
-	}
-}
-
-func (m Model) scheduleNextPoll() tea.Cmd {
-	return tea.Tick(pollInterval, func(_ time.Time) tea.Msg {
-		return pollTickMsg{}
-	})
-}
-
-type pollTickMsg struct{}
-type errMsg struct{ err error }
-type noModelMsg struct{} // sent when no model is selected in the current controller
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
@@ -141,12 +85,31 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case statusStreamConnectedMsg:
+		// The status stream just connected — store the channel and read the first update.
+		m.statusCh = msg.ch
+		return m, readNextStatus(msg.ctx, msg.ch)
+
+	case statusStreamUpdateMsg:
+		m.status = msg.status
+		m.err = nil
+		for _, v := range m.views {
+			v.SetStatus(msg.status)
+		}
+		return m, readNextStatus(msg.ctx, msg.ch)
+
+	case statusStreamErrMsg:
+		m.err = msg.err
+		// The stream is still alive; keep reading for the next update.
+		return m, readNextStatus(msg.ctx, msg.ch)
+
 	case view.StatusUpdatedMsg:
+		// Legacy path kept for views that emit this directly.
 		m.status = msg.Status
 		for _, v := range m.views {
 			v.SetStatus(msg.Status)
 		}
-		return m, m.scheduleNextPoll()
+		return m, nil
 
 	case view.ControllersUpdatedMsg:
 		if cv, ok := m.views[nav.ControllerView].(*view.Controllers); ok {
@@ -160,19 +123,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
-	case pollTickMsg:
-		return m, m.pollStatus()
-
 	case noModelMsg:
 		// No model selected on this controller — pop back to controller view
 		// and show a helpful hint.
+		m.stopStatusStream()
 		m.stack.Pop()
 		m.err = fmt.Errorf("no model selected — use \"juju add-model <name>\" to create one")
 		return m, nil
 
 	case errMsg:
 		m.err = msg.err
-		return m, m.scheduleNextPoll()
+		return m, nil
 
 	case view.NavigateMsg:
 		return m.handleNavigate(msg)
@@ -201,153 +162,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	if msg, ok := msg.(tea.KeyPressMsg); ok {
-		switch {
-		case key.Matches(msg, m.keys.Quit):
-			return m, tea.Quit
-		case key.Matches(msg, m.keys.Back):
-			return m.handleBack()
-		case key.Matches(msg, m.keys.Command):
-			return m.enterCommandMode()
-		case key.Matches(msg, m.keys.Filter):
-			return m.enterFilterMode()
+		if m2, cmd, handled := m.handleGlobalKeys(msg); handled {
+			return m2, cmd
 		}
 	}
 
 	return m.updateActiveView(msg)
-}
-
-func (m Model) handleNavigate(msg view.NavigateMsg) (Model, tea.Cmd) {
-	var cmds []tea.Cmd
-
-	// Selecting a controller from the ControllerView: switch to it and show its models.
-	if msg.Target == nav.ModelsView && msg.Context != "" {
-		if jc, ok := m.client.(*api.JujuClient); ok {
-			if err := jc.SelectController(msg.Context); err != nil {
-				m.err = err
-				return m, nil
-			}
-		}
-		m.err = nil
-		// Reset the models view so we start fresh.
-		mv := view.NewModels()
-		mv.SetSize(m.width, m.contentHeight())
-		m.views[nav.ModelsView] = mv
-		m.stack.Push(nav.StackEntry{View: nav.ModelsView, Context: msg.Context})
-		return m, m.pollModels(msg.Context)
-	}
-
-	// Selecting a model from the ModelsView: switch to it and show the model detail.
-	if msg.Target == nav.ModelView && msg.Context != "" {
-		if jc, ok := m.client.(*api.JujuClient); ok {
-			if err := jc.SelectModel(msg.Context); err != nil {
-				m.err = err
-				return m, nil
-			}
-		}
-		m.status = nil
-		m.err = nil
-		for _, v := range m.views {
-			v.SetStatus(nil)
-		}
-		m.stack.Push(nav.StackEntry{View: nav.ModelView})
-		return m, tea.Batch(m.pollStatus(), m.pollControllers())
-	}
-
-	m.stack.Push(nav.StackEntry{View: msg.Target, Context: msg.Context})
-
-	if msg.Target == nav.UnitsView && msg.Context != "" {
-		uv := view.NewUnits(msg.Context)
-		uv.SetSize(m.width, m.contentHeight())
-		if m.status != nil {
-			uv.SetStatus(m.status)
-		}
-		m.views[nav.UnitsView] = uv
-	}
-
-	if msg.Target == nav.DebugLogView {
-		// Reset the view and start streaming.
-		dl := view.NewDebugLog()
-		dl.SetSize(m.width, m.contentHeight())
-		m.views[nav.DebugLogView] = dl
-		cmds = append(cmds, m.startDebugLogStream())
-	}
-
-	return m, tea.Batch(cmds...)
-}
-
-func (m Model) handleBack() (Model, tea.Cmd) {
-	prev := m.stack.Current()
-	if _, ok := m.stack.Pop(); ok {
-		// Stop debug-log stream when leaving that view.
-		if prev.View == nav.DebugLogView {
-			m.stopDebugLogStream()
-		}
-		current := m.stack.Current()
-		if current.View == nav.UnitsView && current.Context == "" {
-			uv := view.NewUnits("")
-			uv.SetSize(m.width, m.contentHeight())
-			if m.status != nil {
-				uv.SetStatus(m.status)
-			}
-			m.views[nav.UnitsView] = uv
-		}
-	}
-	return m, nil
-}
-
-func (m Model) enterCommandMode() (Model, tea.Cmd) {
-	m.mode = modeCommand
-	m.input.Prompt = ":"
-	m.input.SetValue("")
-	return m, m.input.Focus()
-}
-
-func (m Model) enterFilterMode() (Model, tea.Cmd) {
-	m.mode = modeFilter
-	m.input.Prompt = "/"
-	m.input.SetValue(m.filterStr)
-	return m, m.input.Focus()
-}
-
-func (m Model) updateInput(msg tea.Msg) (Model, tea.Cmd) {
-	if msg, ok := msg.(tea.KeyPressMsg); ok {
-		switch msg.String() {
-		case "enter":
-			value := m.input.Value()
-			if m.mode == modeCommand {
-				m.mode = modeNormal
-				m.input.Blur()
-				return m.executeCommand(value)
-			}
-			m.filterStr = value
-			m.mode = modeNormal
-			m.input.Blur()
-			return m, nil
-
-		case "esc":
-			if m.mode == modeFilter {
-				m.filterStr = ""
-			}
-			m.mode = modeNormal
-			m.input.Blur()
-			return m, nil
-		}
-	}
-
-	var cmd tea.Cmd
-	m.input, cmd = m.input.Update(msg)
-	return m, cmd
-}
-
-func (m Model) executeCommand(cmd string) (Model, tea.Cmd) {
-	cmd = strings.TrimSpace(strings.ToLower(cmd))
-	if cmd == "q" || cmd == "quit" {
-		return m, tea.Quit
-	}
-	if viewID, ok := nav.ResolveCommand(cmd); ok {
-		return m.handleNavigate(view.NavigateMsg{Target: viewID})
-	}
-	return m, nil
 }
 
 func (m Model) updateActiveView(msg tea.Msg) (Model, tea.Cmd) {
@@ -355,79 +175,6 @@ func (m Model) updateActiveView(msg tea.Msg) (Model, tea.Cmd) {
 	updated, cmd := currentView.Update(msg)
 	m.views[m.stack.Current().View] = updated.(view.View)
 	return m, cmd
-}
-
-// debugLogConnectedMsg is sent when the debug-log stream is established.
-type debugLogConnectedMsg struct {
-	ctx context.Context
-	ch  <-chan model.LogEntry
-}
-
-// startDebugLogStream begins streaming debug-log entries from the API.
-// It returns a Cmd that connects and sends a debugLogConnectedMsg.
-func (m *Model) startDebugLogStream() tea.Cmd {
-	m.stopDebugLogStream() // cancel any existing stream
-
-	ctx, cancel := context.WithCancel(context.Background())
-	m.logCancel = cancel
-
-	client := m.client
-	return func() tea.Msg {
-		ch, err := client.DebugLog(ctx)
-		if err != nil {
-			return view.DebugLogErrMsg{Err: err}
-		}
-		return debugLogConnectedMsg{ctx: ctx, ch: ch}
-	}
-}
-
-// stopDebugLogStream cancels the active debug-log context, if any.
-func (m *Model) stopDebugLogStream() {
-	if m.logCancel != nil {
-		m.logCancel()
-		m.logCancel = nil
-	}
-}
-
-// readNextLogBatch returns a Cmd that reads the next batch from the
-// debug-log stream. The context and channel are passed through closures
-// rather than stored on the model.
-func readNextLogBatch(ctx context.Context, ch <-chan model.LogEntry) tea.Cmd {
-	return func() tea.Msg {
-		return readDebugLogBatch(ctx, ch)
-	}
-}
-
-// readDebugLogBatch reads available log entries from the channel,
-// batching them together before delivering to the view.
-func readDebugLogBatch(ctx context.Context, ch <-chan model.LogEntry) tea.Msg {
-	// Block on the first entry.
-	select {
-	case <-ctx.Done():
-		return nil
-	case entry, ok := <-ch:
-		if !ok {
-			return view.DebugLogErrMsg{Err: fmt.Errorf("log stream closed")}
-		}
-		batch := []model.LogEntry{entry}
-		// Drain any additional immediately-available entries.
-	drain:
-		for {
-			select {
-			case e, ok := <-ch:
-				if !ok {
-					break drain
-				}
-				batch = append(batch, e)
-				if len(batch) >= 50 {
-					break drain
-				}
-			default:
-				break drain
-			}
-		}
-		return view.DebugLogMsg{Entries: batch, Ctx: ctx, Ch: ch}
-	}
 }
 
 func (m Model) contentHeight() int {
@@ -459,9 +206,6 @@ func (m Model) viewName() string {
 	case nav.ApplicationsView:
 		return "Applications"
 	case nav.UnitsView:
-		if current.Context != "" {
-			return "Units"
-		}
 		return "Units"
 	case nav.MachinesView:
 		return "Machines"
