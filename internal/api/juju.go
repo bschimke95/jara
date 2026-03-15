@@ -3,8 +3,10 @@ package api
 import (
 	"context"
 	"fmt"
+	"log"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/juju/juju/api"
 	"github.com/juju/juju/api/client/client"
@@ -305,6 +307,106 @@ func (c *JujuClient) DebugLog(ctx context.Context) (<-chan model.LogEntry, error
 	}()
 
 	return entries, nil
+}
+
+// WatchStatus opens a persistent connection and polls Status at the given
+// interval, sending snapshots on the returned channel. On transient
+// connection errors it reconnects with exponential backoff (1s → 30s cap).
+// The stream runs until ctx is cancelled.
+func (c *JujuClient) WatchStatus(ctx context.Context, interval time.Duration) (<-chan StatusUpdate, error) {
+	// Establish the initial connection so callers get an immediate error if
+	// the controller is unreachable.
+	conn, err := c.connect(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	ch := make(chan StatusUpdate)
+
+	go func() {
+		defer close(ch)
+		defer func() {
+			if conn != nil {
+				_ = conn.Close()
+			}
+		}()
+
+		const (
+			initialBackoff = 1 * time.Second
+			maxBackoff     = 30 * time.Second
+		)
+		backoff := initialBackoff
+
+		for {
+			// Ensure we have a live connection.
+			if conn == nil {
+				conn, err = c.connect(ctx)
+				if err != nil {
+					log.Printf("WatchStatus: reconnect failed: %v (retrying in %s)", err, backoff)
+					select {
+					case ch <- StatusUpdate{Err: fmt.Errorf("reconnecting: %w", err)}:
+					case <-ctx.Done():
+						return
+					}
+					select {
+					case <-time.After(backoff):
+					case <-ctx.Done():
+						return
+					}
+					backoff = min(backoff*2, maxBackoff)
+					continue
+				}
+				backoff = initialBackoff // reset on successful reconnect
+			}
+
+			// Fetch status on the persistent connection.
+			statusClient := client.NewClient(conn, nopLogger{})
+			fetchCtx, fetchCancel := context.WithTimeout(ctx, 10*time.Second)
+			result, err := statusClient.Status(fetchCtx, &client.StatusArgs{
+				Patterns: []string{},
+			})
+			fetchCancel()
+
+			if err != nil {
+				log.Printf("WatchStatus: status fetch failed: %v", err)
+				// Connection likely broken — tear it down so we reconnect.
+				_ = conn.Close()
+				conn = nil
+				select {
+				case ch <- StatusUpdate{Err: fmt.Errorf("fetching status: %w", err)}:
+				case <-ctx.Done():
+					return
+				}
+				select {
+				case <-time.After(backoff):
+				case <-ctx.Done():
+					return
+				}
+				backoff = min(backoff*2, maxBackoff)
+				continue
+			}
+
+			backoff = initialBackoff // reset on success
+
+			fs := convertFullStatus(result)
+			fs.FetchedAt = time.Now()
+
+			select {
+			case ch <- StatusUpdate{Status: fs}:
+			case <-ctx.Done():
+				return
+			}
+
+			// Wait for the next tick.
+			select {
+			case <-time.After(interval):
+			case <-ctx.Done():
+				return
+			}
+		}
+	}()
+
+	return ch, nil
 }
 
 // convertFullStatus maps the Juju API params.FullStatus to our domain model.
