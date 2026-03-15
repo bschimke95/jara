@@ -24,9 +24,10 @@ type ModelView struct {
 	keys   ui.KeyMap
 	status *model.FullStatus
 
-	width       int
-	height      int
-	selectedApp string
+	width        int
+	height       int
+	selectedApp  string
+	pendingScale map[string]int // net pending unit delta per app, cleared when status catches up
 }
 
 // NewModelView creates a new model overview.
@@ -47,7 +48,7 @@ func NewModelView() *ModelView {
 	)
 	ut.SetStyles(unfocusedTableStyles())
 
-	relCols := render.RelationColumns()
+	relCols := render.ModelViewRelationColumn()
 	rt := table.New(
 		table.WithColumns(relCols),
 		table.WithFocused(false),
@@ -60,6 +61,7 @@ func NewModelView() *ModelView {
 		unitTable:     ut,
 		relationTable: rt,
 		keys:          ui.DefaultKeyMap(),
+		pendingScale:  make(map[string]int),
 	}
 }
 
@@ -75,6 +77,26 @@ func (m *ModelView) SetStatus(status *model.FullStatus) {
 		return
 	}
 	m.appTable.SetRows(render.ApplicationRows(status.Applications))
+	// Reconcile pending scale: clear entries where live unit count has caught up.
+	// app.Scale is the desired (post-request) value; compare unit count against it.
+	for appName, delta := range m.pendingScale {
+		app, ok := status.Applications[appName]
+		if !ok {
+			delete(m.pendingScale, appName)
+			continue
+		}
+		if delta < 0 {
+			// Scaling down: clear when live unit count has dropped to desired scale.
+			if len(app.Units) <= app.Scale {
+				delete(m.pendingScale, appName)
+			}
+		} else {
+			// Scaling up: clear when live unit count has reached desired scale.
+			if len(app.Units) >= app.Scale {
+				delete(m.pendingScale, appName)
+			}
+		}
+	}
 	m.refreshRightPane()
 }
 
@@ -90,6 +112,20 @@ func (m *ModelView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "R":
 			return m, func() tea.Msg {
 				return NavigateMsg{Target: nav.RelationsView}
+			}
+		case "+":
+			if m.selectedApp != "" {
+				app := m.selectedApp
+				m.pendingScale[app]++
+				m.refreshRightPane()
+				return m, func() tea.Msg { return ScaleRequestMsg{AppName: app, Delta: 1} }
+			}
+		case "-":
+			if m.selectedApp != "" {
+				app := m.selectedApp
+				m.pendingScale[app]--
+				m.refreshRightPane()
+				return m, func() tea.Msg { return ScaleRequestMsg{AppName: app, Delta: -1} }
 			}
 		}
 	}
@@ -170,7 +206,7 @@ func (m *ModelView) recalcLayout() {
 
 	m.relationTable.SetWidth(rightInner)
 	m.relationTable.SetHeight(halfH)
-	m.relationTable.SetColumns(render.ScaleColumns(render.RelationColumns(), rightInner))
+	m.relationTable.SetColumns(render.ScaleColumns(render.ModelViewRelationColumn(), rightInner))
 }
 
 // rightPaneTitle builds a pre-rendered title for a right panel section.
@@ -206,13 +242,27 @@ func (m *ModelView) refreshRightPane() {
 
 	// Units for the selected application.
 	if app, ok := m.status.Applications[appName]; ok {
-		m.unitTable.SetRows(render.UnitRowsForApp(app))
+		rows := render.UnitRowsForApp(app)
+		if delta := m.pendingScale[appName]; delta != 0 {
+			pending := render.PendingUnitRows(appName, app.Units, delta)
+			if delta < 0 {
+				// pending rows replace the last len(pending) live rows
+				tail := len(rows) - len(pending)
+				if tail < 0 {
+					tail = 0
+				}
+				rows = append(rows[:tail], pending...)
+			} else {
+				rows = append(rows, pending...)
+			}
+		}
+		m.unitTable.SetRows(rows)
 	} else {
 		m.unitTable.SetRows(nil)
 	}
 
 	// Relations involving the selected application.
-	m.relationTable.SetRows(render.RelationRowsForApp(m.status.Relations, appName))
+	m.relationTable.SetRows(render.ModelViewRelationRowsForApp(m.status.Relations, appName))
 }
 
 // padToHeight pads content with blank lines so it fills the given height.

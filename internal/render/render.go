@@ -3,6 +3,7 @@ package render
 import (
 	"fmt"
 	"sort"
+	"strings"
 
 	"charm.land/bubbles/v2/table"
 	"charm.land/lipgloss/v2"
@@ -227,6 +228,61 @@ func unitToDetailRow(u model.Unit) table.Row {
 	}
 }
 
+var pendingStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#6b7280")).Italic(true)
+
+// PendingUnitRows returns compact placeholder rows for the model-overview units
+// pane. Positive delta appends "adding" rows; negative delta annotates the last
+// N live unit rows with " (removing)" on the unit name instead of adding new rows.
+func PendingUnitRows(appName string, currentUnits []model.Unit, delta int) []table.Row {
+	var rows []table.Row
+	if delta > 0 {
+		nextIdx := len(currentUnits)
+		for range delta {
+			name := pendingStyle.Render(fmt.Sprintf("  %s/%d", appName, nextIdx))
+			rows = append(rows, table.Row{name, pendingStyle.Render("allocating"), pendingStyle.Render("allocating")})
+			nextIdx++
+		}
+	} else if delta < 0 {
+		// Annotate the last -delta units as being removed.
+		n := -delta
+		start := len(currentUnits) - n
+		if start < 0 {
+			start = 0
+		}
+		for _, u := range currentUnits[start:] {
+			name := pendingStyle.Render("  " + u.Name + " (removing)")
+			rows = append(rows, table.Row{name, pendingStyle.Render("terminating"), pendingStyle.Render("terminating")})
+		}
+	}
+	return rows
+}
+
+// PendingUnitDetailRows returns full-column placeholder rows for the standalone
+// units view. Positive delta appends "adding" rows; negative delta annotates the
+// last N live unit rows with " (removing)" on the unit name.
+func PendingUnitDetailRows(appName string, currentUnits []model.Unit, delta int) []table.Row {
+	var rows []table.Row
+	if delta > 0 {
+		nextIdx := len(currentUnits)
+		for range delta {
+			name := pendingStyle.Render(fmt.Sprintf("  %s/%d", appName, nextIdx))
+			rows = append(rows, table.Row{name, pendingStyle.Render("allocating"), pendingStyle.Render("allocating"), "", "", "", pendingStyle.Render("waiting for unit…")})
+			nextIdx++
+		}
+	} else if delta < 0 {
+		n := -delta
+		start := len(currentUnits) - n
+		if start < 0 {
+			start = 0
+		}
+		for _, u := range currentUnits[start:] {
+			name := pendingStyle.Render("  " + u.Name + " (removing)")
+			rows = append(rows, table.Row{name, pendingStyle.Render("terminating"), pendingStyle.Render("terminating"), u.Machine, u.PublicAddress, "", pendingStyle.Render("waiting for removal…")})
+		}
+	}
+	return rows
+}
+
 // MachineColumns defines the columns for the machine table.
 func MachineColumns() []table.Column {
 	return []table.Column{
@@ -322,6 +378,114 @@ func RelationRowsForApp(relations []model.Relation, appName string) []table.Row 
 		})
 	}
 	return rows
+}
+
+// ModelViewRelationColumn defines the single-column layout for the relations
+// pane inside ModelView.
+func ModelViewRelationColumn() []table.Column {
+	return []table.Column{
+		{Title: "RELATION", Width: 60},
+	}
+}
+
+// ModelViewRelationRowsForApp returns compact relation rows for the relations
+// pane in ModelView. Each row is a single cell formatted as:
+//
+//	<app>:<endpoint> [--<interface>] -> [<model>:][<app2>:]<endpoint2>
+//
+// Rules:
+//   - interface is omitted when both endpoint names are identical
+//   - <app2> is omitted for peer relations (same application on both sides)
+//   - <model> prefix is included for cross-model relations (detected via a
+//     "." qualifier in the relation Key)
+func ModelViewRelationRowsForApp(relations []model.Relation, appName string) []table.Row {
+	var rows []table.Row
+	for _, r := range relations {
+		// Find the local endpoint (matching appName) and the remote endpoint.
+		var local, remote *model.Endpoint
+		for i := range r.Endpoints {
+			ep := &r.Endpoints[i]
+			if ep.ApplicationName == appName {
+				local = ep
+			} else {
+				remote = ep
+			}
+		}
+		if local == nil {
+			continue
+		}
+
+		// Build left-hand side: <app>:<endpoint>
+		lhs := appName + ":" + local.Name
+
+		// Determine interface segment: only show if endpoint names differ.
+		ifaceSeg := ""
+		if remote != nil && local.Name != remote.Name {
+			ifaceSeg = " --" + r.Interface
+		}
+
+		// Peer relation: no distinct remote side — render with a u-turn arrow.
+		if remote == nil || remote.ApplicationName == appName {
+			rows = append(rows, table.Row{lhs + " ↩"})
+			continue
+		}
+
+		// Build right-hand side for a regular (non-peer) relation.
+		// Detect cross-model: Juju encodes CMR keys as
+		// "[<user>/]<model>.<app>:<ep> <app2>:<ep2>"
+		// so a "." appears inside a key segment before the ":".
+		crossModel := isCrossModelRelation(r.Key, remote.ApplicationName)
+
+		var modelPrefix string
+		if crossModel {
+			modelPrefix = extractModelPrefix(r.Key, remote.ApplicationName) + ":"
+		}
+
+		rhs := modelPrefix + remote.ApplicationName + ":" + remote.Name
+		rows = append(rows, table.Row{lhs + ifaceSeg + " -> " + rhs})
+	}
+	return rows
+}
+
+// isCrossModelRelation reports whether the relation key indicates a cross-model
+// relation involving the given remote application name.
+func isCrossModelRelation(key, remoteApp string) bool {
+	// CMR keys contain a qualified name like "admin/model.app:ep" — look for
+	// a segment that contains a "." before the ":" for the remote app.
+	for _, segment := range strings.Fields(key) {
+		colon := strings.Index(segment, ":")
+		if colon < 0 {
+			continue
+		}
+		appPart := segment[:colon]
+		if strings.Contains(appPart, ".") {
+			// Qualified name — check if the bare app name matches remoteApp.
+			bare := appPart[strings.LastIndex(appPart, ".")+1:]
+			if bare == remoteApp || appPart == remoteApp {
+				return true
+			}
+		}
+	}
+	return false
+}
+
+// extractModelPrefix returns the "[user/]model" part from a CMR key segment
+// that matches the given remote application name.
+func extractModelPrefix(key, remoteApp string) string {
+	for _, segment := range strings.Fields(key) {
+		colon := strings.Index(segment, ":")
+		if colon < 0 {
+			continue
+		}
+		appPart := segment[:colon]
+		if dot := strings.LastIndex(appPart, "."); dot >= 0 {
+			bare := appPart[dot+1:]
+			if bare == remoteApp || appPart == remoteApp {
+				return appPart[:dot] // everything before the last "."
+			}
+		}
+	}
+	return ""
 }
 
 // ScaleColumns adjusts column widths proportionally so their total equals availableWidth.
