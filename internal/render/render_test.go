@@ -250,6 +250,30 @@ func TestUnitDetailRows(t *testing.T) {
 	}
 }
 
+func TestUnitRowsForApp_IncludesMessage(t *testing.T) {
+	app := model.Application{
+		Name: "myapp",
+		Units: []model.Unit{
+			{Name: "myapp/0", WorkloadStatus: "active", WorkloadMessage: "Live master (14.12)", AgentStatus: "idle", Leader: true},
+			{Name: "myapp/1", WorkloadStatus: "waiting", WorkloadMessage: "Waiting for relation", AgentStatus: "allocating"},
+		},
+	}
+	rows := UnitRowsForApp(app)
+	if len(rows) != 2 {
+		t.Fatalf("got %d rows, want 2", len(rows))
+	}
+	wantCols := len(UnitColumns())
+	for i, row := range rows {
+		if len(row) != wantCols {
+			t.Errorf("row %d: got %d columns, want %d", i, len(row), wantCols)
+		}
+	}
+	// The MESSAGE column (index 3) should carry the workload message.
+	if rows[1][3] != "Waiting for relation" {
+		t.Errorf("row 1 message = %q, want %q", rows[1][3], "Waiting for relation")
+	}
+}
+
 func TestPendingUnitRows_ScaleUp(t *testing.T) {
 	units := []model.Unit{
 		{Name: "app/0"}, {Name: "app/1"},
@@ -257,6 +281,12 @@ func TestPendingUnitRows_ScaleUp(t *testing.T) {
 	rows := PendingUnitRows("app", units, 2)
 	if len(rows) != 2 {
 		t.Fatalf("got %d rows, want 2", len(rows))
+	}
+	wantCols := len(UnitColumns())
+	for i, row := range rows {
+		if len(row) != wantCols {
+			t.Errorf("pending row %d: got %d columns, want %d", i, len(row), wantCols)
+		}
 	}
 }
 

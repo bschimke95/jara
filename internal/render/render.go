@@ -111,9 +111,10 @@ func ApplicationRows(apps map[string]model.Application) []table.Row {
 // UnitColumns defines the compact columns used inside the model overview panel.
 func UnitColumns() []table.Column {
 	return []table.Column{
-		{Title: "UNIT", Width: 28},
+		{Title: "UNIT", Width: 24},
 		{Title: "WORKLOAD", Width: 12},
 		{Title: "AGENT", Width: 12},
+		{Title: "MESSAGE", Width: 28},
 	}
 }
 
@@ -186,7 +187,7 @@ func UnitDetailRowsForApp(app model.Application) []table.Row {
 	return rows
 }
 
-// unitToRow builds the compact 3-column row used in the model overview panel.
+// unitToRow builds the compact 4-column row used in the model overview panel.
 // Status values are pre-coloured; leader gets a star prefix.
 func unitToRow(u model.Unit) table.Row {
 	var name string
@@ -197,7 +198,7 @@ func unitToRow(u model.Unit) table.Row {
 	}
 	workload := color.StatusStyle(u.WorkloadStatus).Render(u.WorkloadStatus)
 	agent := color.StatusStyle(u.AgentStatus).Render(u.AgentStatus)
-	return table.Row{name, workload, agent}
+	return table.Row{name, workload, agent, u.WorkloadMessage}
 }
 
 // unitToDetailRow builds the full-column row used by the standalone units view.
@@ -239,7 +240,7 @@ func PendingUnitRows(appName string, currentUnits []model.Unit, delta int) []tab
 		nextIdx := len(currentUnits)
 		for range delta {
 			name := pendingStyle.Render(fmt.Sprintf("  %s/%d", appName, nextIdx))
-			rows = append(rows, table.Row{name, pendingStyle.Render("allocating"), pendingStyle.Render("allocating")})
+			rows = append(rows, table.Row{name, pendingStyle.Render("allocating"), pendingStyle.Render("allocating"), pendingStyle.Render("installing agent")})
 			nextIdx++
 		}
 	} else if delta < 0 {
@@ -251,7 +252,7 @@ func PendingUnitRows(appName string, currentUnits []model.Unit, delta int) []tab
 		}
 		for _, u := range currentUnits[start:] {
 			name := pendingStyle.Render("  " + u.Name + " (removing)")
-			rows = append(rows, table.Row{name, pendingStyle.Render("terminating"), pendingStyle.Render("terminating")})
+			rows = append(rows, table.Row{name, pendingStyle.Render("terminating"), pendingStyle.Render("terminating"), ""})
 		}
 	}
 	return rows
