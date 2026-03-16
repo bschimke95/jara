@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strings"
 
+	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -15,8 +16,7 @@ import (
 	"github.com/bschimke95/jara/internal/ui"
 )
 
-// logLevels are the valid Juju debug-log severity levels (CRITICAL is not
-// accepted by the Juju API debug-log endpoint).
+// logLevels are the valid Juju debug-log severity levels.
 var logLevels = []string{"TRACE", "DEBUG", "INFO", "WARNING", "ERROR"}
 
 // leftPane identifies a row in the left navigation pane.
@@ -52,6 +52,7 @@ type FilterModalClosedMsg struct{}
 
 // FilterModal is a two-pane vim-navigable overlay for configuring debug-log filters.
 type FilterModal struct {
+	keys   ui.KeyMap
 	filter model.DebugLogFilter
 
 	// suggestions holds candidate items per left-pane category.
@@ -75,7 +76,7 @@ const rightPaneVisibleRows = 12
 
 // NewFilterModal creates a modal pre-populated with the given filter defaults.
 // suggestions maps each left-pane category to available candidate items.
-func NewFilterModal(initial model.DebugLogFilter, suggestions map[leftPane][]string) FilterModal {
+func NewFilterModal(initial model.DebugLogFilter, suggestions map[leftPane][]string, keys ui.KeyMap) FilterModal {
 	ti := textinput.New()
 	ti.CharLimit = 256
 	ti.Placeholder = "key=value, Enter to add"
@@ -85,6 +86,7 @@ func NewFilterModal(initial model.DebugLogFilter, suggestions map[leftPane][]str
 	}
 
 	return FilterModal{
+		keys:        keys,
 		filter:      initial,
 		suggestions: suggestions,
 		textInput:   ti,
@@ -139,10 +141,10 @@ func (m *FilterModal) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	}
 
 	// Global keys (both panes).
-	switch kp.String() {
-	case "F": // Shift+F → apply
+	switch {
+	case key.Matches(kp, m.keys.ApplyFilter):
 		return m, func() tea.Msg { return FilterAppliedMsg{Filter: m.filter} }
-	case "esc":
+	case key.Matches(kp, m.keys.Back):
 		if m.focus == focusRight {
 			m.focus = focusLeft
 			return m, nil
@@ -157,12 +159,12 @@ func (m *FilterModal) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *FilterModal) updateLeftPane(kp tea.KeyPressMsg) (tea.Model, tea.Cmd) {
-	switch kp.String() {
-	case "j", "down":
+	switch {
+	case key.Matches(kp, m.keys.Down):
 		m.leftCursor = (m.leftCursor + 1) % leftPaneCount
 		m.rightCursor = 0
 		m.rightViewOffset = 0
-	case "k", "up":
+	case key.Matches(kp, m.keys.Up):
 		if m.leftCursor == 0 {
 			m.leftCursor = leftPaneCount - 1
 		} else {
@@ -170,7 +172,7 @@ func (m *FilterModal) updateLeftPane(kp tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		}
 		m.rightCursor = 0
 		m.rightViewOffset = 0
-	case "enter", "l", "right":
+	case key.Matches(kp, m.keys.Enter, m.keys.Right):
 		m.focus = focusRight
 		m.rightCursor = 0
 		m.rightViewOffset = 0
@@ -229,8 +231,8 @@ func (m *FilterModal) updateRightPane(kp tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	rows := m.buildRightRows()
 	total := len(rows)
 
-	switch kp.String() {
-	case "j", "down":
+	switch {
+	case key.Matches(kp, m.keys.Down):
 		if total > 0 {
 			next := (m.rightCursor + 1) % total
 			// Skip forward over any divider row.
@@ -240,7 +242,7 @@ func (m *FilterModal) updateRightPane(kp tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			m.rightCursor = next
 			m.scrollRightIntoView(total)
 		}
-	case "k", "up":
+	case key.Matches(kp, m.keys.Up):
 		if total > 0 {
 			prev := m.rightCursor - 1
 			if prev < 0 {
@@ -256,7 +258,7 @@ func (m *FilterModal) updateRightPane(kp tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			m.rightCursor = prev
 			m.scrollRightIntoView(total)
 		}
-	case "enter", " ":
+	case key.Matches(kp, m.keys.Enter):
 		if m.rightCursor < len(rows) {
 			row := rows[m.rightCursor]
 			switch row.kind {
@@ -288,7 +290,7 @@ func (m *FilterModal) updateRightPane(kp tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 				m.scrollRightIntoView(len(newRows))
 			}
 		}
-	case "h", "left":
+	case key.Matches(kp, m.keys.Left):
 		m.focus = focusLeft
 	}
 	return m, nil
@@ -456,7 +458,7 @@ func (m *FilterModal) renderPanes(leftW, rightW int) (string, string) {
 func (m *FilterModal) renderLeftPane(w int) string {
 	cursorStyle := lipgloss.NewStyle().Foreground(color.Primary).Bold(true)
 	activeHL := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#ffffff")).
+		Foreground(color.CrumbFg).
 		Background(color.Highlight).
 		Bold(true)
 	cursorHL := lipgloss.NewStyle().
@@ -496,11 +498,11 @@ func truncateLabel(s string, maxLen int) string {
 }
 
 func (m *FilterModal) renderRightPane(w int) string {
-	checkedStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#00ff00")).Bold(true)
-	uncheckedStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#ff5555"))
+	checkedStyle := lipgloss.NewStyle().Foreground(color.CheckGreen).Bold(true)
+	uncheckedStyle := lipgloss.NewStyle().Foreground(color.CheckRed)
 	cursorStyle := lipgloss.NewStyle().Foreground(color.Primary).Bold(true)
 	activeStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#ffffff")).
+		Foreground(color.CrumbFg).
 		Background(color.Highlight).
 		Bold(true)
 	normalStyle := lipgloss.NewStyle().Foreground(color.InfoValue)
@@ -622,20 +624,22 @@ func (m *FilterModal) renderFooter() string {
 	descStyle := lipgloss.NewStyle().Foreground(color.HintDesc)
 	sep := descStyle.Render("  │  ")
 
+	bk := func(b key.Binding) string { return b.Help().Key }
+
 	var parts []string
-	parts = append(parts, keyStyle.Render("<j/k>")+" "+descStyle.Render("move"))
+	parts = append(parts, keyStyle.Render("<"+bk(m.keys.Up)+"/"+bk(m.keys.Down)+">")+" "+descStyle.Render("move"))
 	if m.focus == focusLeft {
-		parts = append(parts, keyStyle.Render("<enter/→>")+" "+descStyle.Render("open"))
+		parts = append(parts, keyStyle.Render("<"+bk(m.keys.Enter)+"/"+bk(m.keys.Right)+">")+" "+descStyle.Render("open"))
 	} else {
 		if m.leftCursor == leftPaneLevel {
-			parts = append(parts, keyStyle.Render("<enter>")+" "+descStyle.Render("select"))
+			parts = append(parts, keyStyle.Render("<"+bk(m.keys.Enter)+">")+" "+descStyle.Render("select"))
 		} else {
-			parts = append(parts, keyStyle.Render("<enter>")+" "+descStyle.Render("toggle"))
+			parts = append(parts, keyStyle.Render("<"+bk(m.keys.Enter)+">")+" "+descStyle.Render("toggle"))
 		}
-		parts = append(parts, keyStyle.Render("<h/esc>")+" "+descStyle.Render("back"))
+		parts = append(parts, keyStyle.Render("<"+bk(m.keys.Left)+"/"+bk(m.keys.Back)+">")+" "+descStyle.Render("back"))
 	}
-	parts = append(parts, keyStyle.Render("<F>")+" "+descStyle.Render("apply"))
-	parts = append(parts, keyStyle.Render("<esc>")+" "+descStyle.Render("close"))
+	parts = append(parts, keyStyle.Render("<"+bk(m.keys.ApplyFilter)+">")+" "+descStyle.Render("apply"))
+	parts = append(parts, keyStyle.Render("<"+bk(m.keys.Back)+">")+" "+descStyle.Render("close"))
 
 	return " " + strings.Join(parts, sep)
 }

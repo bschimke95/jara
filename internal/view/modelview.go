@@ -3,6 +3,7 @@ package view
 import (
 	"strings"
 
+	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -104,16 +105,16 @@ func (m *ModelView) Init() tea.Cmd { return nil }
 
 func (m *ModelView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if msg, ok := msg.(tea.KeyPressMsg); ok {
-		switch msg.String() {
-		case "U":
+		switch {
+		case key.Matches(msg, m.keys.UnitsNav):
 			return m, func() tea.Msg {
 				return NavigateMsg{Target: nav.UnitsView, Context: m.selectedApp}
 			}
-		case "R":
+		case key.Matches(msg, m.keys.RelationsNav):
 			return m, func() tea.Msg {
 				return NavigateMsg{Target: nav.RelationsView}
 			}
-		case "L":
+		case key.Matches(msg, m.keys.LogsJump):
 			var filter *model.DebugLogFilter
 			if m.selectedApp != "" {
 				f := model.DebugLogFilter{Applications: []string{m.selectedApp}}
@@ -122,18 +123,18 @@ func (m *ModelView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, func() tea.Msg {
 				return NavigateMsg{Target: nav.DebugLogView, Filter: filter}
 			}
-		case "l":
+		case key.Matches(msg, m.keys.LogsView):
 			return m, func() tea.Msg {
 				return NavigateMsg{Target: nav.DebugLogView}
 			}
-		case "+":
+		case key.Matches(msg, m.keys.ScaleUp):
 			if m.selectedApp != "" {
 				app := m.selectedApp
 				m.pendingScale[app]++
 				m.refreshRightPane()
 				return m, func() tea.Msg { return ScaleRequestMsg{AppName: app, Delta: 1} }
 			}
-		case "-":
+		case key.Matches(msg, m.keys.ScaleDown):
 			if m.selectedApp != "" {
 				app := m.selectedApp
 				m.pendingScale[app]--
