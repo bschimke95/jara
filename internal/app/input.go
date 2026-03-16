@@ -76,6 +76,17 @@ func (m Model) executeCommand(cmd string) (Model, tea.Cmd) {
 // handleGlobalKeys processes key presses that are active in normal mode
 // regardless of the current view.
 func (m Model) handleGlobalKeys(msg tea.KeyPressMsg) (Model, tea.Cmd, bool) {
+	// ctrl+c always quits, even when a modal is open.
+	if msg.String() == "ctrl+c" {
+		return m, tea.Quit, true
+	}
+
+	// When the debug-log filter modal is open it owns all other key events —
+	// global bindings (quit via q, back, etc.) must not fire while active.
+	if dl, ok := m.views[m.stack.Current().View].(*view.DebugLog); ok && dl.IsModalOpen() {
+		return m, nil, false
+	}
+
 	switch {
 	case key.Matches(msg, m.keys.Quit):
 		return m, tea.Quit, true
@@ -86,6 +97,10 @@ func (m Model) handleGlobalKeys(msg tea.KeyPressMsg) (Model, tea.Cmd, bool) {
 		m2, cmd := m.enterCommandMode()
 		return m2, cmd, true
 	case key.Matches(msg, m.keys.Filter):
+		// The debug-log view owns '/' for in-buffer search; let it handle it.
+		if m.stack.Current().View == nav.DebugLogView {
+			return m, nil, false
+		}
 		m2, cmd := m.enterFilterMode()
 		return m2, cmd, true
 	}

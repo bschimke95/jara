@@ -9,6 +9,7 @@ import (
 	"github.com/charmbracelet/x/ansi"
 
 	"github.com/bschimke95/jara/internal/model"
+	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/render"
 	"github.com/bschimke95/jara/internal/ui"
 )
@@ -145,6 +146,29 @@ func (u *Units) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				u.pendingScale[appName]--
 				u.rebuildRows()
 				return u, func() tea.Msg { return ScaleRequestMsg{AppName: appName, Delta: -1} }
+			}
+		case key.Matches(msg, u.keys.LogsJump):
+			var filter *model.DebugLogFilter
+			if row := u.table.SelectedRow(); row != nil {
+				unitName := strings.TrimSpace(row[0])
+				if idx := strings.Index(unitName, " "); idx >= 0 {
+					unitName = unitName[idx+1:]
+				}
+				unitName = strings.TrimSpace(unitName)
+				if slash := strings.LastIndex(unitName, "/"); slash >= 0 {
+					app := unitName[:slash]
+					num := unitName[slash+1:]
+					unitName = "unit-" + app + "-" + num
+				}
+				f := model.DebugLogFilter{IncludeEntities: []string{unitName}}
+				filter = &f
+			}
+			return u, func() tea.Msg {
+				return NavigateMsg{Target: nav.DebugLogView, Filter: filter}
+			}
+		case key.Matches(msg, u.keys.LogsView):
+			return u, func() tea.Msg {
+				return NavigateMsg{Target: nav.DebugLogView}
 			}
 		}
 	}

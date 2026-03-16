@@ -196,7 +196,7 @@ func (c *MockClient) ScaleApplication(_ context.Context, appName string, delta i
 }
 
 // DebugLog returns a channel of synthetic log entries.
-func (c *MockClient) DebugLog(ctx context.Context) (<-chan model.LogEntry, error) {
+func (c *MockClient) DebugLog(ctx context.Context, _ model.DebugLogFilter) (<-chan model.LogEntry, error) {
 	ch := make(chan model.LogEntry)
 
 	entities := []string{"unit-postgresql-0", "unit-ubuntu-app-0", "machine-0", "unit-grafana-0", "unit-prometheus-0"}

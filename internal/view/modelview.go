@@ -113,6 +113,19 @@ func (m *ModelView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, func() tea.Msg {
 				return NavigateMsg{Target: nav.RelationsView}
 			}
+		case "L":
+			var filter *model.DebugLogFilter
+			if m.selectedApp != "" {
+				f := model.DebugLogFilter{Applications: []string{m.selectedApp}}
+				filter = &f
+			}
+			return m, func() tea.Msg {
+				return NavigateMsg{Target: nav.DebugLogView, Filter: filter}
+			}
+		case "l":
+			return m, func() tea.Msg {
+				return NavigateMsg{Target: nav.DebugLogView}
+			}
 		case "+":
 			if m.selectedApp != "" {
 				app := m.selectedApp
