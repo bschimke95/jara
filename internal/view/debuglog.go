@@ -52,22 +52,22 @@ type DebugLog struct {
 	width  int
 	height int
 
-	lines        []string // formatted log lines (pre-coloured)
-	rawEntries   []model.LogEntry
-	offset       int  // scroll offset (0 = pinned to bottom)
-	paused       bool // when true, auto-scroll is paused
+	lines      []string // formatted log lines (pre-coloured)
+	rawEntries []model.LogEntry
+	offset     int  // scroll offset (0 = pinned to bottom)
+	paused     bool // when true, auto-scroll is paused
 
 	mode         debugMode
 	filterModal  FilterModal
 	activeFilter model.DebugLogFilter // currently applied filter (for display)
 
-	status      *model.FullStatus // latest model status, used for suggestions
+	status      *model.FullStatus   // latest model status, used for suggestions
 	seenModules map[string]struct{} // modules observed in the log stream
 
 	searchInput   textinput.Model
-	searchQuery   string            // committed search string
-	searchMatches []int             // indices into d.lines that match the query
-	searchIdx     int               // position in searchMatches
+	searchQuery   string // committed search string
+	searchMatches []int  // indices into d.lines that match the query
+	searchIdx     int    // position in searchMatches
 }
 
 // NewDebugLog creates a new debug-log view.
@@ -185,7 +185,7 @@ func (d *DebugLog) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case DebugLogErrMsg:
 		errLine := lipgloss.NewStyle().
-			Foreground(lipgloss.Color("#ff5555")).
+			Foreground(color.Error).
 			Render(fmt.Sprintf("  ⚠ stream error: %v", msg.Err))
 		d.lines = append(d.lines, errLine)
 		return d, nil
@@ -272,11 +272,11 @@ func (d *DebugLog) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(kp, d.keys.Bottom):
 			d.offset = d.bottomOffset()
 			d.paused = false
-		case kp.String() == "F": // Shift+F → open filter modal
-			d.filterModal = NewFilterModal(d.activeFilter, d.buildSuggestions())
+		case key.Matches(kp, d.keys.FilterOpen):
+			d.filterModal = NewFilterModal(d.activeFilter, d.buildSuggestions(), d.keys)
 			d.filterModal.SetSize(d.width, d.height)
 			d.mode = debugModeFilter
-		case kp.String() == "D": // Shift+D → clear active filter
+		case key.Matches(kp, d.keys.ClearFilter):
 			d.activeFilter = model.DebugLogFilter{}
 			d.lines = make([]string, 0, maxLogLines)
 			d.rawEntries = make([]model.LogEntry, 0, maxLogLines)
@@ -285,13 +285,13 @@ func (d *DebugLog) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return d, func() tea.Msg {
 				return DebugLogFilterChangedMsg{Filter: d.activeFilter}
 			}
-		case kp.String() == "/": // search
+		case key.Matches(kp, d.keys.SearchOpen):
 			d.searchInput.SetValue("")
 			d.mode = debugModeSearch
 			return d, d.searchInput.Focus()
-		case kp.String() == "n": // next search match
+		case key.Matches(kp, d.keys.SearchNext):
 			d.jumpToNextMatch(1)
-		case kp.String() == "N": // previous search match
+		case key.Matches(kp, d.keys.SearchPrev):
 			d.jumpToNextMatch(-1)
 		}
 	}
@@ -489,8 +489,8 @@ func highlightSearchMatch(line, query string) string {
 		return line
 	}
 	hl := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#000000")).
-		Background(lipgloss.Color("#ffff00"))
+		Foreground(color.SearchHighlightFg).
+		Background(color.SearchHighlightBg)
 	return line[:idx] + hl.Render(line[idx:idx+len(query)]) + line[idx+len(query):]
 }
 
@@ -498,15 +498,15 @@ func highlightSearchMatch(line, query string) string {
 func severityColor(severity string) lipgloss.Style {
 	switch strings.ToUpper(severity) {
 	case "ERROR", "CRITICAL":
-		return lipgloss.NewStyle().Foreground(lipgloss.Color("#ff5555"))
+		return lipgloss.NewStyle().Foreground(color.CheckRed)
 	case "WARNING":
-		return lipgloss.NewStyle().Foreground(lipgloss.Color("#ffff00"))
+		return lipgloss.NewStyle().Foreground(color.StatusColor("waiting"))
 	case "INFO":
-		return lipgloss.NewStyle().Foreground(lipgloss.Color("#00bfff"))
+		return lipgloss.NewStyle().Foreground(color.Primary)
 	case "DEBUG":
 		return lipgloss.NewStyle().Foreground(color.Muted)
 	case "TRACE":
-		return lipgloss.NewStyle().Foreground(lipgloss.Color("#808080"))
+		return lipgloss.NewStyle().Foreground(color.Subtle)
 	default:
 		return lipgloss.NewStyle().Foreground(color.Subtle)
 	}

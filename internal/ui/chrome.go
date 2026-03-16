@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 
+	"charm.land/bubbles/v2/key"
 	"charm.land/lipgloss/v2"
 	"github.com/bschimke95/jara/internal/color"
 )
@@ -231,7 +232,7 @@ func CrumbBar(viewName string, context string, width int) string {
 	if context != "" {
 		ctxStyle := lipgloss.NewStyle().
 			Foreground(color.CrumbFg).
-			Background(lipgloss.Color("#374151")).
+			Background(color.CrumbBgAlt).
 			Padding(0, 1)
 		parts = append(parts, ctxStyle.Render(context))
 	}
@@ -277,69 +278,73 @@ type KeyHint struct {
 }
 
 // HintsForView returns the appropriate key hints for the current view.
-func HintsForView(viewName string) []KeyHint {
+// Key labels are derived from the actual KeyMap bindings so they stay
+// consistent when the user overrides key bindings via config.
+func HintsForView(viewName string, keys KeyMap) []KeyHint {
+	bk := func(b key.Binding) string { return b.Help().Key }
+
 	common := []KeyHint{
-		{Key: ":", Desc: "cmd"},
-		{Key: "?", Desc: "help"},
-		{Key: "q", Desc: "quit"},
+		{Key: bk(keys.Command), Desc: "cmd"},
+		{Key: bk(keys.Help), Desc: "help"},
+		{Key: bk(keys.Quit), Desc: "quit"},
 	}
 
 	switch viewName {
 	case "Controllers":
 		return append([]KeyHint{
-			{Key: "enter", Desc: "select"},
+			{Key: bk(keys.Enter), Desc: "select"},
 		}, common...)
 	case "Models":
 		return append([]KeyHint{
-			{Key: "enter", Desc: "select"},
-			{Key: "esc", Desc: "back"},
+			{Key: bk(keys.Enter), Desc: "select"},
+			{Key: bk(keys.Back), Desc: "back"},
 		}, common...)
 	case "Model":
 		return append([]KeyHint{
-			{Key: "U", Desc: "units"},
-			{Key: "R", Desc: "relations"},
-			{Key: "L", Desc: "logs (app)"},
-			{Key: "l", Desc: "logs"},
-			{Key: "+/-", Desc: "scale"},
+			{Key: bk(keys.UnitsNav), Desc: "units"},
+			{Key: bk(keys.RelationsNav), Desc: "relations"},
+			{Key: bk(keys.LogsJump), Desc: "logs (app)"},
+			{Key: bk(keys.LogsView), Desc: "logs"},
+			{Key: bk(keys.ScaleUp) + "/" + bk(keys.ScaleDown), Desc: "scale"},
 		}, common...)
 	case "Applications":
 		return append([]KeyHint{
-			{Key: "enter", Desc: "units"},
-			{Key: "L", Desc: "logs (app)"},
-			{Key: "l", Desc: "logs"},
+			{Key: bk(keys.Enter), Desc: "units"},
+			{Key: bk(keys.LogsJump), Desc: "logs (app)"},
+			{Key: bk(keys.LogsView), Desc: "logs"},
 		}, common...)
 	case "Units":
 		return append([]KeyHint{
-			{Key: "esc", Desc: "back"},
-			{Key: "L", Desc: "logs (unit)"},
-			{Key: "l", Desc: "logs"},
-			{Key: "+/-", Desc: "scale"},
+			{Key: bk(keys.Back), Desc: "back"},
+			{Key: bk(keys.LogsJump), Desc: "logs (unit)"},
+			{Key: bk(keys.LogsView), Desc: "logs"},
+			{Key: bk(keys.ScaleUp) + "/" + bk(keys.ScaleDown), Desc: "scale"},
 		}, common...)
 	case "Machines":
 		return append([]KeyHint{
-			{Key: "esc", Desc: "back"},
-			{Key: "L", Desc: "logs (machine)"},
-			{Key: "l", Desc: "logs"},
+			{Key: bk(keys.Back), Desc: "back"},
+			{Key: bk(keys.LogsJump), Desc: "logs (machine)"},
+			{Key: bk(keys.LogsView), Desc: "logs"},
 		}, common...)
 	case "Relations":
 		return append([]KeyHint{
-			{Key: "esc", Desc: "back"},
-			{Key: "l", Desc: "logs"},
+			{Key: bk(keys.Back), Desc: "back"},
+			{Key: bk(keys.LogsView), Desc: "logs"},
 		}, common...)
 	case "Debug Log":
 		return append([]KeyHint{
-			{Key: "esc", Desc: "back"},
-			{Key: "G", Desc: "bottom"},
-			{Key: "g", Desc: "top"},
-			{Key: "F", Desc: "filter"},
-			{Key: "D", Desc: "clear filter"},
-			{Key: "/", Desc: "search"},
-			{Key: "n/N", Desc: "next/prev match"},
+			{Key: bk(keys.Back), Desc: "back"},
+			{Key: bk(keys.Bottom), Desc: "bottom"},
+			{Key: bk(keys.Top), Desc: "top"},
+			{Key: bk(keys.FilterOpen), Desc: "filter"},
+			{Key: bk(keys.ClearFilter), Desc: "clear filter"},
+			{Key: bk(keys.SearchOpen), Desc: "search"},
+			{Key: bk(keys.SearchNext) + "/" + bk(keys.SearchPrev), Desc: "next/prev match"},
 		}, common...)
 	default:
 		return append([]KeyHint{
-			{Key: "enter", Desc: "select"},
-			{Key: "esc", Desc: "back"},
+			{Key: bk(keys.Enter), Desc: "select"},
+			{Key: bk(keys.Back), Desc: "back"},
 		}, common...)
 	}
 }

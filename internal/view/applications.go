@@ -93,7 +93,7 @@ func styledTable() table.Styles {
 		Foreground(color.Primary).
 		Padding(0, 1)
 	s.Selected = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#ffffff")).
+		Foreground(color.CrumbFg).
 		Background(color.Highlight).
 		Bold(true)
 	s.Cell = lipgloss.NewStyle().
