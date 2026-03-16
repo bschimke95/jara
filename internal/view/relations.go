@@ -1,10 +1,12 @@
 package view
 
 import (
+	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/bschimke95/jara/internal/model"
+	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/render"
 	"github.com/bschimke95/jara/internal/ui"
 )
@@ -48,6 +50,18 @@ func (r *Relations) SetStatus(status *model.FullStatus) {
 func (r *Relations) Init() tea.Cmd { return nil }
 
 func (r *Relations) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if kp, ok := msg.(tea.KeyPressMsg); ok {
+		if key.Matches(kp, r.keys.LogsJump) {
+			return r, func() tea.Msg {
+				return NavigateMsg{Target: nav.DebugLogView}
+			}
+		}
+		if key.Matches(kp, r.keys.LogsView) {
+			return r, func() tea.Msg {
+				return NavigateMsg{Target: nav.DebugLogView}
+			}
+		}
+	}
 	var cmd tea.Cmd
 	r.table, cmd = r.table.Update(msg)
 	return r, cmd

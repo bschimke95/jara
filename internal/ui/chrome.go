@@ -1,3 +1,6 @@
+// Package ui provides the chrome layer for jara: the header, footer, border
+// boxes, key-hint rendering, and the shared key-binding map used across all
+// views.
 package ui
 
 import (
@@ -277,7 +280,6 @@ type KeyHint struct {
 func HintsForView(viewName string) []KeyHint {
 	common := []KeyHint{
 		{Key: ":", Desc: "cmd"},
-		{Key: "/", Desc: "filter"},
 		{Key: "?", Desc: "help"},
 		{Key: "q", Desc: "quit"},
 	}
@@ -296,22 +298,43 @@ func HintsForView(viewName string) []KeyHint {
 		return append([]KeyHint{
 			{Key: "U", Desc: "units"},
 			{Key: "R", Desc: "relations"},
+			{Key: "L", Desc: "logs (app)"},
+			{Key: "l", Desc: "logs"},
 			{Key: "+/-", Desc: "scale"},
 		}, common...)
 	case "Applications":
 		return append([]KeyHint{
 			{Key: "enter", Desc: "units"},
+			{Key: "L", Desc: "logs (app)"},
+			{Key: "l", Desc: "logs"},
 		}, common...)
 	case "Units":
 		return append([]KeyHint{
 			{Key: "esc", Desc: "back"},
+			{Key: "L", Desc: "logs (unit)"},
+			{Key: "l", Desc: "logs"},
 			{Key: "+/-", Desc: "scale"},
+		}, common...)
+	case "Machines":
+		return append([]KeyHint{
+			{Key: "esc", Desc: "back"},
+			{Key: "L", Desc: "logs (machine)"},
+			{Key: "l", Desc: "logs"},
+		}, common...)
+	case "Relations":
+		return append([]KeyHint{
+			{Key: "esc", Desc: "back"},
+			{Key: "l", Desc: "logs"},
 		}, common...)
 	case "Debug Log":
 		return append([]KeyHint{
 			{Key: "esc", Desc: "back"},
 			{Key: "G", Desc: "bottom"},
 			{Key: "g", Desc: "top"},
+			{Key: "F", Desc: "filter"},
+			{Key: "D", Desc: "clear filter"},
+			{Key: "/", Desc: "search"},
+			{Key: "n/N", Desc: "next/prev match"},
 		}, common...)
 	default:
 		return append([]KeyHint{

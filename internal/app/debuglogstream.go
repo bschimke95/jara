@@ -18,7 +18,7 @@ type debugLogConnectedMsg struct {
 
 // startDebugLogStream begins streaming debug-log entries from the API.
 // It returns a Cmd that connects and sends a debugLogConnectedMsg.
-func (m *Model) startDebugLogStream() tea.Cmd {
+func (m *Model) startDebugLogStream(filter model.DebugLogFilter) tea.Cmd {
 	m.stopDebugLogStream() // cancel any existing stream
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -26,7 +26,7 @@ func (m *Model) startDebugLogStream() tea.Cmd {
 
 	client := m.client
 	return func() tea.Msg {
-		ch, err := client.DebugLog(ctx)
+		ch, err := client.DebugLog(ctx, filter)
 		if err != nil {
 			return view.DebugLogErrMsg{Err: err}
 		}

@@ -61,6 +61,21 @@ func (a *Applications) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		}
+		if key.Matches(msg, a.keys.LogsJump) {
+			var filter *model.DebugLogFilter
+			if row := a.table.SelectedRow(); row != nil {
+				f := model.DebugLogFilter{Applications: []string{row[0]}}
+				filter = &f
+			}
+			return a, func() tea.Msg {
+				return NavigateMsg{Target: nav.DebugLogView, Filter: filter}
+			}
+		}
+		if key.Matches(msg, a.keys.LogsView) {
+			return a, func() tea.Msg {
+				return NavigateMsg{Target: nav.DebugLogView}
+			}
+		}
 	}
 	var cmd tea.Cmd
 	a.table, cmd = a.table.Update(msg)
