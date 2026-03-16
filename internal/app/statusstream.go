@@ -34,8 +34,10 @@ type statusStreamErrMsg struct {
 	ch  <-chan api.StatusUpdate
 }
 
-type errMsg struct{ err error }
-type noModelMsg struct{} // sent when no model is selected in the current controller
+type (
+	errMsg     struct{ err error }
+	noModelMsg struct{} // sent when no model is selected in the current controller
+)
 
 // startStatusStream begins streaming status updates from the API.
 // It returns a Cmd that connects and sends a statusStreamConnectedMsg.
@@ -46,8 +48,9 @@ func (m *Model) startStatusStream() tea.Cmd {
 	m.statusCancel = cancel
 
 	client := m.client
+	refreshDuration := m.cfg.RefreshDuration()
 	return func() tea.Msg {
-		ch, err := client.WatchStatus(ctx, pollInterval)
+		ch, err := client.WatchStatus(ctx, refreshDuration)
 		if err != nil {
 			if strings.Contains(err.Error(), "No selected model") ||
 				strings.Contains(err.Error(), "resolving current model") {

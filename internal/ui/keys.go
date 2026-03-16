@@ -22,9 +22,18 @@ type KeyMap struct {
 	Tab         key.Binding
 	ScaleUp     key.Binding
 	ScaleDown   key.Binding
-	LogsJump    key.Binding // Shift+L: jump to logs with entity pre-filter
-	LogsView    key.Binding // l: open logs keeping current filter
-	ClearFilter key.Binding // Shift+D: clear active log filter
+	LogsJump     key.Binding // Shift+L: jump to logs with entity pre-filter
+	LogsView     key.Binding // l: open logs keeping current filter
+	ClearFilter  key.Binding // Shift+D: clear active log filter
+	SearchOpen   key.Binding // /: open inline search (debug-log)
+	SearchNext   key.Binding // n: next search match
+	SearchPrev   key.Binding // N: previous search match
+	FilterOpen   key.Binding // Shift+F: open filter modal (debug-log)
+	UnitsNav     key.Binding // Shift+U: navigate to units view
+	RelationsNav key.Binding // Shift+R: navigate to relations view
+	ApplyFilter  key.Binding // Shift+F: apply filter in modal
+	Right        key.Binding // l/right: move right in modal
+	Left         key.Binding // h/left: move left in modal
 }
 
 // DefaultKeyMap returns the default vim-style keybindings.
@@ -105,6 +114,42 @@ func DefaultKeyMap() KeyMap {
 		ClearFilter: key.NewBinding(
 			key.WithKeys("D"),
 			key.WithHelp("D", "clear filter"),
+		),
+		SearchOpen: key.NewBinding(
+			key.WithKeys("/"),
+			key.WithHelp("/", "search"),
+		),
+		SearchNext: key.NewBinding(
+			key.WithKeys("n"),
+			key.WithHelp("n", "next match"),
+		),
+		SearchPrev: key.NewBinding(
+			key.WithKeys("N"),
+			key.WithHelp("N", "prev match"),
+		),
+		FilterOpen: key.NewBinding(
+			key.WithKeys("F"),
+			key.WithHelp("F", "filter"),
+		),
+		UnitsNav: key.NewBinding(
+			key.WithKeys("U"),
+			key.WithHelp("U", "units"),
+		),
+		RelationsNav: key.NewBinding(
+			key.WithKeys("R"),
+			key.WithHelp("R", "relations"),
+		),
+		ApplyFilter: key.NewBinding(
+			key.WithKeys("F"),
+			key.WithHelp("F", "apply"),
+		),
+		Right: key.NewBinding(
+			key.WithKeys("l", "right"),
+			key.WithHelp("l/→", "right"),
+		),
+		Left: key.NewBinding(
+			key.WithKeys("h", "left"),
+			key.WithHelp("h/←", "left"),
 		),
 	}
 }
