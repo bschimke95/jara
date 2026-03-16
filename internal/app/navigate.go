@@ -3,7 +3,6 @@ package app
 import (
 	tea "charm.land/bubbletea/v2"
 
-	"github.com/bschimke95/jara/internal/api"
 	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/view"
 )
@@ -13,11 +12,9 @@ func (m Model) handleNavigate(msg view.NavigateMsg) (Model, tea.Cmd) {
 
 	// Selecting a controller from the ControllerView: switch to it and show its models.
 	if msg.Target == nav.ModelsView && msg.Context != "" {
-		if jc, ok := m.client.(*api.JujuClient); ok {
-			if err := jc.SelectController(msg.Context); err != nil {
-				m.err = err
-				return m, nil
-			}
+		if err := m.client.SelectController(msg.Context); err != nil {
+			m.err = err
+			return m, nil
 		}
 		m.stopStatusStream() // stop watching the previous model
 		m.err = nil
@@ -31,11 +28,9 @@ func (m Model) handleNavigate(msg view.NavigateMsg) (Model, tea.Cmd) {
 
 	// Selecting a model from the ModelsView: switch to it and show the model detail.
 	if msg.Target == nav.ModelView && msg.Context != "" {
-		if jc, ok := m.client.(*api.JujuClient); ok {
-			if err := jc.SelectModel(msg.Context); err != nil {
-				m.err = err
-				return m, nil
-			}
+		if err := m.client.SelectModel(msg.Context); err != nil {
+			m.err = err
+			return m, nil
 		}
 		m.status = nil
 		m.err = nil
