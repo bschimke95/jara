@@ -1,0 +1,106 @@
+# Jara Configuration
+# Location: ~/.config/jara/config.yaml
+#
+# All values are optional. Unset keys use the compiled defaults.
+# CLI flags (e.g. --refresh, --headless) override values in this file.
+
+jara:
+  # Status poll interval in seconds.
+  # refreshRate: 3
+
+  # Log level: error, warn, info, debug.
+  # logLevel: info
+
+  # Override the default log file path.
+  # logFile: /tmp/jara.log
+
+  # Hide the header panel.
+  # headless: false
+
+  # Hide the logo in the header.
+  # logoless: false
+
+  # Disable write operations (scale, etc.).
+  # readOnly: false
+
+  ui:
+    # Skin / color theme — k9s-inspired dark blue scheme.
+    # All values are hex color strings (e.g. "#00bfff").
+    skin:
+      # logoColor: "#00bfff"
+      # primary: "#00bfff"
+      # secondary: "#6b7280"
+      # title: "#e5e7eb"
+      # subtle: "#4b5563"
+      # highlight: "#1d4ed8"
+      # muted: "#6b7280"
+      # hintKey: "#f0c674"
+      # hintDesc: "#6b7280"
+      # crumbFg: "#ffffff"
+      # crumbBg: "#1d4ed8"
+      # border: "#4b5563"
+      # borderTitle: "#00bfff"
+      # infoLabel: "#6b7280"
+      # infoValue: "#e5e7eb"
+
+      # Override colors for specific Juju status strings.
+      # status:
+      #   active: "#00ff00"
+      #   idle: "#00ff00"
+      #   running: "#00ff00"
+      #   started: "#00ff00"
+      #   blocked: "#ff5555"
+      #   error: "#ff5555"
+      #   lost: "#ff5555"
+      #   down: "#ff5555"
+      #   waiting: "#ffff00"
+      #   allocating: "#ffff00"
+      #   pending: "#ffff00"
+      #   maintenance: "#00bfff"
+      #   executing: "#00bfff"
+      #   terminated: "#808080"
+      #   unknown: "#808080"
+      #   stopped: "#ff4500"
+      #   default: "#c0c0c0"
+
+    # Key binding overrides. Each binding is a list of key strings.
+    # See https://pkg.go.dev/charm.land/bubbletea/v2#KeyPressMsg for key names.
+    keys:
+      # quit:
+      #   keys: ["q", "ctrl+c"]
+      # help:
+      #   keys: ["?"]
+      # back:
+      #   keys: ["esc"]
+      # enter:
+      #   keys: ["enter"]
+      # command:
+      #   keys: [":"]
+      # filter:
+      #   keys: ["/"]
+      # up:
+      #   keys: ["k", "up"]
+      # down:
+      #   keys: ["j", "down"]
+      # pageUp:
+      #   keys: ["ctrl+u", "pgup"]
+      # pageDown:
+      #   keys: ["ctrl+d", "pgdown"]
+      # top:
+      #   keys: ["g"]
+      # bottom:
+      #   keys: ["G"]
+      # cancelInput:
+      #   keys: ["esc"]
+      # tab:
+      #   keys: ["tab"]
+      # scaleUp:
+      #   keys: ["+"]
+      # scaleDown:
+      #   keys: ["-"]
+      # logsJump:
+      #   keys: ["L"]
+      # logsView:
+      #   keys: ["l"]
+      # clearFilter:
+      #   keys: ["D"]

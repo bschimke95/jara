@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"time"
 
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
@@ -12,17 +11,17 @@ import (
 
 	"github.com/bschimke95/jara/internal/api"
 	"github.com/bschimke95/jara/internal/color"
+	"github.com/bschimke95/jara/internal/config"
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/ui"
 	"github.com/bschimke95/jara/internal/view"
 )
 
-const pollInterval = 3 * time.Second
-
 // Model is the root Bubble Tea model.
 type Model struct {
 	client api.Client
+	cfg    *config.Config
 	status *model.FullStatus
 
 	stack *nav.Stack
@@ -44,14 +43,41 @@ type Model struct {
 	ready bool
 }
 
+// Option configures the root Model.
+type Option func(*Model)
+
+// WithTheme applies a resolved theme to the color package globals.
+func WithTheme(t *config.Theme) Option {
+	return func(_ *Model) {
+		if t != nil {
+			t.Apply()
+		}
+	}
+}
+
+// WithKeyMap overrides the default key bindings.
+func WithKeyMap(km ui.KeyMap) Option {
+	return func(m *Model) {
+		m.keys = km
+	}
+}
+
+// WithConfig attaches the full configuration to the model.
+func WithConfig(cfg *config.Config) Option {
+	return func(m *Model) {
+		m.cfg = cfg
+	}
+}
+
 // New creates the root model.
-func New(client api.Client) Model {
+func New(client api.Client, opts ...Option) Model {
 	ti := textinput.New()
 	ti.Prompt = ""
 	ti.CharLimit = 64
 
-	return Model{
+	m := Model{
 		client: client,
+		cfg:    config.NewDefault(),
 		stack:  nav.NewStack(nav.ModelView),
 		views: map[nav.ViewID]view.View{
 			nav.ControllerView:   view.NewControllers(),
@@ -67,6 +93,12 @@ func New(client api.Client) Model {
 		input: ti,
 		mode:  modeNormal,
 	}
+
+	for _, opt := range opts {
+		opt(&m)
+	}
+
+	return m
 }
 
 func (m Model) Init() tea.Cmd {
@@ -241,7 +273,7 @@ func (m Model) View() tea.View {
 		cloud = m.status.Model.Cloud
 		region = m.status.Model.Region
 	}
-	hints := ui.HintsForView(m.viewName())
+	hints := ui.HintsForView(m.viewName(), m.keys)
 	headerInner := ui.HeaderContent(controllerName, modelName, cloud, region, hints, m.width-2)
 	sections = append(sections, ui.BorderBox(headerInner, "", m.width))
 
@@ -295,7 +327,7 @@ func (m Model) View() tea.View {
 
 	// ── Error line ──
 	if m.err != nil {
-		errStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("#ff0000"))
+		errStyle := lipgloss.NewStyle().Foreground(color.Error)
 		sections = append(sections, errStyle.Render(" Error: "+m.err.Error()))
 	}
 
