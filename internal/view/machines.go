@@ -1,10 +1,12 @@
 package view
 
 import (
+	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/bschimke95/jara/internal/model"
+	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/render"
 	"github.com/bschimke95/jara/internal/ui"
 )
@@ -48,6 +50,23 @@ func (m *Machines) SetStatus(status *model.FullStatus) {
 func (m *Machines) Init() tea.Cmd { return nil }
 
 func (m *Machines) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if kp, ok := msg.(tea.KeyPressMsg); ok {
+		if key.Matches(kp, m.keys.LogsJump) {
+			var filter *model.DebugLogFilter
+			if row := m.table.SelectedRow(); row != nil {
+				f := model.DebugLogFilter{IncludeEntities: []string{"machine-" + row[0]}}
+				filter = &f
+			}
+			return m, func() tea.Msg {
+				return NavigateMsg{Target: nav.DebugLogView, Filter: filter}
+			}
+		}
+		if key.Matches(kp, m.keys.LogsView) {
+			return m, func() tea.Msg {
+				return NavigateMsg{Target: nav.DebugLogView}
+			}
+		}
+	}
 	var cmd tea.Cmd
 	m.table, cmd = m.table.Update(msg)
 	return m, cmd

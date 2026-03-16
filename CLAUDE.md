@@ -10,6 +10,8 @@
 - **k9s-style UI**: Matches the visual aesthetics and navigation patterns of k9s
 - **Multi-view Navigation**: Switch between Applications, Units, Machines, and Relations views
 - **Real-time Status**: Polls the Juju controller every 3 seconds for status updates
+- **Debug-Log Streaming**: Live `juju debug-log` stream with inline search (`/`, `n/N`) and a two-pane vim-navigable filter modal (`Shift+F`)
+- **Log Filtering**: Filter by level, application, unit, machine, module, or label; active filter shown as chips in the border title; `Shift+D` clears the filter
 - **Command Mode**: Supports command-line style interactions (`:` prefix) and filtering (`/` prefix)
 - **Controller Selection**: Selecting a controller persists the choice to the local Juju client store (`~/.local/share/juju/`), keeping jara in sync with the `juju` CLI
 
@@ -49,7 +51,9 @@ jara/
 │   │   ├── applications.go    # Applications table view
 │   │   ├── units.go           # Units table view
 │   │   ├── machines.go        # Machines table view
-│   │   └── relations.go       # Relations table view
+│   │   ├── relations.go       # Relations table view
+│   │   ├── debuglog.go        # Debug-log streaming view (search, filter modal integration)
+│   │   └── filtermodal.go     # Two-pane vim-navigable filter modal overlay
 │   └── app/
 │       └── app.go             # Root Bubble Tea model, layout composition
 └── go.mod, go.sum
@@ -335,5 +339,5 @@ make tidy           # go mod tidy
 - Write operations (scale applications, restart units)
 - Configuration file support
 - Custom color themes
-- Filtering and search across views
 - Detailed resource inspection panel
+- Expand `MockClient.DebugLog` to apply filter fields (level, entity, module) for integration testing

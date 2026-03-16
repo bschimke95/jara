@@ -22,6 +22,9 @@ type KeyMap struct {
 	Tab         key.Binding
 	ScaleUp     key.Binding
 	ScaleDown   key.Binding
+	LogsJump    key.Binding // Shift+L: jump to logs with entity pre-filter
+	LogsView    key.Binding // l: open logs keeping current filter
+	ClearFilter key.Binding // Shift+D: clear active log filter
 }
 
 // DefaultKeyMap returns the default vim-style keybindings.
@@ -90,6 +93,18 @@ func DefaultKeyMap() KeyMap {
 		ScaleDown: key.NewBinding(
 			key.WithKeys("-"),
 			key.WithHelp("-", "scale down"),
+		),
+		LogsJump: key.NewBinding(
+			key.WithKeys("L"),
+			key.WithHelp("L", "logs"),
+		),
+		LogsView: key.NewBinding(
+			key.WithKeys("l"),
+			key.WithHelp("l", "logs"),
+		),
+		ClearFilter: key.NewBinding(
+			key.WithKeys("D"),
+			key.WithHelp("D", "clear filter"),
 		),
 	}
 }

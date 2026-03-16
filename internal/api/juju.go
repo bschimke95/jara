@@ -16,6 +16,7 @@ import (
 	"github.com/juju/juju/api/jujuclient"
 	corelogger "github.com/juju/juju/core/logger"
 	"github.com/juju/juju/rpc/params"
+	"github.com/juju/loggo/v2"
 
 	"github.com/bschimke95/jara/internal/model"
 )
@@ -293,16 +294,37 @@ func (c *JujuClient) ScaleApplication(ctx context.Context, appName string, delta
 // DebugLog connects to the controller and streams debug log messages.
 // The returned channel emits log entries until the context is cancelled
 // or the connection is closed.
-func (c *JujuClient) DebugLog(ctx context.Context) (<-chan model.LogEntry, error) {
+func (c *JujuClient) DebugLog(ctx context.Context, filter model.DebugLogFilter) (<-chan model.LogEntry, error) {
 	conn, err := c.connect(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	jujuClient := client.NewClient(conn, nopLogger{})
-	msgs, err := jujuClient.WatchDebugLog(ctx, common.DebugLogParams{
+	params := common.DebugLogParams{
 		Backlog: 100,
-	})
+	}
+	if filter.Backlog > 0 {
+		params.Backlog = uint(filter.Backlog)
+	}
+	if filter.Level != "" {
+		if lvl, ok := loggo.ParseLevel(filter.Level); ok {
+			params.Level = lvl
+		}
+	}
+	params.IncludeEntity = filter.IncludeEntities
+	// Expand application names to "unit-<app>-*" glob patterns so users can
+	// filter by application without knowing individual unit numbers.
+	for _, app := range filter.Applications {
+		params.IncludeEntity = append(params.IncludeEntity, "unit-"+app+"-*")
+	}
+	params.ExcludeEntity = filter.ExcludeEntities
+	params.IncludeModule = filter.IncludeModules
+	params.ExcludeModule = filter.ExcludeModules
+	params.IncludeLabels = filter.IncludeLabels
+	params.ExcludeLabels = filter.ExcludeLabels
+
+	jujuClient := client.NewClient(conn, nopLogger{})
+	msgs, err := jujuClient.WatchDebugLog(ctx, params)
 	if err != nil {
 		_ = conn.Close()
 		return nil, fmt.Errorf("starting debug-log stream: %w", err)

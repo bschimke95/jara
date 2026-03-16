@@ -158,6 +158,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case view.DebugLogErrMsg:
 		return m.updateActiveView(msg)
+
+	case view.DebugLogFilterChangedMsg:
+		// The user applied a new filter from inside the debug-log view.
+		// Restart the stream with the new filter; keep the same view instance.
+		return m, m.startDebugLogStream(msg.Filter)
 	}
 
 	if m.mode != modeNormal {
@@ -262,6 +267,15 @@ func (m Model) View() tea.View {
 			bodyTitle += "(" + ctx + ")"
 		}
 
+		// For the debug-log view, embed the active filter summary in the title.
+		var rawTitle string
+		if m.stack.Current().View == nav.DebugLogView {
+			if dl, ok := m.views[nav.DebugLogView].(*view.DebugLog); ok {
+				titleStyle := lipgloss.NewStyle().Foreground(color.BorderTitle).Bold(true)
+				rawTitle = titleStyle.Render(" "+bodyTitle+" ") + dl.FilterTitle()
+			}
+		}
+
 		// Pad or truncate content to fill available height.
 		contentLines := strings.Split(viewOutput.Content, "\n")
 		targetH := m.contentHeight()
@@ -272,7 +286,11 @@ func (m Model) View() tea.View {
 			contentLines = contentLines[:targetH]
 		}
 		bodyContent := strings.Join(contentLines, "\n")
-		sections = append(sections, ui.BorderBox(bodyContent, bodyTitle, m.width))
+		if rawTitle != "" {
+			sections = append(sections, ui.BorderBoxRawTitle(bodyContent, rawTitle, m.width))
+		} else {
+			sections = append(sections, ui.BorderBox(bodyContent, bodyTitle, m.width))
+		}
 	}
 
 	// ── Error line ──

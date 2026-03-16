@@ -1,3 +1,6 @@
+// Package api defines the Client interface through which jara communicates with
+// a Juju controller, along with message types used to propagate status updates
+// to the TUI.
 package api
 
 import (
@@ -12,7 +15,7 @@ type Client interface {
 	Status(ctx context.Context) (*model.FullStatus, error)
 	Controllers(ctx context.Context) ([]model.Controller, error)
 	Models(ctx context.Context, controllerName string) ([]model.ModelSummary, error)
-	DebugLog(ctx context.Context) (<-chan model.LogEntry, error)
+	DebugLog(ctx context.Context, filter model.DebugLogFilter) (<-chan model.LogEntry, error)
 	// WatchStatus starts a background loop that pushes status snapshots onto
 	// the returned channel at the given interval. The stream runs until the
 	// context is cancelled. On transient errors the implementation should

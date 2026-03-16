@@ -1,3 +1,6 @@
+// Package model defines the core domain types used throughout jara to represent
+// Juju entities: controllers, models, applications, units, machines, relations,
+// and log entries.
 package model
 
 import "time"
@@ -107,6 +110,35 @@ type LogEntry struct {
 	Module    string
 	Location  string
 	Message   string
+}
+
+// DebugLogFilter holds the filtering parameters for a debug-log stream.
+// Zero values mean "no filter" for each field.
+type DebugLogFilter struct {
+	// Level is the minimum log severity to include (e.g. "WARNING").
+	// Empty string means all levels.
+	Level string
+	// Applications limits output to all units of these application names
+	// (e.g. "postgresql"). Converted to "unit-appname-*" glob patterns for
+	// the Juju API.
+	Applications []string
+	// IncludeEntities limits output to log lines from these entities
+	// (e.g. "unit-postgresql-0", "machine-0").
+	IncludeEntities []string
+	// ExcludeEntities suppresses log lines from these entities.
+	ExcludeEntities []string
+	// IncludeModules limits output to these logger modules
+	// (e.g. "juju.worker.uniter").
+	IncludeModules []string
+	// ExcludeModules suppresses log lines from these logger modules.
+	ExcludeModules []string
+	// IncludeLabels limits output to log lines carrying all of these labels (key=value).
+	IncludeLabels map[string]string
+	// ExcludeLabels suppresses log lines carrying any of these labels (key=value).
+	ExcludeLabels map[string]string
+	// Backlog is the number of historical lines to replay on connect.
+	// Zero uses the implementation default (100).
+	Backlog int
 }
 
 // FullStatus is the aggregate snapshot of a Juju model.

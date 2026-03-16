@@ -15,6 +15,8 @@ type StatusUpdatedMsg struct {
 type NavigateMsg struct {
 	Target  nav.ViewID
 	Context string
+	// Filter is an optional debug-log filter applied when Target is DebugLogView.
+	Filter *model.DebugLogFilter
 }
 
 // GoBackMsg requests navigation back to the previous view.

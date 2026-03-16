@@ -3,6 +3,7 @@ package app
 import (
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/view"
 )
@@ -53,11 +54,33 @@ func (m Model) handleNavigate(msg view.NavigateMsg) (Model, tea.Cmd) {
 	}
 
 	if msg.Target == nav.DebugLogView {
-		// Reset the view and start streaming.
-		dl := view.NewDebugLog()
-		dl.SetSize(m.width, m.contentHeight())
-		m.views[nav.DebugLogView] = dl
-		cmds = append(cmds, m.startDebugLogStream())
+		var filter model.DebugLogFilter
+		if msg.Filter != nil {
+			// Explicit new filter (e.g. entity pre-fill from another view):
+			// create a fresh view instance so the buffer is clean.
+			dl := view.NewDebugLog()
+			dl.SetSize(m.width, m.contentHeight())
+			filter = *msg.Filter
+			dl.SetFilter(filter)
+			if m.status != nil {
+				dl.SetStatus(m.status)
+			}
+			m.views[nav.DebugLogView] = dl
+		} else {
+			// No new filter: reuse the existing view and its current filter so
+			// the user's filter state is preserved across navigation.
+			if existing, ok := m.views[nav.DebugLogView].(*view.DebugLog); ok {
+				filter = existing.ActiveFilter()
+			} else {
+				dl := view.NewDebugLog()
+				dl.SetSize(m.width, m.contentHeight())
+				if m.status != nil {
+					dl.SetStatus(m.status)
+				}
+				m.views[nav.DebugLogView] = dl
+			}
+		}
+		cmds = append(cmds, m.startDebugLogStream(filter))
 	}
 
 	return m, tea.Batch(cmds...)
