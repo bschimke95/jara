@@ -16,7 +16,7 @@
 ### Module & Build Info
 
 - **Go Module**: `github.com/bschimke95/jara`
-- **Go Version**: 1.23+ (uses latest language features)
+- **Go Version**: 1.25+ (uses latest language features; `go.mod` declares `go 1.25.8`)
 - **Key Dependencies**:
   - `charm.land/bubbletea/v2` - TUI framework
   - `charm.land/bubbles/v2` - UI components (table, text input, help)
@@ -54,6 +54,35 @@ jara/
 │       └── app.go             # Root Bubble Tea model, layout composition
 └── go.mod, go.sum
 ```
+
+---
+
+## Sub-Agents
+
+Project-specific Claude Code sub-agents live in `.claude/agents/`. They provide focused expertise and can be invoked explicitly or picked up automatically based on the task context.
+
+### Available Agents
+
+| Agent | File | Invoke when… |
+|---|---|---|
+| `agent-organizer` | `.claude/agents/agent-organizer.md` | A task spans multiple concerns (new feature end-to-end, CLI migration, release). Decomposes work and routes to the right specialists. |
+| `golang-pro` | `.claude/agents/golang-pro.md` | Writing new Go code, implementing features, adding `Client` interface methods. |
+| `cli-developer` | `.claude/agents/cli-developer.md` | Designing or implementing the Cobra CLI layer in `cmd/jara/`. |
+| `refactoring-specialist` | `.claude/agents/refactoring-specialist.md` | Removing type assertions, decomposing large view/render functions, improving structure without changing behaviour. |
+| `qa-expert` | `.claude/agents/qa-expert.md` | Writing or improving tests, expanding `MockClient`, adding table-driven test cases. |
+| `code-reviewer` | `.claude/agents/code-reviewer.md` | Reviewing a diff or PR for correctness, lint compliance, and test coverage. |
+| `debugger` | `.claude/agents/debugger.md` | Diagnosing test failures, race conditions, nil panics, or broken TUI rendering. |
+| `documentation-expert` | `.claude/agents/documentation-expert.md` | Writing godoc comments, package-level docs, or updating this file. |
+
+### When to Use `agent-organizer`
+
+For large tasks that cross multiple concerns, invoke `agent-organizer` first. It will decompose the work into steps and assign each to the appropriate specialist. Example triggers:
+
+- "Implement a new `ScaleApplication` command end-to-end"
+- "Migrate `cmd/jara/main.go` to Cobra"
+- "Add a new view for Offers"
+
+For small, focused tasks (e.g. "add a unit test for `render.FormatSince`"), invoke the specialist agent directly.
 
 ---
 
@@ -161,11 +190,41 @@ func BorderBox(content, title string, width int) string { ... }
 
 ### 7. Testing
 
-- While the current codebase doesn't have extensive tests, follow these patterns:
-  - Test files in the same package: `file.go` + `file_test.go`
-  - Table-driven tests for multiple cases
-  - Use `testing.T` standard library
-  - Mock interfaces (e.g., `MockClient` in `api/`)
+**Definition of Done**: A feature is not complete until it has unit tests. Integration tests are also required when the feature involves stateful interactions between components (e.g., API client behaviour, multi-step workflows).
+
+#### Unit Tests
+- Test files live in the same package: `foo.go` → `foo_test.go`
+- Use **table-driven tests** for multiple input/output cases:
+  ```go
+  tests := []struct {
+      input string
+      want  string
+  }{
+      {"active", "#00ff00"},
+      {"blocked", "#ff5555"},
+  }
+  for _, tt := range tests {
+      t.Run(tt.input, func(t *testing.T) { ... })
+  }
+  ```
+- Use only `testing.T` from the standard library — no third-party assertion libraries
+- Test unexported helpers directly within the same package (white-box testing)
+- Keep tests fast: no sleeps, no real network calls
+
+#### Integration Tests
+- Use `MockClient` (in `internal/api/mock.go`) to exercise multi-step workflows without a real Juju controller
+- `MockClient` is fully stateful: `ScaleApplication`, `SelectController`, `SelectModel` all mutate shared state and are reflected in subsequent `Status()` calls
+- Test concurrent access when the code under test may be called from multiple goroutines
+- Integration tests live alongside unit tests in the same `_test.go` files; no special build tag is required unless the test is genuinely slow (use `-tags integration` then)
+
+#### What to Test
+| Layer | What to cover |
+|---|---|
+| `nav` | Stack push/pop, breadcrumbs, command resolution |
+| `color` | Status → color mapping, style consistency |
+| `render` | Row generation, sorting, column scaling |
+| `api` (mock) | State mutations, error paths, concurrency safety |
+| `view/*` | Row counts, selection behaviour, message handling |
 
 ### 8. Common Patterns
 
@@ -220,26 +279,52 @@ result := body.String()
 
 ## Development Workflow
 
+A `Makefile` provides all common tasks. Prefer `make` targets over raw `go` commands.
+
 ### Building
 
 ```bash
-go build ./cmd/jara        # Build main binary
-go build ./...             # Build all packages
+make build          # Build ./cmd/jara
 ```
 
 ### Testing
 
 ```bash
-go test ./...              # Run all tests
-go test -v ./internal/...  # Verbose output
-go vet ./...               # Check for vet issues
+make test           # go test -race ./...
+make test-integration  # go test -race -tags integration ./...
 ```
 
-### Code Quality
+Always run with `-race`; the `make` targets do this automatically.
+
+### Linting
 
 ```bash
-gofmt -w ./internal ./cmd  # Auto-format
-go mod tidy                # Clean up go.mod
+make lint           # golangci-lint run ./...
+make vet            # go vet ./...
+```
+
+The linter is configured in `.golangci.yml`. Enabled linters: `govet`, `staticcheck`, `errcheck`, `gosimple`, `unused`, `ineffassign`, `revive`, `gofumpt`.
+
+All lint warnings must be resolved before a change is considered ready. Do not suppress linter warnings with `//nolint` unless there is a documented reason.
+
+### Formatting
+
+```bash
+make fmt            # gofumpt -w .
+```
+
+Code must be formatted with `gofumpt` (a stricter superset of `gofmt`). The CI pipeline enforces this via the `gofumpt` linter.
+
+### Full pre-commit check
+
+```bash
+make all            # lint + test + build
+```
+
+### Module hygiene
+
+```bash
+make tidy           # go mod tidy
 ```
 
 ---
