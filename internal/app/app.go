@@ -229,10 +229,7 @@ func (m Model) View() tea.View {
 	var sections []string
 
 	// ── Header box: status info (left) + key hints (center) + logo (right) ──
-	controllerName := "local"
-	if jc, ok := m.client.(*api.JujuClient); ok {
-		controllerName = jc.ControllerName()
-	}
+	controllerName := m.client.ControllerName()
 	modelName, cloud, region := "", "", ""
 	if m.status != nil {
 		modelName = m.status.Model.Name

@@ -78,7 +78,7 @@ func (u *Units) rebuildRows() {
 	var rows []table.Row
 	if u.appName != "" {
 		if app, ok := u.status.Applications[u.appName]; ok {
-				rows = render.UnitDetailRowsForApp(app)
+			rows = render.UnitDetailRowsForApp(app)
 			if delta := u.pendingScale[u.appName]; delta != 0 {
 				pending := render.PendingUnitDetailRows(u.appName, app.Units, delta)
 				if delta < 0 {
