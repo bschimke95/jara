@@ -229,7 +229,7 @@ func unitToDetailRow(u model.Unit) table.Row {
 	}
 }
 
-var pendingStyle = lipgloss.NewStyle().Foreground(lipgloss.Color("#6b7280")).Italic(true)
+var pendingStyle = lipgloss.NewStyle().Foreground(color.Muted).Italic(true)
 
 // PendingUnitRows returns compact placeholder rows for the model-overview units
 // pane. Positive delta appends "adding" rows; negative delta annotates the last
