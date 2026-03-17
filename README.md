@@ -17,6 +17,14 @@ applications, units, machines, and relations without leaving the terminal.
 
 ## Installation
 
+### Snap
+
+    sudo snap install jara
+
+After installing, grant jara access to your local Juju credentials:
+
+    snap connect jara:juju-client-observe
+
 ### From source
 
     go install github.com/bschimke95/jara@latest

@@ -1,6 +1,9 @@
 # Binary
 /jara
 
+# Snap
+jara*.snap
+
 # IDE
 .idea/
 .vscode/

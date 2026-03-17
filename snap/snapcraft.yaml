@@ -1,0 +1,56 @@
+name: jara
+base: core24
+version: git
+summary: Terminal UI for observing and interacting with Juju clusters
+description: |
+  Jara is a terminal user interface (TUI) to observe and interact with Juju
+  clusters, inspired by k9s. It gives you a live, keyboard-driven overview of
+  controllers, models, applications, units, machines, and relations without
+  leaving the terminal.
+
+  To connect to your Juju client configuration after installation, run:
+
+    snap connect jara:juju-client-observe
+
+grade: devel
+confinement: strict
+
+platforms:
+  amd64:
+  arm64:
+
+apps:
+  jara:
+    command: bin/jara
+    plugs:
+      - home
+      - network
+      - network-bind
+      - juju-client-observe
+
+plugs:
+  juju-client-observe:
+    interface: personal-files
+    read:
+      - $HOME/.local/share/juju
+      - $HOME/.config/juju
+    write:
+      - $HOME/.local/share/juju
+
+parts:
+  jara:
+    plugin: go
+    source: .
+    build-snaps:
+      - go/latest/stable
+    override-build: |
+      VERSION=$(git describe --tags --always --dirty 2>/dev/null || echo "dev")
+      COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "none")
+      DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
+      go build \
+        -ldflags "-w -s \
+          -X github.com/bschimke95/jara/internal/cmd.version=${VERSION} \
+          -X github.com/bschimke95/jara/internal/cmd.commit=${COMMIT} \
+          -X github.com/bschimke95/jara/internal/cmd.date=${DATE}" \
+        -o "${CRAFT_PART_INSTALL}/bin/jara" \
+        ./cmd/jara
