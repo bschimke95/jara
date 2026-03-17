@@ -73,7 +73,8 @@ func TestMachineRows_Sorted(t *testing.T) {
 	machines := map[string]model.Machine{
 		"2": {ID: "2", Status: "started", DNSName: "dns-2", InstanceID: "i-2", Base: "ubuntu@22.04", Hardware: "cores=2", Since: &now},
 		"0": {ID: "0", Status: "started", DNSName: "dns-0", InstanceID: "i-0", Base: "ubuntu@22.04", Hardware: "cores=4", Since: &now},
-		"1": {ID: "1", Status: "started", DNSName: "dns-1", InstanceID: "i-1", Base: "ubuntu@22.04", Hardware: "cores=2", Since: &now,
+		"1": {
+			ID: "1", Status: "started", DNSName: "dns-1", InstanceID: "i-1", Base: "ubuntu@22.04", Hardware: "cores=2", Since: &now,
 			Containers: []model.Machine{
 				{ID: "1/lxd/0", Status: "started", DNSName: "dns-lxd", InstanceID: "juju-lxd-0", Base: "ubuntu@22.04", Hardware: "cores=1"},
 			},

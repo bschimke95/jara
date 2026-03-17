@@ -140,19 +140,19 @@ func ApplyTheme(t ThemeOverrides) {
 // ThemeOverrides carries the resolved theme colors. Non-nil fields override
 // the corresponding package-level variable.
 type ThemeOverrides struct {
-	LogoColor    color.Color
-	Primary      color.Color
-	Secondary    color.Color
-	Title        color.Color
-	Subtle       color.Color
-	Highlight    color.Color
-	Muted        color.Color
-	HintKey      color.Color
-	HintDesc     color.Color
-	CrumbFg      color.Color
-	CrumbBg      color.Color
-	Border       color.Color
-	BorderTitle  color.Color
+	LogoColor         color.Color
+	Primary           color.Color
+	Secondary         color.Color
+	Title             color.Color
+	Subtle            color.Color
+	Highlight         color.Color
+	Muted             color.Color
+	HintKey           color.Color
+	HintDesc          color.Color
+	CrumbFg           color.Color
+	CrumbBg           color.Color
+	Border            color.Color
+	BorderTitle       color.Color
 	InfoLabel         color.Color
 	InfoValue         color.Color
 	Error             color.Color
