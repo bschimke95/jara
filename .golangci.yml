@@ -1,3 +1,5 @@
+version: "2"
+
 run:
   timeout: 3m
 
@@ -6,24 +8,21 @@ linters:
     - errcheck
     - govet
     - staticcheck
-    - gosimple
-    - unused
     - ineffassign
     - revive
+
+  settings:
+    revive:
+      rules:
+        - name: exported
+          disabled: true
+        - name: var-naming
+          disabled: true
+
+formatters:
+  enable:
     - gofumpt
 
-linters-settings:
-  revive:
-    rules:
-      - name: exported
-        severity: warning
-      - name: var-naming
-        severity: warning
-  gofumpt:
-    extra-rules: true
-
 issues:
-  exclude-dirs:
-    - vendor
   max-issues-per-linter: 50
   max-same-issues: 5

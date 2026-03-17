@@ -121,8 +121,7 @@ func TestStatusColorType(t *testing.T) {
 	}
 
 	// Should be able to use as color.Color interface
-	var c color.Color = result
-	if c == nil {
+	if result == nil {
 		t.Error("StatusColor result should implement color.Color interface")
 	}
 }

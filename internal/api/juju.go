@@ -258,7 +258,7 @@ func (c *JujuClient) Status(ctx context.Context) (*model.FullStatus, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	statusClient := client.NewClient(conn, nopLogger{})
 	result, err := statusClient.Status(ctx, &client.StatusArgs{
@@ -278,7 +278,7 @@ func (c *JujuClient) ScaleApplication(ctx context.Context, appName string, delta
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	appClient := application.NewClient(conn)
 	_, err = appClient.ScaleApplication(ctx, application.ScaleApplicationParams{
