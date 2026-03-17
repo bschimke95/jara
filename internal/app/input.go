@@ -8,7 +8,6 @@ import (
 
 	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/view"
-	"github.com/bschimke95/jara/internal/view/debuglog"
 )
 
 type inputMode int
@@ -75,22 +74,13 @@ func (m Model) executeCommand(cmd string) (Model, tea.Cmd) {
 }
 
 // handleGlobalKeys processes key presses that are active in normal mode
-// regardless of the current view.
+// regardless of the current view. This is called only when the active view
+// did not consume the key (returned nil cmd), so views can override any
+// global binding by handling the key themselves.
 func (m Model) handleGlobalKeys(msg tea.KeyPressMsg) (Model, tea.Cmd, bool) {
-	// ctrl+c always quits, even when a modal is open.
-	if msg.String() == "ctrl+c" {
-		return m, tea.Quit, true
-	}
-
-	// When the debug-log filter modal or inline search is open it owns all other
-	// key events — global bindings (quit via q, back, etc.) must not fire.
-	if dl, ok := m.views[m.stack.Current().View].(*debuglog.View); ok {
-		if dl.IsModalOpen() || dl.IsSearchActive() {
-			return m, nil, false
-		}
-	}
-
 	switch {
+	case msg.String() == "ctrl+c":
+		return m, tea.Quit, true
 	case key.Matches(msg, m.keys.Quit):
 		return m, tea.Quit, true
 	case key.Matches(msg, m.keys.Back):
@@ -100,10 +90,6 @@ func (m Model) handleGlobalKeys(msg tea.KeyPressMsg) (Model, tea.Cmd, bool) {
 		m2, cmd := m.enterCommandMode()
 		return m2, cmd, true
 	case key.Matches(msg, m.keys.Filter):
-		// The debug-log view owns '/' for in-buffer search; let it handle it.
-		if m.stack.Current().View == nav.DebugLogView {
-			return m, nil, false
-		}
 		m2, cmd := m.enterFilterMode()
 		return m2, cmd, true
 	}
