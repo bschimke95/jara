@@ -112,14 +112,24 @@ func New(client api.Client, opts ...Option) Model {
 	return m
 }
 
+// startupMsg is sent once by Init to trigger stream setup inside Update,
+// where model mutations (like storing the cancel func) are preserved.
+type startupMsg struct{}
+
 func (m Model) Init() tea.Cmd {
-	return tea.Batch(m.startStatusStream(), m.pollControllers(), tea.RequestWindowSize)
+	return tea.Batch(
+		func() tea.Msg { return startupMsg{} },
+		tea.RequestWindowSize,
+	)
 }
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	// ── Infrastructure: stream lifecycle & window management ──
 	// These are internal to the app and never reach views.
+	case startupMsg:
+		return m, tea.Batch(m.startStatusStream(), m.pollControllers())
+
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
@@ -131,10 +141,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case statusStreamConnectedMsg:
+		if msg.ctx.Err() != nil {
+			return m, nil
+		}
 		m.statusCh = msg.ch
 		return m, readNextStatus(msg.ctx, msg.ch)
 
 	case statusStreamUpdateMsg:
+		// Discard updates from a cancelled stream (e.g. after switching models).
+		if msg.ctx.Err() != nil {
+			return m, nil
+		}
 		m.status = msg.status
 		m.err = nil
 		for _, v := range m.views {
@@ -145,6 +162,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, readNextStatus(msg.ctx, msg.ch)
 
 	case statusStreamErrMsg:
+		if msg.ctx.Err() != nil {
+			return m, nil
+		}
 		m.err = msg.err
 		return m, readNextStatus(msg.ctx, msg.ch)
 
