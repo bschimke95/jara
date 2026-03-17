@@ -12,6 +12,7 @@ import (
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/view/controllers"
 	"github.com/bschimke95/jara/internal/view/models"
+	"github.com/bschimke95/jara/internal/view/modelview"
 )
 
 // statusStreamConnectedMsg is sent when the status stream is established.
@@ -35,10 +36,7 @@ type statusStreamErrMsg struct {
 	ch  <-chan api.StatusUpdate
 }
 
-type (
-	errMsg     struct{ err error }
-	noModelMsg struct{} // sent when no model is selected in the current controller
-)
+type errMsg struct{ err error }
 
 // startStatusStream begins streaming status updates from the API.
 // It returns a Cmd that connects and sends a statusStreamConnectedMsg.
@@ -55,7 +53,7 @@ func (m *Model) startStatusStream() tea.Cmd {
 		if err != nil {
 			if strings.Contains(err.Error(), "No selected model") ||
 				strings.Contains(err.Error(), "resolving current model") {
-				return noModelMsg{}
+				return modelview.NoModelMsg{}
 			}
 			return errMsg{err}
 		}
@@ -85,7 +83,7 @@ func readNextStatus(ctx context.Context, ch <-chan api.StatusUpdate) tea.Cmd {
 			}
 			if update.Err != nil {
 				if strings.Contains(update.Err.Error(), "No selected model") {
-					return noModelMsg{}
+					return modelview.NoModelMsg{}
 				}
 				return statusStreamErrMsg{err: update.Err, ctx: ctx, ch: ch}
 			}

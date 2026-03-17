@@ -97,9 +97,17 @@ func (m *View) KeyHints() []view.KeyHint {
 	}
 }
 
+// NoModelMsg is sent by the status stream when no model is selected on the
+// current controller. The view handles it by requesting navigation back.
+type NoModelMsg struct{}
+
 func (m *View) Init() tea.Cmd { return nil }
 
 func (m *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if _, ok := msg.(NoModelMsg); ok {
+		return m, func() tea.Msg { return view.GoBackMsg{} }
+	}
+
 	if msg, ok := msg.(tea.KeyPressMsg); ok {
 		switch {
 		case key.Matches(msg, m.keys.UnitsNav):
