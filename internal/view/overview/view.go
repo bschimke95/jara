@@ -1,4 +1,5 @@
-package view
+// Package overview implements the tree overview of model status.
+package overview
 
 import (
 	"fmt"
@@ -14,50 +15,51 @@ import (
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/ui"
+	"github.com/bschimke95/jara/internal/view"
 )
 
-// Overview is the Bubble Tea model for the tree overview.
-type Overview struct {
-	keys   ui.KeyMap
-	width  int
-	height int
-	status *model.FullStatus
+// New creates a new overview view.
+func New(keys ui.KeyMap) *View {
+	return &View{keys: keys}
 }
 
-// NewOverview creates a new overview view.
-func NewOverview() *Overview {
-	return &Overview{keys: ui.DefaultKeyMap()}
-}
-
-func (o *Overview) SetSize(width, height int) {
+func (o *View) SetSize(width, height int) {
 	o.width = width
 	o.height = height
 }
 
-func (o *Overview) SetStatus(status *model.FullStatus) {
+// SetStatus implements view.StatusReceiver.
+func (o *View) SetStatus(status *model.FullStatus) {
 	o.status = status
 }
 
-func (o *Overview) Init() tea.Cmd { return nil }
+// KeyHints returns the view-specific key hints for the header.
+func (o *View) KeyHints() []view.KeyHint {
+	bk := func(b key.Binding) string { return b.Help().Key }
+	return []view.KeyHint{
+		{Key: bk(o.keys.Enter), Desc: "applications"},
+	}
+}
 
-func (o *Overview) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (o *View) Init() tea.Cmd { return nil }
+
+func (o *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if msg, ok := msg.(tea.KeyPressMsg); ok {
 		if key.Matches(msg, o.keys.Enter) {
 			return o, func() tea.Msg {
-				return NavigateMsg{Target: nav.ApplicationsView}
+				return view.NavigateMsg{Target: nav.ApplicationsView}
 			}
 		}
 	}
 	return o, nil
 }
 
-func (o *Overview) View() tea.View {
+func (o *View) View() tea.View {
 	if o.status == nil {
 		return tea.NewView("Loading...")
 	}
 
 	var b strings.Builder
-
 	b.WriteString(o.renderTree())
 	b.WriteString("\n\n")
 
@@ -72,7 +74,7 @@ func (o *Overview) View() tea.View {
 	return tea.NewView(b.String())
 }
 
-func (o *Overview) renderTree() string {
+func (o *View) renderTree() string {
 	s := o.status
 	modelLabel := fmt.Sprintf("%s [%s/%s] (%s)",
 		s.Model.Name, s.Model.Cloud, s.Model.Region, s.Model.Version)

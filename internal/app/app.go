@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
@@ -16,6 +17,14 @@ import (
 	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/ui"
 	"github.com/bschimke95/jara/internal/view"
+	"github.com/bschimke95/jara/internal/view/applications"
+	"github.com/bschimke95/jara/internal/view/controllers"
+	"github.com/bschimke95/jara/internal/view/debuglog"
+	"github.com/bschimke95/jara/internal/view/machines"
+	"github.com/bschimke95/jara/internal/view/models"
+	"github.com/bschimke95/jara/internal/view/modelview"
+	"github.com/bschimke95/jara/internal/view/relations"
+	"github.com/bschimke95/jara/internal/view/units"
 )
 
 // Model is the root Bubble Tea model.
@@ -75,21 +84,23 @@ func New(client api.Client, opts ...Option) Model {
 	ti.Prompt = ""
 	ti.CharLimit = 64
 
+	keys := ui.DefaultKeyMap()
+
 	m := Model{
 		client: client,
 		cfg:    config.NewDefault(),
 		stack:  nav.NewStack(nav.ModelView),
 		views: map[nav.ViewID]view.View{
-			nav.ControllerView:   view.NewControllers(),
-			nav.ModelsView:       view.NewModels(),
-			nav.ModelView:        view.NewModelView(),
-			nav.ApplicationsView: view.NewApplications(),
-			nav.UnitsView:        view.NewUnits(""),
-			nav.MachinesView:     view.NewMachines(),
-			nav.RelationsView:    view.NewRelations(),
-			nav.DebugLogView:     view.NewDebugLog(),
+			nav.ControllerView:   controllers.New(keys),
+			nav.ModelsView:       models.New(keys),
+			nav.ModelView:        modelview.New(keys),
+			nav.ApplicationsView: applications.New(keys),
+			nav.UnitsView:        units.New("", keys),
+			nav.MachinesView:     machines.New(keys),
+			nav.RelationsView:    relations.New(keys),
+			nav.DebugLogView:     debuglog.New(keys),
 		},
-		keys:  ui.DefaultKeyMap(),
+		keys:  keys,
 		input: ti,
 		mode:  modeNormal,
 	}
@@ -126,7 +137,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.status = msg.status
 		m.err = nil
 		for _, v := range m.views {
-			v.SetStatus(msg.status)
+			if sr, ok := v.(view.StatusReceiver); ok {
+				sr.SetStatus(msg.status)
+			}
 		}
 		return m, readNextStatus(msg.ctx, msg.ch)
 
@@ -139,18 +152,20 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Legacy path kept for views that emit this directly.
 		m.status = msg.Status
 		for _, v := range m.views {
-			v.SetStatus(msg.Status)
+			if sr, ok := v.(view.StatusReceiver); ok {
+				sr.SetStatus(msg.Status)
+			}
 		}
 		return m, nil
 
-	case view.ControllersUpdatedMsg:
-		if cv, ok := m.views[nav.ControllerView].(*view.Controllers); ok {
+	case controllers.UpdatedMsg:
+		if cv, ok := m.views[nav.ControllerView].(*controllers.View); ok {
 			cv.SetControllers(msg.Controllers)
 		}
 		return m, nil
 
-	case view.ModelsUpdatedMsg:
-		if mv, ok := m.views[nav.ModelsView].(*view.Models); ok {
+	case models.UpdatedMsg:
+		if mv, ok := m.views[nav.ModelsView].(*models.View); ok {
 			mv.SetModels(msg.Models)
 		}
 		return m, nil
@@ -180,7 +195,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// The stream just connected — deliver the first batch and schedule more.
 		return m, readNextLogBatch(msg.ctx, msg.ch)
 
-	case view.DebugLogMsg:
+	case debuglog.Msg:
 		m2, cmd := m.updateActiveView(msg)
 		// Schedule reading the next batch from the stream.
 		if msg.Ctx != nil && msg.Ch != nil {
@@ -188,10 +203,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m2, cmd
 
-	case view.DebugLogErrMsg:
+	case debuglog.ErrMsg:
 		return m.updateActiveView(msg)
 
-	case view.DebugLogFilterChangedMsg:
+	case debuglog.FilterChangedMsg:
 		// The user applied a new filter from inside the debug-log view.
 		// Restart the stream with the new filter; keep the same view instance.
 		return m, m.startDebugLogStream(msg.Filter)
@@ -225,6 +240,12 @@ func (m Model) contentHeight() int {
 	chrome := headerHeight + 2     // +2 for body box borders
 	if m.mode != modeNormal {
 		chrome++
+	}
+	// When the debug-log search bar is visible it occupies 3 rows (bordered box).
+	if m.stack.Current().View == nav.DebugLogView {
+		if dl, ok := m.views[nav.DebugLogView].(*debuglog.View); ok && dl.IsSearchActive() {
+			chrome += 3
+		}
 	}
 	h := m.height - chrome
 	if h < 5 {
@@ -273,12 +294,26 @@ func (m Model) View() tea.View {
 		cloud = m.status.Model.Cloud
 		region = m.status.Model.Region
 	}
-	hints := ui.HintsForView(m.viewName(), m.keys)
+	// Combine common hints with the active view's own key hints.
+	currentView := m.views[m.stack.Current().View]
+	bk := func(b key.Binding) string { return b.Help().Key }
+	commonHints := []ui.KeyHint{
+		{Key: bk(m.keys.Command), Desc: "cmd"},
+		{Key: bk(m.keys.Help), Desc: "help"},
+		{Key: bk(m.keys.Quit), Desc: "quit"},
+	}
+	hints := append(currentView.KeyHints(), commonHints...)
 	headerInner := ui.HeaderContent(controllerName, modelName, cloud, region, hints, m.width-2)
 	sections = append(sections, ui.BorderBox(headerInner, "", m.width))
 
+	// ── Search bar (debug-log only, between header and body) ──
+	if m.stack.Current().View == nav.DebugLogView {
+		if dl, ok := m.views[nav.DebugLogView].(*debuglog.View); ok && dl.IsSearchActive() {
+			sections = append(sections, dl.RenderSearchBar(m.width))
+		}
+	}
+
 	// ── Body: view content ──
-	currentView := m.views[m.stack.Current().View]
 	viewOutput := currentView.View()
 
 	// The ModelView renders its own bordered panes, so skip the outer border.
@@ -302,7 +337,7 @@ func (m Model) View() tea.View {
 		// For the debug-log view, embed the active filter summary in the title.
 		var rawTitle string
 		if m.stack.Current().View == nav.DebugLogView {
-			if dl, ok := m.views[nav.DebugLogView].(*view.DebugLog); ok {
+			if dl, ok := m.views[nav.DebugLogView].(*debuglog.View); ok {
 				titleStyle := lipgloss.NewStyle().Foreground(color.BorderTitle).Bold(true)
 				rawTitle = titleStyle.Render(" "+bodyTitle+" ") + dl.FilterTitle()
 			}

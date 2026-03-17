@@ -1,4 +1,5 @@
-package view
+// Package units implements the self-contained units table view.
+package units
 
 import (
 	"strings"
@@ -10,48 +11,37 @@ import (
 
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/nav"
-	"github.com/bschimke95/jara/internal/render"
 	"github.com/bschimke95/jara/internal/ui"
+	"github.com/bschimke95/jara/internal/view"
 )
 
-// Units is the Bubble Tea model for the units table view.
-type Units struct {
-	table        table.Model
-	keys         ui.KeyMap
-	width        int
-	height       int
-	status       *model.FullStatus
-	appName      string
-	pendingScale map[string]int // net pending unit delta per app
-}
-
-// NewUnits creates a new units view. If appName is non-empty, only that app's units are shown.
-func NewUnits(appName string) *Units {
-	cols := render.UnitDetailColumns()
+// New creates a new units view. If appName is non-empty, only that app's units are shown.
+func New(appName string, keys ui.KeyMap) *View {
+	cols := DetailColumns()
 	t := table.New(
 		table.WithColumns(cols),
 		table.WithFocused(true),
 		table.WithHeight(10),
 	)
-	t.SetStyles(styledTableHighlightOnly())
-	return &Units{table: t, keys: ui.DefaultKeyMap(), appName: appName, pendingScale: make(map[string]int)}
+	t.SetStyles(ui.StyledTableHighlightOnly())
+	return &View{table: t, keys: keys, appName: appName, pendingScale: make(map[string]int)}
 }
 
-func (u *Units) SetSize(width, height int) {
+func (u *View) SetSize(width, height int) {
 	u.width = width
 	u.height = height
 	u.table.SetWidth(width)
 	u.table.SetHeight(height)
-	u.table.SetColumns(render.ScaleColumns(render.UnitDetailColumns(), width))
+	u.table.SetColumns(ui.ScaleColumns(DetailColumns(), width))
 }
 
-func (u *Units) SetStatus(status *model.FullStatus) {
+// SetStatus implements view.StatusReceiver.
+func (u *View) SetStatus(status *model.FullStatus) {
 	u.status = status
 	if status == nil {
 		return
 	}
 	// Reconcile pending scale: clear entries where live unit count has caught up.
-	// app.Scale is the desired (post-request) value; compare unit count against it.
 	for appName, delta := range u.pendingScale {
 		app, ok := status.Applications[appName]
 		if !ok {
@@ -71,17 +61,27 @@ func (u *Units) SetStatus(status *model.FullStatus) {
 	u.rebuildRows()
 }
 
+// KeyHints returns the view-specific key hints for the header.
+func (u *View) KeyHints() []view.KeyHint {
+	bk := func(b key.Binding) string { return b.Help().Key }
+	return []view.KeyHint{
+		{Key: bk(u.keys.ScaleUp) + "/" + bk(u.keys.ScaleDown), Desc: "scale"},
+		{Key: bk(u.keys.LogsJump), Desc: "logs (unit)"},
+		{Key: bk(u.keys.LogsView), Desc: "logs"},
+	}
+}
+
 // rebuildRows recomputes the table rows from the current status + pending deltas.
-func (u *Units) rebuildRows() {
+func (u *View) rebuildRows() {
 	if u.status == nil {
 		return
 	}
 	var rows []table.Row
 	if u.appName != "" {
 		if app, ok := u.status.Applications[u.appName]; ok {
-			rows = render.UnitDetailRowsForApp(app)
+			rows = DetailRowsForApp(app)
 			if delta := u.pendingScale[u.appName]; delta != 0 {
-				pending := render.PendingUnitDetailRows(u.appName, app.Units, delta)
+				pending := PendingDetailRows(u.appName, app.Units, delta)
 				if delta < 0 {
 					tail := len(rows) - len(pending)
 					if tail < 0 {
@@ -94,18 +94,14 @@ func (u *Units) rebuildRows() {
 			}
 		}
 	} else {
-		rows = render.UnitDetailRows(u.status.Applications)
-		// For the all-units view, patch pending rows per app.
+		rows = DetailRows(u.status.Applications)
 		for appName, delta := range u.pendingScale {
 			if delta == 0 {
 				continue
 			}
 			app := u.status.Applications[appName]
-			pending := render.PendingUnitDetailRows(appName, app.Units, delta)
+			pending := PendingDetailRows(appName, app.Units, delta)
 			if delta < 0 {
-				// Replace the last len(pending) rows belonging to this app.
-				// Scan for consecutive rows that contain the app prefix and
-				// record the index past the last one (end).
 				prefix := "  " + appName + "/"
 				end := -1
 				for i, r := range rows {
@@ -128,9 +124,9 @@ func (u *Units) rebuildRows() {
 	u.table.SetRows(rows)
 }
 
-func (u *Units) Init() tea.Cmd { return nil }
+func (u *View) Init() tea.Cmd { return nil }
 
-func (u *Units) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (u *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if msg, ok := msg.(tea.KeyPressMsg); ok {
 		switch {
 		case key.Matches(msg, u.keys.ScaleUp):
@@ -138,14 +134,14 @@ func (u *Units) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if appName != "" {
 				u.pendingScale[appName]++
 				u.rebuildRows()
-				return u, func() tea.Msg { return ScaleRequestMsg{AppName: appName, Delta: 1} }
+				return u, func() tea.Msg { return view.ScaleRequestMsg{AppName: appName, Delta: 1} }
 			}
 		case key.Matches(msg, u.keys.ScaleDown):
 			appName := u.selectedAppName()
 			if appName != "" {
 				u.pendingScale[appName]--
 				u.rebuildRows()
-				return u, func() tea.Msg { return ScaleRequestMsg{AppName: appName, Delta: -1} }
+				return u, func() tea.Msg { return view.ScaleRequestMsg{AppName: appName, Delta: -1} }
 			}
 		case key.Matches(msg, u.keys.LogsJump):
 			var filter *model.DebugLogFilter
@@ -164,11 +160,11 @@ func (u *Units) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				filter = &f
 			}
 			return u, func() tea.Msg {
-				return NavigateMsg{Target: nav.DebugLogView, Filter: filter}
+				return view.NavigateMsg{Target: nav.DebugLogView, Filter: filter}
 			}
 		case key.Matches(msg, u.keys.LogsView):
 			return u, func() tea.Msg {
-				return NavigateMsg{Target: nav.DebugLogView}
+				return view.NavigateMsg{Target: nav.DebugLogView}
 			}
 		}
 	}
@@ -177,33 +173,25 @@ func (u *Units) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return u, cmd
 }
 
-// selectedAppName returns the application name for the currently highlighted row,
-// or u.appName if this view is scoped to a specific application.
-func (u *Units) selectedAppName() string {
+// selectedAppName returns the application name for the currently highlighted row.
+func (u *View) selectedAppName() string {
 	if u.appName != "" {
 		return u.appName
 	}
-	// For the all-units view, derive the app name from the unit name ("app/N").
 	row := u.table.SelectedRow()
 	if row == nil {
 		return ""
 	}
-	// Unit name is the first column; split on "/" to get app name.
 	unitName := row[0]
-	if idx := len(unitName) - 1; idx >= 0 {
-		for i := len(unitName) - 1; i >= 0; i-- {
-			if unitName[i] == '/' {
-				return unitName[:i]
-			}
+	for i := len(unitName) - 1; i >= 0; i-- {
+		if unitName[i] == '/' {
+			return unitName[:i]
 		}
 	}
 	return ""
 }
 
-func (u *Units) View() tea.View {
-	// The selected row is rendered by wrapping the already-coloured cells with
-	// the Selected style's background. Inner ANSI resets break the outer
-	// background, so we temporarily replace the cursor row with stripped cells.
+func (u *View) View() tea.View {
 	cursor := u.table.Cursor()
 	rows := u.table.Rows()
 	if cursor >= 0 && cursor < len(rows) {

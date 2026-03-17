@@ -7,7 +7,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/bschimke95/jara/internal/model"
-	"github.com/bschimke95/jara/internal/view"
+	"github.com/bschimke95/jara/internal/view/debuglog"
 )
 
 // debugLogConnectedMsg is sent when the debug-log stream is established.
@@ -28,7 +28,7 @@ func (m *Model) startDebugLogStream(filter model.DebugLogFilter) tea.Cmd {
 	return func() tea.Msg {
 		ch, err := client.DebugLog(ctx, filter)
 		if err != nil {
-			return view.DebugLogErrMsg{Err: err}
+			return debuglog.ErrMsg{Err: err}
 		}
 		return debugLogConnectedMsg{ctx: ctx, ch: ch}
 	}
@@ -60,7 +60,7 @@ func readDebugLogBatch(ctx context.Context, ch <-chan model.LogEntry) tea.Msg {
 		return nil
 	case entry, ok := <-ch:
 		if !ok {
-			return view.DebugLogErrMsg{Err: fmt.Errorf("log stream closed")}
+			return debuglog.ErrMsg{Err: fmt.Errorf("log stream closed")}
 		}
 		batch := []model.LogEntry{entry}
 		// Drain any additional immediately-available entries.
@@ -79,6 +79,6 @@ func readDebugLogBatch(ctx context.Context, ch <-chan model.LogEntry) tea.Msg {
 				break drain
 			}
 		}
-		return view.DebugLogMsg{Entries: batch, Ctx: ctx, Ch: ch}
+		return debuglog.Msg{Entries: batch, Ctx: ctx, Ch: ch}
 	}
 }

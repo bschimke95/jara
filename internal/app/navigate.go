@@ -6,6 +6,9 @@ import (
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/view"
+	"github.com/bschimke95/jara/internal/view/debuglog"
+	"github.com/bschimke95/jara/internal/view/models"
+	"github.com/bschimke95/jara/internal/view/units"
 )
 
 func (m Model) handleNavigate(msg view.NavigateMsg) (Model, tea.Cmd) {
@@ -20,7 +23,7 @@ func (m Model) handleNavigate(msg view.NavigateMsg) (Model, tea.Cmd) {
 		m.stopStatusStream() // stop watching the previous model
 		m.err = nil
 		// Reset the models view so we start fresh.
-		mv := view.NewModels()
+		mv := models.New(m.keys)
 		mv.SetSize(m.width, m.contentHeight())
 		m.views[nav.ModelsView] = mv
 		m.stack.Push(nav.StackEntry{View: nav.ModelsView, Context: msg.Context})
@@ -36,7 +39,9 @@ func (m Model) handleNavigate(msg view.NavigateMsg) (Model, tea.Cmd) {
 		m.status = nil
 		m.err = nil
 		for _, v := range m.views {
-			v.SetStatus(nil)
+			if sr, ok := v.(view.StatusReceiver); ok {
+				sr.SetStatus(nil)
+			}
 		}
 		m.stack.Push(nav.StackEntry{View: nav.ModelView})
 		return m, tea.Batch(m.startStatusStream(), m.pollControllers())
@@ -45,7 +50,7 @@ func (m Model) handleNavigate(msg view.NavigateMsg) (Model, tea.Cmd) {
 	m.stack.Push(nav.StackEntry{View: msg.Target, Context: msg.Context})
 
 	if msg.Target == nav.UnitsView && msg.Context != "" {
-		uv := view.NewUnits(msg.Context)
+		uv := units.New(msg.Context, m.keys)
 		uv.SetSize(m.width, m.contentHeight())
 		if m.status != nil {
 			uv.SetStatus(m.status)
@@ -58,7 +63,7 @@ func (m Model) handleNavigate(msg view.NavigateMsg) (Model, tea.Cmd) {
 		if msg.Filter != nil {
 			// Explicit new filter (e.g. entity pre-fill from another view):
 			// create a fresh view instance so the buffer is clean.
-			dl := view.NewDebugLog()
+			dl := debuglog.New(m.keys)
 			dl.SetSize(m.width, m.contentHeight())
 			filter = *msg.Filter
 			dl.SetFilter(filter)
@@ -69,10 +74,10 @@ func (m Model) handleNavigate(msg view.NavigateMsg) (Model, tea.Cmd) {
 		} else {
 			// No new filter: reuse the existing view and its current filter so
 			// the user's filter state is preserved across navigation.
-			if existing, ok := m.views[nav.DebugLogView].(*view.DebugLog); ok {
+			if existing, ok := m.views[nav.DebugLogView].(*debuglog.View); ok {
 				filter = existing.ActiveFilter()
 			} else {
-				dl := view.NewDebugLog()
+				dl := debuglog.New(m.keys)
 				dl.SetSize(m.width, m.contentHeight())
 				if m.status != nil {
 					dl.SetStatus(m.status)
@@ -95,7 +100,7 @@ func (m Model) handleBack() (Model, tea.Cmd) {
 		}
 		current := m.stack.Current()
 		if current.View == nav.UnitsView && current.Context == "" {
-			uv := view.NewUnits("")
+			uv := units.New("", m.keys)
 			uv.SetSize(m.width, m.contentHeight())
 			if m.status != nil {
 				uv.SetStatus(m.status)
