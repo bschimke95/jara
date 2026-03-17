@@ -21,12 +21,15 @@ func (m Model) handleNavigate(msg view.NavigateMsg) (Model, tea.Cmd) {
 		if controllerName == "" {
 			controllerName = m.client.ControllerName()
 		}
+		// Always stop the status stream when leaving a model view for the
+		// models list — prevents stale updates from the old model arriving
+		// after a new model is selected on a different controller.
+		m.stopStatusStream()
 		if msg.Context != "" {
 			if err := m.client.SelectController(msg.Context); err != nil {
 				m.err = err
 				return m, nil
 			}
-			m.stopStatusStream() // stop watching the previous model
 		}
 		m.err = nil
 		// Reset the models view so we start fresh.
@@ -101,9 +104,12 @@ func (m Model) handleNavigate(msg view.NavigateMsg) (Model, tea.Cmd) {
 func (m Model) handleBack() (Model, tea.Cmd) {
 	prev := m.stack.Current()
 	if _, ok := m.stack.Pop(); ok {
-		// Stop debug-log stream when leaving that view.
+		// Stop streams when leaving their associated views.
 		if prev.View == nav.DebugLogView {
 			m.stopDebugLogStream()
+		}
+		if prev.View == nav.ModelView {
+			m.stopStatusStream()
 		}
 		current := m.stack.Current()
 		if current.View == nav.UnitsView && current.Context == "" {
