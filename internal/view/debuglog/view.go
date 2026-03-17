@@ -3,6 +3,7 @@
 package debuglog
 
 import (
+	"context"
 	"fmt"
 	"sort"
 	"strings"
@@ -109,6 +110,36 @@ func (d *View) buildSuggestions() map[leftPane][]string {
 	return sugg
 }
 
+// ReadNextLogBatch reads the next batch of entries from the stream channel.
+// It blocks on the first entry, then drains any immediately available extras.
+func ReadNextLogBatch(ctx context.Context, ch <-chan model.LogEntry) tea.Msg {
+	select {
+	case <-ctx.Done():
+		return nil
+	case entry, ok := <-ch:
+		if !ok {
+			return ErrMsg{Err: fmt.Errorf("log stream closed")}
+		}
+		batch := []model.LogEntry{entry}
+	drainLoop:
+		for {
+			select {
+			case e, ok := <-ch:
+				if !ok {
+					break drainLoop
+				}
+				batch = append(batch, e)
+				if len(batch) >= 50 {
+					break drainLoop
+				}
+			default:
+				break drainLoop
+			}
+		}
+		return Msg{Entries: batch, Ctx: ctx, Ch: ch}
+	}
+}
+
 func (d *View) Init() tea.Cmd { return nil }
 
 func (d *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -134,7 +165,13 @@ func (d *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if !d.paused {
 			d.offset = d.bottomOffset()
 		}
-		return d, nil
+		// Schedule the next read from the stream.
+		var nextRead tea.Cmd
+		if msg.Ctx != nil && msg.Ch != nil {
+			ctx, ch := msg.Ctx, msg.Ch
+			nextRead = func() tea.Msg { return ReadNextLogBatch(ctx, ch) }
+		}
+		return d, nextRead
 
 	case ErrMsg:
 		errLine := lipgloss.NewStyle().
