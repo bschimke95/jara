@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 
 	tea "charm.land/bubbletea/v2"
 
@@ -42,43 +41,10 @@ func (m *Model) stopDebugLogStream() {
 	}
 }
 
-// readNextLogBatch returns a Cmd that reads the next batch from the
-// debug-log stream. The context and channel are passed through closures
-// rather than stored on the model.
-func readNextLogBatch(ctx context.Context, ch <-chan model.LogEntry) tea.Cmd {
+// readFirstLogBatch returns a Cmd that reads the first batch from the
+// debug-log stream channel after the stream connects.
+func readFirstLogBatch(ctx context.Context, ch <-chan model.LogEntry) tea.Cmd {
 	return func() tea.Msg {
-		return readDebugLogBatch(ctx, ch)
-	}
-}
-
-// readDebugLogBatch reads available log entries from the channel,
-// batching them together before delivering to the view.
-func readDebugLogBatch(ctx context.Context, ch <-chan model.LogEntry) tea.Msg {
-	// Block on the first entry.
-	select {
-	case <-ctx.Done():
-		return nil
-	case entry, ok := <-ch:
-		if !ok {
-			return debuglog.ErrMsg{Err: fmt.Errorf("log stream closed")}
-		}
-		batch := []model.LogEntry{entry}
-		// Drain any additional immediately-available entries.
-	drain:
-		for {
-			select {
-			case e, ok := <-ch:
-				if !ok {
-					break drain
-				}
-				batch = append(batch, e)
-				if len(batch) >= 50 {
-					break drain
-				}
-			default:
-				break drain
-			}
-		}
-		return debuglog.Msg{Entries: batch, Ctx: ctx, Ch: ch}
+		return debuglog.ReadNextLogBatch(ctx, ch)
 	}
 }
