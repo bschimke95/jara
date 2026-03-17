@@ -8,6 +8,7 @@ import (
 
 	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/view"
+	"github.com/bschimke95/jara/internal/view/debuglog"
 )
 
 type inputMode int
@@ -81,10 +82,12 @@ func (m Model) handleGlobalKeys(msg tea.KeyPressMsg) (Model, tea.Cmd, bool) {
 		return m, tea.Quit, true
 	}
 
-	// When the debug-log filter modal is open it owns all other key events —
-	// global bindings (quit via q, back, etc.) must not fire while active.
-	if dl, ok := m.views[m.stack.Current().View].(*view.DebugLog); ok && dl.IsModalOpen() {
-		return m, nil, false
+	// When the debug-log filter modal or inline search is open it owns all other
+	// key events — global bindings (quit via q, back, etc.) must not fire.
+	if dl, ok := m.views[m.stack.Current().View].(*debuglog.View); ok {
+		if dl.IsModalOpen() || dl.IsSearchActive() {
+			return m, nil, false
+		}
 	}
 
 	switch {

@@ -1,0 +1,22 @@
+package models
+
+import (
+	"charm.land/bubbles/v2/table"
+
+	"github.com/bschimke95/jara/internal/model"
+	"github.com/bschimke95/jara/internal/ui"
+)
+
+// UpdatedMsg is sent when the model list for a controller arrives.
+type UpdatedMsg struct {
+	Models []model.ModelSummary
+}
+
+// View is the Bubble Tea model for the models list view.
+type View struct {
+	table  table.Model
+	keys   ui.KeyMap
+	width  int
+	height int
+	models []model.ModelSummary
+}

@@ -10,7 +10,8 @@ import (
 
 	"github.com/bschimke95/jara/internal/api"
 	"github.com/bschimke95/jara/internal/model"
-	"github.com/bschimke95/jara/internal/view"
+	"github.com/bschimke95/jara/internal/view/controllers"
+	"github.com/bschimke95/jara/internal/view/models"
 )
 
 // statusStreamConnectedMsg is sent when the status stream is established.
@@ -98,11 +99,11 @@ func (m Model) pollControllers() tea.Cmd {
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-		controllers, err := m.client.Controllers(ctx)
+		ctrlList, err := m.client.Controllers(ctx)
 		if err != nil {
 			return errMsg{err}
 		}
-		return view.ControllersUpdatedMsg{Controllers: controllers}
+		return controllers.UpdatedMsg{Controllers: ctrlList}
 	}
 }
 
@@ -111,11 +112,11 @@ func (m Model) pollModels(controllerName string) tea.Cmd {
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()
-		models, err := m.client.Models(ctx, controllerName)
+		modelList, err := m.client.Models(ctx, controllerName)
 		if err != nil {
 			return errMsg{err}
 		}
-		return view.ModelsUpdatedMsg{Models: models}
+		return models.UpdatedMsg{Models: modelList}
 	}
 }
 
