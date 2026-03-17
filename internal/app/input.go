@@ -41,8 +41,8 @@ func (m Model) enterFilterMode() (Model, tea.Cmd) {
 
 func (m Model) updateInput(msg tea.Msg) (Model, tea.Cmd) {
 	if msg, ok := msg.(tea.KeyPressMsg); ok {
-		switch msg.String() {
-		case "enter":
+		switch {
+		case key.Matches(msg, m.keys.Enter):
 			value := m.input.Value()
 			// If a suggestion is selected, use its command text.
 			if m.mode == modeCommand && len(m.suggestions) > 0 {
@@ -62,7 +62,7 @@ func (m Model) updateInput(msg tea.Msg) (Model, tea.Cmd) {
 			m.input.Blur()
 			return m, nil
 
-		case "esc":
+		case key.Matches(msg, m.keys.CancelInput):
 			if m.mode == modeFilter {
 				m.filterStr = ""
 			}
@@ -72,7 +72,7 @@ func (m Model) updateInput(msg tea.Msg) (Model, tea.Cmd) {
 			m.input.Blur()
 			return m, nil
 
-		case "tab":
+		case key.Matches(msg, m.keys.Tab):
 			// Auto-complete: fill in the selected suggestion.
 			if m.mode == modeCommand && len(m.suggestions) > 0 {
 				m.input.SetValue(m.suggestions[m.selectedSuggestion].Command)
@@ -81,13 +81,13 @@ func (m Model) updateInput(msg tea.Msg) (Model, tea.Cmd) {
 				return m, nil
 			}
 
-		case "down":
+		case key.Matches(msg, m.keys.Down):
 			if m.mode == modeCommand && len(m.suggestions) > 0 {
 				m.selectedSuggestion = (m.selectedSuggestion + 1) % len(m.suggestions)
 				return m, nil
 			}
 
-		case "up":
+		case key.Matches(msg, m.keys.Up):
 			if m.mode == modeCommand && len(m.suggestions) > 0 {
 				m.selectedSuggestion = (m.selectedSuggestion - 1 + len(m.suggestions)) % len(m.suggestions)
 				return m, nil
