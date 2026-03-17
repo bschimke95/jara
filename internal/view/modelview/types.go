@@ -1,0 +1,23 @@
+package modelview
+
+import (
+	"charm.land/bubbles/v2/table"
+
+	"github.com/bschimke95/jara/internal/model"
+	"github.com/bschimke95/jara/internal/ui"
+)
+
+// View is the split-pane model overview.
+type View struct {
+	appTable      table.Model
+	unitTable     table.Model
+	relationTable table.Model
+
+	keys   ui.KeyMap
+	status *model.FullStatus
+
+	width        int
+	height       int
+	selectedApp  string
+	pendingScale map[string]int
+}

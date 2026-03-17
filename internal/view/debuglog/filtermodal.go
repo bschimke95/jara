@@ -1,4 +1,4 @@
-package view
+package debuglog
 
 import (
 	"fmt"
@@ -23,23 +23,22 @@ var logLevels = []string{"TRACE", "DEBUG", "INFO", "WARNING", "ERROR"}
 type leftPane int
 
 const (
-	leftPaneLevel        leftPane = iota
-	leftPaneApplications          // filter by application (→ unit-<app>-* globs)
-	leftPaneUnits                 // IncludeEntities exact unit names
-	leftPaneMachines              // IncludeEntities prefixed "machine-"
-	leftPaneModules               // IncludeModules
-	leftPaneLabels                // IncludeLabels
-	leftPaneCount                 // sentinel
+	leftPaneLevel leftPane = iota
+	leftPaneApplications
+	leftPaneUnits
+	leftPaneMachines
+	leftPaneModules
+	leftPaneLabels
+	leftPaneCount
 )
 
 var leftPaneNames = []string{"Level", "Applications", "Units", "Machines", "Modules", "Labels"}
 
-// paneFocus indicates which pane the cursor is in.
 type paneFocus int
 
 const (
-	focusLeft  paneFocus = iota
-	focusRight           // right pane is active
+	focusLeft paneFocus = iota
+	focusRight
 )
 
 // FilterAppliedMsg is emitted by the filter modal when the user confirms.
@@ -55,15 +54,13 @@ type FilterModal struct {
 	keys   ui.KeyMap
 	filter model.DebugLogFilter
 
-	// suggestions holds candidate items per left-pane category.
 	suggestions map[leftPane][]string
 
 	leftCursor      leftPane
 	rightCursor     int
-	rightViewOffset int // scroll offset for the right pane
+	rightViewOffset int
 	focus           paneFocus
 
-	// adding is only used by the Labels pane (free-text key=value input).
 	adding    bool
 	textInput textinput.Model
 
@@ -71,11 +68,9 @@ type FilterModal struct {
 	height int
 }
 
-// rightPaneVisibleRows is the number of rows shown in the right pane at once.
 const rightPaneVisibleRows = 12
 
 // NewFilterModal creates a modal pre-populated with the given filter defaults.
-// suggestions maps each left-pane category to available candidate items.
 func NewFilterModal(initial model.DebugLogFilter, suggestions map[leftPane][]string, keys ui.KeyMap) FilterModal {
 	ti := textinput.New()
 	ti.CharLimit = 256
@@ -93,27 +88,20 @@ func NewFilterModal(initial model.DebugLogFilter, suggestions map[leftPane][]str
 	}
 }
 
-// SetSize informs the modal of the full terminal dimensions so it can centre itself.
 func (m *FilterModal) SetSize(width, height int) {
 	m.width = width
 	m.height = height
 }
 
-// Init satisfies tea.Model; the filter modal has no startup commands.
 func (m *FilterModal) Init() tea.Cmd { return nil }
 
-// View renders the modal overlay. In practice the parent DebugLog view calls
-// Render(background) directly so that the lipgloss compositor can layer the
-// modal on top of the log content.
 func (m *FilterModal) View() tea.View {
 	return tea.NewView(m.Render(""))
 }
 
-// Update handles key presses and text-input events for the filter modal.
 func (m *FilterModal) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	kp, isKey := msg.(tea.KeyPressMsg)
 
-	// ── free-text label input ─────────────────────────────────────────────
 	if m.adding {
 		if isKey {
 			switch kp.String() {
@@ -140,7 +128,6 @@ func (m *FilterModal) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
-	// Global keys (both panes).
 	switch {
 	case key.Matches(kp, m.keys.ApplyFilter):
 		return m, func() tea.Msg { return FilterAppliedMsg{Filter: m.filter} }
@@ -180,14 +167,13 @@ func (m *FilterModal) updateLeftPane(kp tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// rowKind tags each row in the right pane so the action and render logic can branch.
 type rowKind int
 
 const (
-	rowSelected   rowKind = iota // already in the filter (✔, removable with d/x)
-	rowAddLabel                  // "[ + add label ]" free-text trigger (labels only)
-	rowDivider                   // visual separator between selected and suggestions
-	rowSuggestion                // available but not yet selected
+	rowSelected rowKind = iota
+	rowAddLabel
+	rowDivider
+	rowSuggestion
 )
 
 type rightRow struct {
@@ -215,7 +201,6 @@ func (m *FilterModal) buildRightRows() []rightRow {
 		}
 		sugg := m.availableSuggestions()
 		if len(sugg) > 0 {
-			// Only insert a divider when there is already something selected above.
 			if len(selected) > 0 || m.leftCursor == leftPaneLabels {
 				rows = append(rows, rightRow{kind: rowDivider})
 			}
@@ -235,7 +220,6 @@ func (m *FilterModal) updateRightPane(kp tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case key.Matches(kp, m.keys.Down):
 		if total > 0 {
 			next := (m.rightCursor + 1) % total
-			// Skip forward over any divider row.
 			for next < total && rows[next].kind == rowDivider {
 				next = (next + 1) % total
 			}
@@ -248,7 +232,6 @@ func (m *FilterModal) updateRightPane(kp tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			if prev < 0 {
 				prev = total - 1
 			}
-			// Skip backward over any divider row.
 			for prev >= 0 && rows[prev].kind == rowDivider {
 				prev--
 				if prev < 0 {
@@ -296,7 +279,6 @@ func (m *FilterModal) updateRightPane(kp tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// scrollRightIntoView adjusts rightViewOffset so the cursor stays visible.
 func (m *FilterModal) scrollRightIntoView(total int) {
 	if m.rightCursor < m.rightViewOffset {
 		m.rightViewOffset = m.rightCursor
@@ -313,8 +295,6 @@ func (m *FilterModal) scrollRightIntoView(total int) {
 	}
 }
 
-// selectedItems returns the items currently active in the filter for the
-// focused left-pane category.
 func (m *FilterModal) selectedItems() []string {
 	switch m.leftCursor {
 	case leftPaneApplications:
@@ -348,7 +328,6 @@ func (m *FilterModal) selectedItems() []string {
 	return nil
 }
 
-// availableSuggestions returns items from the suggestions list not already selected.
 func (m *FilterModal) availableSuggestions() []string {
 	raw := m.suggestions[m.leftCursor]
 	if len(raw) == 0 {
@@ -368,7 +347,6 @@ func (m *FilterModal) availableSuggestions() []string {
 	return out
 }
 
-// addSelectedItem adds an item to the filter for the current left-pane category.
 func (m *FilterModal) addSelectedItem(v string) {
 	switch m.leftCursor {
 	case leftPaneApplications:
@@ -385,7 +363,6 @@ func (m *FilterModal) addSelectedItem(v string) {
 	}
 }
 
-// removeSelectedItem removes an item from the filter for the current category.
 func (m *FilterModal) removeSelectedItem(v string) {
 	switch m.leftCursor {
 	case leftPaneApplications:
@@ -400,7 +377,6 @@ func (m *FilterModal) removeSelectedItem(v string) {
 	}
 }
 
-// addLabelEntry parses a "key=value" string and adds it to IncludeLabels.
 func (m *FilterModal) addLabelEntry(v string) {
 	k, val, _ := strings.Cut(v, "=")
 	k = strings.TrimSpace(k)
@@ -484,7 +460,6 @@ func (m *FilterModal) renderLeftPane(w int) string {
 	return strings.TrimRight(b.String(), "\n")
 }
 
-// truncateLabel truncates s to maxLen visible characters, appending "…" if clipped.
 func truncateLabel(s string, maxLen int) string {
 	stripped := ansi.Strip(s)
 	if len([]rune(stripped)) <= maxLen {
@@ -511,7 +486,6 @@ func (m *FilterModal) renderRightPane(w int) string {
 	inputStyle := lipgloss.NewStyle().Foreground(color.Title)
 	dimStyle := lipgloss.NewStyle().Foreground(color.Muted)
 
-	// 2 (cursor ▶) + 2 (checkbox) = 4 prefix chars.
 	maxLabel := w - 4
 	if maxLabel < 4 {
 		maxLabel = 4
@@ -519,7 +493,6 @@ func (m *FilterModal) renderRightPane(w int) string {
 
 	rows := m.buildRightRows()
 
-	// ── label input mode (labels pane only) ──────────────────────────────
 	if m.adding {
 		var b strings.Builder
 		for _, row := range rows {
@@ -534,7 +507,6 @@ func (m *FilterModal) renderRightPane(w int) string {
 
 	total := len(rows)
 
-	// Clamp scroll offset.
 	maxOffset := total - rightPaneVisibleRows
 	if maxOffset < 0 {
 		maxOffset = 0
@@ -597,7 +569,6 @@ func (m *FilterModal) renderRightPane(w int) string {
 		}
 	}
 
-	// Scroll indicators.
 	if m.rightViewOffset > 0 {
 		indicator := dimStyle.Render(fmt.Sprintf("  ↑ %d more", m.rightViewOffset))
 		result := strings.TrimRight(b.String(), "\n")

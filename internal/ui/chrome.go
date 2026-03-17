@@ -280,6 +280,10 @@ type KeyHint struct {
 // HintsForView returns the appropriate key hints for the current view.
 // Key labels are derived from the actual KeyMap bindings so they stay
 // consistent when the user overrides key bindings via config.
+//
+// Deprecated: Views now provide their own hints via the KeyHints() method on
+// the view.View interface. This function remains for backward compatibility
+// and will be removed in a future release.
 func HintsForView(viewName string, keys KeyMap) []KeyHint {
 	bk := func(b key.Binding) string { return b.Help().Key }
 
