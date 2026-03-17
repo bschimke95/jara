@@ -36,9 +36,11 @@ type Model struct {
 	stack *nav.Stack
 	views map[nav.ViewID]view.View
 
-	mode      inputMode
-	input     textinput.Model
-	filterStr string
+	mode               inputMode
+	input              textinput.Model
+	filterStr          string
+	suggestions        []nav.CommandMatch
+	selectedSuggestion int
 
 	keys   ui.KeyMap
 	width  int
@@ -226,13 +228,11 @@ func (m Model) updateActiveView(msg tea.Msg) (Model, tea.Cmd) {
 
 func (m Model) contentHeight() int {
 	// Layout: header box (logo height + 2 borders) + body box borders (2)
-	// + optional error (0) + optional input (0-1)
+	// + optional input bar (variable height).
 	logoHeight := ui.LogoHeight()
 	headerHeight := logoHeight + 2 // +2 for top and bottom borders
 	chrome := headerHeight + 2     // +2 for body box borders
-	if m.mode != modeNormal {
-		chrome++
-	}
+	chrome += m.inputBarHeight()
 	// When the debug-log search bar is visible it occupies 3 rows (bordered box).
 	if m.stack.Current().View == nav.DebugLogView {
 		if dl, ok := m.views[nav.DebugLogView].(*debuglog.View); ok && dl.IsSearchActive() {
@@ -298,6 +298,11 @@ func (m Model) View() tea.View {
 	headerInner := ui.HeaderContent(controllerName, modelName, cloud, region, hints, m.width-2)
 	sections = append(sections, ui.BorderBox(headerInner, "", m.width))
 
+	// ── Input bar (command/filter mode, between header and body) ──
+	if m.mode != modeNormal {
+		sections = append(sections, m.renderInputBar())
+	}
+
 	// ── Search bar (debug-log only, between header and body) ──
 	if m.stack.Current().View == nav.DebugLogView {
 		if dl, ok := m.views[nav.DebugLogView].(*debuglog.View); ok && dl.IsSearchActive() {
@@ -356,18 +361,6 @@ func (m Model) View() tea.View {
 	if m.err != nil {
 		errStyle := lipgloss.NewStyle().Foreground(color.Error)
 		sections = append(sections, errStyle.Render(" Error: "+m.err.Error()))
-	}
-
-	// ── Input bar (command/filter mode) ──
-	if m.mode != modeNormal {
-		promptStyle := lipgloss.NewStyle().Foreground(color.Primary).Bold(true)
-		valueStyle := lipgloss.NewStyle().Foreground(color.Title)
-		prompt := m.input.Prompt
-		val := m.input.Value()
-		cursor := lipgloss.NewStyle().
-			Foreground(color.Primary).
-			Render("█")
-		sections = append(sections, fmt.Sprintf(" %s%s%s", promptStyle.Render(prompt), valueStyle.Render(val), cursor))
 	}
 
 	body := lipgloss.JoinVertical(lipgloss.Left, sections...)
