@@ -14,20 +14,27 @@ import (
 func (m Model) handleNavigate(msg view.NavigateMsg) (Model, tea.Cmd) {
 	var cmds []tea.Cmd
 
-	// Selecting a controller from the ControllerView: switch to it and show its models.
-	if msg.Target == nav.ModelsView && msg.Context != "" {
-		if err := m.client.SelectController(msg.Context); err != nil {
-			m.err = err
-			return m, nil
+	// Navigating to ModelsView: if a controller context is provided, switch to it;
+	// otherwise use the currently active controller. Either way, populate the list.
+	if msg.Target == nav.ModelsView {
+		controllerName := msg.Context
+		if controllerName == "" {
+			controllerName = m.client.ControllerName()
 		}
-		m.stopStatusStream() // stop watching the previous model
+		if msg.Context != "" {
+			if err := m.client.SelectController(msg.Context); err != nil {
+				m.err = err
+				return m, nil
+			}
+			m.stopStatusStream() // stop watching the previous model
+		}
 		m.err = nil
 		// Reset the models view so we start fresh.
 		mv := models.New(m.keys)
 		mv.SetSize(m.width, m.contentHeight())
 		m.views[nav.ModelsView] = mv
-		m.stack.Push(nav.StackEntry{View: nav.ModelsView, Context: msg.Context})
-		return m, m.pollModels(msg.Context)
+		m.stack.Push(nav.StackEntry{View: nav.ModelsView, Context: controllerName})
+		return m, m.pollModels(controllerName)
 	}
 
 	// Selecting a model from the ModelsView: switch to it and show the model detail.
@@ -43,8 +50,8 @@ func (m Model) handleNavigate(msg view.NavigateMsg) (Model, tea.Cmd) {
 				sr.SetStatus(nil)
 			}
 		}
-		m.stack.Push(nav.StackEntry{View: nav.ModelView})
-		return m, tea.Batch(m.startStatusStream(), m.pollControllers())
+		m.stack.Push(nav.StackEntry{View: nav.ModelView, Context: msg.Context})
+		return m, m.startStatusStream()
 	}
 
 	m.stack.Push(nav.StackEntry{View: msg.Target, Context: msg.Context})
@@ -106,6 +113,11 @@ func (m Model) handleBack() (Model, tea.Cmd) {
 				uv.SetStatus(m.status)
 			}
 			m.views[nav.UnitsView] = uv
+		}
+		// Re-populate the models list whenever we land back on it, using the
+		// controller name stored in the stack entry's context.
+		if current.View == nav.ModelsView && current.Context != "" {
+			return m, m.pollModels(current.Context)
 		}
 	}
 	return m, nil

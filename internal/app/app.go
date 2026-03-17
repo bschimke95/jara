@@ -118,6 +118,8 @@ func (m Model) Init() tea.Cmd {
 
 func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	// ── Infrastructure: stream lifecycle & window management ──
+	// These are internal to the app and never reach views.
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
@@ -129,7 +131,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case statusStreamConnectedMsg:
-		// The status stream just connected — store the channel and read the first update.
 		m.statusCh = msg.ch
 		return m, readNextStatus(msg.ctx, msg.ch)
 
@@ -145,45 +146,40 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case statusStreamErrMsg:
 		m.err = msg.err
-		// The stream is still alive; keep reading for the next update.
 		return m, readNextStatus(msg.ctx, msg.ch)
 
-	case view.StatusUpdatedMsg:
-		// Legacy path kept for views that emit this directly.
-		m.status = msg.Status
-		for _, v := range m.views {
-			if sr, ok := v.(view.StatusReceiver); ok {
-				sr.SetStatus(msg.Status)
-			}
-		}
-		return m, nil
-
-	case controllers.UpdatedMsg:
-		if cv, ok := m.views[nav.ControllerView].(*controllers.View); ok {
-			cv.SetControllers(msg.Controllers)
-		}
-		return m, nil
-
-	case models.UpdatedMsg:
-		if mv, ok := m.views[nav.ModelsView].(*models.View); ok {
-			mv.SetModels(msg.Models)
-		}
-		return m, nil
-
-	case noModelMsg:
-		// No model selected on this controller — pop back to controller view
-		// and show a helpful hint.
-		m.stopStatusStream()
-		m.stack.Pop()
-		m.err = fmt.Errorf("no model selected — use \"juju add-model <name>\" to create one")
-		return m, nil
+	case debugLogConnectedMsg:
+		return m, readFirstLogBatch(msg.ctx, msg.ch)
 
 	case errMsg:
 		m.err = msg.err
 		return m, nil
+	}
 
-	case view.ScaleRequestMsg:
-		return m, m.scaleApplication(msg.AppName, msg.Delta)
+	// ── Input mode: command/filter bar owns all keys ──
+	if m.mode != modeNormal {
+		return m.updateInput(msg)
+	}
+
+	// ── Delegate to the active view ──
+	// Views get priority so they can override global key bindings
+	// (e.g. the debug-log view handles '/' for in-buffer search).
+	m, cmd := m.updateActiveView(msg)
+
+	// ── Global keys (only when the view did not consume the key) ──
+	if kp, ok := msg.(tea.KeyPressMsg); ok && cmd == nil {
+		if m2, gcmd, handled := m.handleGlobalKeys(kp); handled {
+			return m2, gcmd
+		}
+	}
+
+	// ── Post-process: handle orchestration messages emitted by views ──
+	// These arrive as tea.Msg from a previous view Update cycle. The view
+	// above will ignore them (unhandled in its switch), so we act on them here.
+	switch msg := msg.(type) {
+	case modelview.NoModelMsg:
+		m.stopStatusStream()
+		m.err = fmt.Errorf("no model selected — use \"juju add-model <name>\" to create one")
 
 	case view.NavigateMsg:
 		return m.handleNavigate(msg)
@@ -191,38 +187,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case view.GoBackMsg:
 		return m.handleBack()
 
-	case debugLogConnectedMsg:
-		// The stream just connected — deliver the first batch and schedule more.
-		return m, readNextLogBatch(msg.ctx, msg.ch)
-
-	case debuglog.Msg:
-		m2, cmd := m.updateActiveView(msg)
-		// Schedule reading the next batch from the stream.
-		if msg.Ctx != nil && msg.Ch != nil {
-			return m2, tea.Batch(cmd, readNextLogBatch(msg.Ctx, msg.Ch))
-		}
-		return m2, cmd
-
-	case debuglog.ErrMsg:
-		return m.updateActiveView(msg)
+	case view.ScaleRequestMsg:
+		return m, m.scaleApplication(msg.AppName, msg.Delta)
 
 	case debuglog.FilterChangedMsg:
-		// The user applied a new filter from inside the debug-log view.
-		// Restart the stream with the new filter; keep the same view instance.
 		return m, m.startDebugLogStream(msg.Filter)
 	}
 
-	if m.mode != modeNormal {
-		return m.updateInput(msg)
-	}
-
-	if msg, ok := msg.(tea.KeyPressMsg); ok {
-		if m2, cmd, handled := m.handleGlobalKeys(msg); handled {
-			return m2, cmd
-		}
-	}
-
-	return m.updateActiveView(msg)
+	return m, cmd
 }
 
 func (m Model) updateActiveView(msg tea.Msg) (Model, tea.Cmd) {
