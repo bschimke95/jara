@@ -49,7 +49,7 @@ func run(_ *cobra.Command, _ []string) error {
 	if err != nil {
 		return fmt.Errorf("creating Juju client: %w", err)
 	}
-	defer client.Close()
+	defer func() { _ = client.Close() }()
 
 	// 6. Build and run the TUI.
 	m := app.New(client, app.WithTheme(theme), app.WithKeyMap(keys), app.WithConfig(cfg))
@@ -94,6 +94,6 @@ func setupLogging(path string) (cleanup func(), err error) {
 	return func() {
 		os.Stderr = origStderr
 		klog.Flush()
-		f.Close()
+		_ = f.Close()
 	}, nil
 }

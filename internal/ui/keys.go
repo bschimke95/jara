@@ -6,22 +6,22 @@ import (
 
 // KeyMap defines the global keybindings for jara.
 type KeyMap struct {
-	Quit        key.Binding
-	Help        key.Binding
-	Back        key.Binding
-	Enter       key.Binding
-	Command     key.Binding
-	Filter      key.Binding
-	Up          key.Binding
-	Down        key.Binding
-	PageUp      key.Binding
-	PageDown    key.Binding
-	Top         key.Binding
-	Bottom      key.Binding
-	CancelInput key.Binding
-	Tab         key.Binding
-	ScaleUp     key.Binding
-	ScaleDown   key.Binding
+	Quit         key.Binding
+	Help         key.Binding
+	Back         key.Binding
+	Enter        key.Binding
+	Command      key.Binding
+	Filter       key.Binding
+	Up           key.Binding
+	Down         key.Binding
+	PageUp       key.Binding
+	PageDown     key.Binding
+	Top          key.Binding
+	Bottom       key.Binding
+	CancelInput  key.Binding
+	Tab          key.Binding
+	ScaleUp      key.Binding
+	ScaleDown    key.Binding
 	LogsJump     key.Binding // Shift+L: jump to logs with entity pre-filter
 	LogsView     key.Binding // l: open logs keeping current filter
 	ClearFilter  key.Binding // Shift+D: clear active log filter

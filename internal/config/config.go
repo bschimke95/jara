@@ -161,22 +161,22 @@ type KeyBindingConfig struct {
 // KeysConfig holds all key binding overrides.
 // Any unset binding retains its compiled default.
 type KeysConfig struct {
-	Quit        *KeyBindingConfig `yaml:"quit,omitempty"`
-	Help        *KeyBindingConfig `yaml:"help,omitempty"`
-	Back        *KeyBindingConfig `yaml:"back,omitempty"`
-	Enter       *KeyBindingConfig `yaml:"enter,omitempty"`
-	Command     *KeyBindingConfig `yaml:"command,omitempty"`
-	Filter      *KeyBindingConfig `yaml:"filter,omitempty"`
-	Up          *KeyBindingConfig `yaml:"up,omitempty"`
-	Down        *KeyBindingConfig `yaml:"down,omitempty"`
-	PageUp      *KeyBindingConfig `yaml:"pageUp,omitempty"`
-	PageDown    *KeyBindingConfig `yaml:"pageDown,omitempty"`
-	Top         *KeyBindingConfig `yaml:"top,omitempty"`
-	Bottom      *KeyBindingConfig `yaml:"bottom,omitempty"`
-	CancelInput *KeyBindingConfig `yaml:"cancelInput,omitempty"`
-	Tab         *KeyBindingConfig `yaml:"tab,omitempty"`
-	ScaleUp     *KeyBindingConfig `yaml:"scaleUp,omitempty"`
-	ScaleDown   *KeyBindingConfig `yaml:"scaleDown,omitempty"`
+	Quit         *KeyBindingConfig `yaml:"quit,omitempty"`
+	Help         *KeyBindingConfig `yaml:"help,omitempty"`
+	Back         *KeyBindingConfig `yaml:"back,omitempty"`
+	Enter        *KeyBindingConfig `yaml:"enter,omitempty"`
+	Command      *KeyBindingConfig `yaml:"command,omitempty"`
+	Filter       *KeyBindingConfig `yaml:"filter,omitempty"`
+	Up           *KeyBindingConfig `yaml:"up,omitempty"`
+	Down         *KeyBindingConfig `yaml:"down,omitempty"`
+	PageUp       *KeyBindingConfig `yaml:"pageUp,omitempty"`
+	PageDown     *KeyBindingConfig `yaml:"pageDown,omitempty"`
+	Top          *KeyBindingConfig `yaml:"top,omitempty"`
+	Bottom       *KeyBindingConfig `yaml:"bottom,omitempty"`
+	CancelInput  *KeyBindingConfig `yaml:"cancelInput,omitempty"`
+	Tab          *KeyBindingConfig `yaml:"tab,omitempty"`
+	ScaleUp      *KeyBindingConfig `yaml:"scaleUp,omitempty"`
+	ScaleDown    *KeyBindingConfig `yaml:"scaleDown,omitempty"`
 	LogsJump     *KeyBindingConfig `yaml:"logsJump,omitempty"`
 	LogsView     *KeyBindingConfig `yaml:"logsView,omitempty"`
 	ClearFilter  *KeyBindingConfig `yaml:"clearFilter,omitempty"`

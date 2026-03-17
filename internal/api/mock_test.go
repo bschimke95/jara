@@ -197,7 +197,7 @@ func TestMockClient_ErrorHandling(t *testing.T) {
 		{
 			name: "scale invalid app",
 			fn: func() error {
-				client.SelectModel("admin/default")
+				_ = client.SelectModel("admin/default")
 				return client.ScaleApplication(context.Background(), "invalid", 1)
 			},
 		},
