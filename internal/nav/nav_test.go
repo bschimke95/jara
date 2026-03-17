@@ -160,3 +160,52 @@ func TestResolveCommand(t *testing.T) {
 		})
 	}
 }
+
+func TestMatchCommands(t *testing.T) {
+	tests := []struct {
+		name      string
+		prefix    string
+		wantLen   int
+		wantFirst string // expected command of the first match (alphabetically)
+	}{
+		{"empty prefix returns nil", "", 0, ""},
+		{"prefix 'app' matches applications view", "app", 1, "app"},
+		{"prefix 'un' matches units view", "un", 1, "unit"},
+		{"prefix 'ma' matches machines view", "ma", 1, "mach"},
+		{"prefix 'rel' matches relations view", "rel", 1, "rel"},
+		{"prefix 'q' includes quit", "q", 1, "quit"},
+		{"prefix 'qu' includes quit", "qu", 1, "quit"},
+		{"prefix 'log' matches debug-log", "log", 1, "log"},
+		{"prefix 'mod' matches both model and models views", "mod", 2, "mod"},
+		{"no match for garbage prefix", "zzz", 0, ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := MatchCommands(tt.prefix)
+			if len(got) != tt.wantLen {
+				t.Errorf("MatchCommands(%q) returned %d matches, want %d", tt.prefix, len(got), tt.wantLen)
+				for i, m := range got {
+					t.Logf("  match[%d]: %q -> %v", i, m.Command, m.Target)
+				}
+				return
+			}
+			if tt.wantFirst != "" && len(got) > 0 && got[0].Command != tt.wantFirst {
+				t.Errorf("MatchCommands(%q)[0].Command = %q, want %q", tt.prefix, got[0].Command, tt.wantFirst)
+			}
+		})
+	}
+}
+
+func TestMatchCommands_Deduplication(t *testing.T) {
+	// Multiple aliases point to the same view (e.g. "controller", "controllers", "ctrl"
+	// all point to ControllerView). MatchCommands should deduplicate by target.
+	matches := MatchCommands("c")
+	targets := make(map[ViewID]bool)
+	for _, m := range matches {
+		if targets[m.Target] {
+			t.Errorf("duplicate target %v in MatchCommands(%q)", m.Target, "c")
+		}
+		targets[m.Target] = true
+	}
+}
