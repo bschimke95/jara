@@ -1,5 +1,10 @@
 package nav
 
+import (
+	"sort"
+	"strings"
+)
+
 // ViewID identifies a view type.
 type ViewID int
 
@@ -68,6 +73,43 @@ var CommandAliases = map[string]ViewID{
 func ResolveCommand(cmd string) (ViewID, bool) {
 	v, ok := CommandAliases[cmd]
 	return v, ok
+}
+
+// CommandMatch represents a command suggestion with its canonical name and target.
+type CommandMatch struct {
+	Command string
+	Target  ViewID
+}
+
+// MatchCommands returns all commands that start with the given prefix,
+// deduplicated by target view and sorted alphabetically. Built-in commands
+// like "quit" are included.
+func MatchCommands(prefix string) []CommandMatch {
+	if prefix == "" {
+		return nil
+	}
+	prefix = strings.ToLower(prefix)
+	seen := make(map[ViewID]bool)
+	var matches []CommandMatch
+	// Collect unique matches by target.
+	// Use a sorted list of keys for deterministic output.
+	keys := make([]string, 0, len(CommandAliases))
+	for k := range CommandAliases {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	for _, cmd := range keys {
+		target := CommandAliases[cmd]
+		if strings.HasPrefix(cmd, prefix) && !seen[target] {
+			seen[target] = true
+			matches = append(matches, CommandMatch{Command: cmd, Target: target})
+		}
+	}
+	// Built-in commands.
+	if strings.HasPrefix("quit", prefix) || strings.HasPrefix("q", prefix) {
+		matches = append(matches, CommandMatch{Command: "quit"})
+	}
+	return matches
 }
 
 // Stack implements a simple navigation stack (view history).
