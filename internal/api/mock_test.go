@@ -3,8 +3,11 @@ package api
 import (
 	"context"
 	"fmt"
+	"strings"
 	"sync"
 	"testing"
+
+	"github.com/bschimke95/jara/internal/model"
 )
 
 func TestMockClient_InitialState(t *testing.T) {
@@ -211,4 +214,110 @@ func TestMockClient_ErrorHandling(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestMockClient_DeployApplication(t *testing.T) {
+	client := NewMockClient()
+
+	err := client.SelectModel("admin/default")
+	if err != nil {
+		t.Fatalf("SelectModel() failed: %v", err)
+	}
+
+	err = client.DeployApplication(context.Background(), model.DeployOptions{
+		CharmName:       "redis-k8s",
+		ApplicationName: "redis",
+	})
+	if err != nil {
+		t.Fatalf("DeployApplication() failed: %v", err)
+	}
+
+	status, err := client.Status(context.Background())
+	if err != nil {
+		t.Fatalf("Status() failed: %v", err)
+	}
+
+	app, exists := status.Applications["redis"]
+	if !exists {
+		t.Fatal("redis app not found after deploy")
+	}
+	if app.Charm != "redis-k8s" {
+		t.Errorf("app charm = %q, want %q", app.Charm, "redis-k8s")
+	}
+	if app.Scale != 1 {
+		t.Errorf("app scale = %d, want 1", app.Scale)
+	}
+	if len(app.Units) != 1 {
+		t.Errorf("unit count = %d, want 1", len(app.Units))
+	}
+}
+
+func TestMockClient_DeployApplicationErrors(t *testing.T) {
+	client := NewMockClient()
+
+	err := client.SelectModel("admin/default")
+	if err != nil {
+		t.Fatalf("SelectModel() failed: %v", err)
+	}
+
+	tests := []struct {
+		name      string
+		charmName string
+		appName   string
+	}{
+		{name: "empty charm", charmName: "", appName: "foo"},
+		{name: "duplicate app", charmName: "ubuntu", appName: "ubuntu-app"},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := client.DeployApplication(context.Background(), model.DeployOptions{
+				CharmName:       tt.charmName,
+				ApplicationName: tt.appName,
+			})
+			if err == nil {
+				t.Fatalf("expected error")
+			}
+		})
+	}
+}
+
+func TestMockClient_CharmhubSuggestions(t *testing.T) {
+	client := NewMockClient()
+
+	all, err := client.CharmhubSuggestions(context.Background(), "", 0)
+	if err != nil {
+		t.Fatalf("CharmhubSuggestions() failed: %v", err)
+	}
+	if len(all) == 0 {
+		t.Fatal("expected non-empty suggestions")
+	}
+
+	filtered, err := client.CharmhubSuggestions(context.Background(), "graf", 10)
+	if err != nil {
+		t.Fatalf("CharmhubSuggestions(filtered) failed: %v", err)
+	}
+	if len(filtered) == 0 {
+		t.Fatal("expected filtered suggestions")
+	}
+	for _, name := range filtered {
+		if !containsIgnoreCase(name, "graf") {
+			t.Fatalf("filtered suggestion %q does not match query", name)
+		}
+	}
+
+	limited, err := client.CharmhubSuggestions(context.Background(), "", 2)
+	if err != nil {
+		t.Fatalf("CharmhubSuggestions(limited) failed: %v", err)
+	}
+	if len(limited) != 2 {
+		t.Fatalf("limited suggestions len = %d, want 2", len(limited))
+	}
+}
+
+func containsIgnoreCase(s, q string) bool {
+	if q == "" {
+		return true
+	}
+	return strings.Contains(strings.ToLower(s), strings.ToLower(q))
 }

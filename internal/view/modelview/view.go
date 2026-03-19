@@ -13,6 +13,7 @@ import (
 	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/ui"
 	"github.com/bschimke95/jara/internal/view"
+	"github.com/bschimke95/jara/internal/view/deploymodal"
 	"github.com/bschimke95/jara/internal/view/relations"
 	"github.com/bschimke95/jara/internal/view/units"
 )
@@ -84,11 +85,17 @@ func (m *View) SetStatus(status *model.FullStatus) {
 	m.refreshRightPane()
 }
 
+// SetCharmSuggestions stores external charm suggestions for deploy modal.
+func (m *View) SetCharmSuggestions(names []string) {
+	m.charmhubSuggestions = append([]string(nil), names...)
+}
+
 // KeyHints returns the view-specific key hints for the header.
 func (m *View) KeyHints() []view.KeyHint {
 	bk := func(b key.Binding) string { return b.Help().Key }
 	return []view.KeyHint{
 		{Key: bk(m.keys.Enter), Desc: "select"},
+		{Key: bk(m.keys.Deploy), Desc: "deploy"},
 		{Key: bk(m.keys.UnitsNav), Desc: "units"},
 		{Key: bk(m.keys.RelationsNav), Desc: "relations"},
 		{Key: bk(m.keys.ScaleUp) + "/" + bk(m.keys.ScaleDown), Desc: "scale"},
@@ -104,12 +111,36 @@ type NoModelMsg struct{}
 func (m *View) Init() tea.Cmd { return nil }
 
 func (m *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	if m.deployModalOpen {
+		switch msg := msg.(type) {
+		case deploymodal.AppliedMsg:
+			m.deployModalOpen = false
+			return m, func() tea.Msg {
+				return view.DeployRequestMsg{ModelName: msg.ModelName, Options: msg.Options}
+			}
+		case deploymodal.ClosedMsg:
+			m.deployModalOpen = false
+			return m, nil
+		default:
+			updated, cmd := m.deployModal.Update(msg)
+			if dm, ok := updated.(*deploymodal.Modal); ok {
+				m.deployModal = *dm
+			}
+			return m, cmd
+		}
+	}
+
 	if _, ok := msg.(NoModelMsg); ok {
 		return m, func() tea.Msg { return view.GoBackMsg{} }
 	}
 
 	if msg, ok := msg.(tea.KeyPressMsg); ok {
 		switch {
+		case key.Matches(msg, m.keys.Deploy):
+			m.deployModal = deploymodal.New("", m.keys, m.charmSuggestions(), m.applicationSuggestions())
+			m.deployModal.SetSize(m.width, m.height)
+			m.deployModalOpen = true
+			return m, m.deployModal.BeginCharmEdit()
 		case key.Matches(msg, m.keys.UnitsNav):
 			return m, func() tea.Msg {
 				return view.NavigateMsg{Target: nav.UnitsView, Context: m.selectedApp}
@@ -155,6 +186,14 @@ func (m *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *View) View() tea.View {
+	background := m.renderBackground()
+	if m.deployModalOpen {
+		return tea.NewView(m.deployModal.Render(background))
+	}
+	return tea.NewView(background)
+}
+
+func (m *View) renderBackground() string {
 	leftWidth, rightWidth := m.splitWidths()
 
 	leftContent := m.appTable.View()
@@ -182,7 +221,7 @@ func (m *View) View() tea.View {
 	rightBox := lipgloss.JoinVertical(lipgloss.Left, unitBox, relBox)
 
 	combined := lipgloss.JoinHorizontal(lipgloss.Top, leftBox, rightBox)
-	return tea.NewView(combined)
+	return combined
 }
 
 func (m *View) splitWidths() (int, int) {
@@ -268,4 +307,28 @@ func (m *View) refreshRightPane() {
 	}
 
 	m.relationTable.SetRows(relations.CompactRowsForApp(m.status.Relations, appName))
+}
+
+func (m *View) charmSuggestions() []string {
+	out := append([]string(nil), m.charmhubSuggestions...)
+	if m.status == nil {
+		return out
+	}
+	for _, app := range m.status.Applications {
+		if app.Charm != "" {
+			out = append(out, app.Charm)
+		}
+	}
+	return out
+}
+
+func (m *View) applicationSuggestions() []string {
+	if m.status == nil {
+		return nil
+	}
+	out := make([]string, 0, len(m.status.Applications))
+	for name := range m.status.Applications {
+		out = append(out, name)
+	}
+	return out
 }

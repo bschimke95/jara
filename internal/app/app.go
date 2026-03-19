@@ -130,7 +130,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// ── Infrastructure: stream lifecycle & window management ──
 	// These are internal to the app and never reach views.
 	case startupMsg:
-		return m, tea.Batch(m.startStatusStream(), m.pollControllers())
+		return m, tea.Batch(m.startStatusStream(), m.pollControllers(), m.pollCharmhubSuggestions())
 
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
@@ -173,6 +173,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case debugLogConnectedMsg:
 		return m, readFirstLogBatch(msg.ctx, msg.ch)
 
+	case charmhubSuggestionsMsg:
+		for _, v := range m.views {
+			if sr, ok := v.(view.CharmSuggestionReceiver); ok {
+				sr.SetCharmSuggestions(msg.Names)
+			}
+		}
+		return m, nil
+
 	case errMsg:
 		m.err = msg.err
 		return m, nil
@@ -211,6 +219,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case view.ScaleRequestMsg:
 		return m, m.scaleApplication(msg.AppName, msg.Delta)
+
+	case view.DeployRequestMsg:
+		return m, m.deployApplication(msg.ModelName, msg.Options)
 
 	case debuglog.FilterChangedMsg:
 		return m, m.startDebugLogStream(msg.Filter)

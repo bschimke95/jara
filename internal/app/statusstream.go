@@ -10,6 +10,7 @@ import (
 
 	"github.com/bschimke95/jara/internal/api"
 	"github.com/bschimke95/jara/internal/model"
+	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/view/controllers"
 	"github.com/bschimke95/jara/internal/view/models"
 	"github.com/bschimke95/jara/internal/view/modelview"
@@ -37,6 +38,10 @@ type statusStreamErrMsg struct {
 }
 
 type errMsg struct{ err error }
+
+type charmhubSuggestionsMsg struct {
+	Names []string
+}
 
 // startStatusStream begins streaming status updates from the API.
 // It returns a Cmd that connects and sends a statusStreamConnectedMsg.
@@ -118,12 +123,56 @@ func (m Model) pollModels(controllerName string) tea.Cmd {
 	}
 }
 
+// pollCharmhubSuggestions fetches charm names for deploy autocomplete.
+func (m Model) pollCharmhubSuggestions() tea.Cmd {
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		names, err := m.client.CharmhubSuggestions(ctx, "", 200)
+		if err != nil {
+			// Suggestions are best-effort; keep UI functional without them.
+			return nil
+		}
+		return charmhubSuggestionsMsg{Names: names}
+	}
+}
+
 // scaleApplication returns a Cmd that calls ScaleApplication on the API client.
 func (m Model) scaleApplication(appName string, delta int) tea.Cmd {
 	return func() tea.Msg {
 		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 		defer cancel()
 		if err := m.client.ScaleApplication(ctx, appName, delta); err != nil {
+			return errMsg{err}
+		}
+		return nil
+	}
+}
+
+// deployApplication returns a Cmd that deploys a new application charm.
+// If modelName is set, deployment is targeted to that model first.
+func (m Model) deployApplication(modelName string, opts model.DeployOptions) tea.Cmd {
+	return func() tea.Msg {
+		if m.cfg != nil && m.cfg.Jara.ReadOnly {
+			return errMsg{fmt.Errorf("write operations are disabled in read-only mode")}
+		}
+		if strings.TrimSpace(opts.CharmName) == "" {
+			return errMsg{fmt.Errorf("charm name is required")}
+		}
+		if modelName == "" {
+			current := m.stack.Current()
+			if current.View == nav.ModelView && current.Context != "" {
+				modelName = current.Context
+			}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		if modelName != "" {
+			if err := m.client.SelectModel(modelName); err != nil {
+				return errMsg{fmt.Errorf("selecting model %q: %w", modelName, err)}
+			}
+		}
+		if err := m.client.DeployApplication(ctx, opts); err != nil {
 			return errMsg{err}
 		}
 		return nil

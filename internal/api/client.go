@@ -24,6 +24,10 @@ type Client interface {
 	// ScaleApplication adjusts the unit count for an application by delta
 	// (positive to scale up, negative to scale down).
 	ScaleApplication(ctx context.Context, appName string, delta int) error
+	// DeployApplication deploys a charm with deploy options in the current model.
+	DeployApplication(ctx context.Context, opts model.DeployOptions) error
+	// CharmhubSuggestions returns charm names from Charmhub for autocomplete.
+	CharmhubSuggestions(ctx context.Context, query string, limit int) ([]string, error)
 	// SelectController switches the client to target a different controller.
 	SelectController(name string) error
 	// SelectModel switches the client to target the given model within the

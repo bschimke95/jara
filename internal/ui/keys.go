@@ -22,6 +22,7 @@ type KeyMap struct {
 	Tab          key.Binding
 	ScaleUp      key.Binding
 	ScaleDown    key.Binding
+	Deploy       key.Binding // D: deploy a new application charm
 	LogsJump     key.Binding // Shift+L: jump to logs with entity pre-filter
 	LogsView     key.Binding // l: open logs keeping current filter
 	ClearFilter  key.Binding // Shift+D: clear active log filter
@@ -102,6 +103,10 @@ func DefaultKeyMap() KeyMap {
 		ScaleDown: key.NewBinding(
 			key.WithKeys("-"),
 			key.WithHelp("-", "scale down"),
+		),
+		Deploy: key.NewBinding(
+			key.WithKeys("D"),
+			key.WithHelp("D", "deploy"),
 		),
 		LogsJump: key.NewBinding(
 			key.WithKeys("L"),

@@ -3,6 +3,8 @@ package api
 import (
 	"context"
 	"fmt"
+	"sort"
+	"strings"
 	"sync"
 	"time"
 
@@ -193,6 +195,92 @@ func (c *MockClient) ScaleApplication(_ context.Context, appName string, delta i
 	app.Scale = newScale
 	c.status.Applications[appName] = app
 	return nil
+}
+
+// DeployApplication adds a new synthetic application to the current status.
+func (c *MockClient) DeployApplication(_ context.Context, opts model.DeployOptions) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if opts.CharmName == "" {
+		return fmt.Errorf("charm name cannot be empty")
+	}
+	charmName := opts.CharmName
+	appName := opts.ApplicationName
+	if appName == "" {
+		appName = charmName
+	}
+	if _, exists := c.status.Applications[appName]; exists {
+		return fmt.Errorf("application %q already exists", appName)
+	}
+
+	now := time.Now()
+	machineID := fmt.Sprintf("%d", c.nextMachineID)
+	addressSuffix := c.nextMachineID + 100
+	c.nextMachineID++
+
+	newApp := model.Application{
+		Name:          appName,
+		Status:        "waiting",
+		StatusMessage: "deploying charm",
+		Charm:         charmName,
+		CharmChannel:  "stable",
+		Scale:         1,
+		Exposed:       false,
+		Base:          "ubuntu@22.04",
+		Since:         &now,
+		Units: []model.Unit{
+			{
+				Name:            fmt.Sprintf("%s/0", appName),
+				WorkloadStatus:  "waiting",
+				WorkloadMessage: "deploying charm",
+				AgentStatus:     "allocating",
+				Machine:         machineID,
+				PublicAddress:   fmt.Sprintf("10.0.3.%d", addressSuffix),
+				Since:           &now,
+			},
+		},
+	}
+	c.status.Applications[appName] = newApp
+
+	c.status.Machines[machineID] = model.Machine{
+		ID:          machineID,
+		Status:      "started",
+		DNSName:     fmt.Sprintf("ip-10-0-3-%s.ec2.internal", machineID),
+		IPAddresses: []string{fmt.Sprintf("10.0.3.%d", addressSuffix)},
+		InstanceID:  fmt.Sprintf("i-mock%s", machineID),
+		Base:        newApp.Base,
+		Hardware:    "arch=amd64 cores=2 mem=4096M",
+		Since:       &now,
+	}
+
+	return nil
+}
+
+// CharmhubSuggestions returns synthetic charm names for autocomplete.
+func (c *MockClient) CharmhubSuggestions(_ context.Context, query string, limit int) ([]string, error) {
+	base := []string{
+		"postgresql",
+		"postgresql-k8s",
+		"mysql",
+		"redis-k8s",
+		"prometheus-k8s",
+		"grafana-k8s",
+		"traefik-k8s",
+		"nginx-ingress-integrator",
+	}
+	q := strings.ToLower(strings.TrimSpace(query))
+	out := make([]string, 0, len(base))
+	for _, name := range base {
+		if q == "" || strings.Contains(strings.ToLower(name), q) {
+			out = append(out, name)
+		}
+	}
+	sort.Strings(out)
+	if limit > 0 && len(out) > limit {
+		out = out[:limit]
+	}
+	return out, nil
 }
 
 // DebugLog returns a channel of synthetic log entries.

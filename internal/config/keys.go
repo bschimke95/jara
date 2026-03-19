@@ -27,6 +27,7 @@ func ResolveKeyMap(keys KeysConfig) ui.KeyMap {
 	overrideBinding(&km.Tab, keys.Tab, "switch pane")
 	overrideBinding(&km.ScaleUp, keys.ScaleUp, "scale up")
 	overrideBinding(&km.ScaleDown, keys.ScaleDown, "scale down")
+	overrideBinding(&km.Deploy, keys.Deploy, "deploy")
 	overrideBinding(&km.LogsJump, keys.LogsJump, "logs")
 	overrideBinding(&km.LogsView, keys.LogsView, "logs")
 	overrideBinding(&km.ClearFilter, keys.ClearFilter, "clear filter")

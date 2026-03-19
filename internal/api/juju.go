@@ -2,8 +2,12 @@ package api
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"io"
 	"log"
+	"net/http"
+	"net/url"
 	"sort"
 	"strings"
 	"time"
@@ -14,6 +18,8 @@ import (
 	"github.com/juju/juju/api/common"
 	"github.com/juju/juju/api/connector"
 	"github.com/juju/juju/api/jujuclient"
+	"github.com/juju/juju/core/base"
+	"github.com/juju/juju/core/constraints"
 	corelogger "github.com/juju/juju/core/logger"
 	"github.com/juju/juju/rpc/params"
 	"github.com/juju/loggo/v2"
@@ -42,6 +48,7 @@ type JujuClient struct {
 	controllerName string
 	modelUUID      string
 	conn           api.Connection
+	charmhubURL    string
 }
 
 // JujuClientOption configures a JujuClient.
@@ -61,6 +68,13 @@ func WithModelUUID(uuid string) JujuClientOption {
 	}
 }
 
+// WithCharmhubURL sets the Charmhub API base URL used for suggestion lookups.
+func WithCharmhubURL(rawURL string) JujuClientOption {
+	return func(c *JujuClient) {
+		c.charmhubURL = strings.TrimSpace(rawURL)
+	}
+}
+
 // NewJujuClient creates a new client backed by the real Juju API.
 // It reads controller/account info from the local Juju client store
 // (typically ~/.local/share/juju).
@@ -71,7 +85,8 @@ func NewJujuClient(opts ...JujuClientOption) (*JujuClient, error) {
 	store := jujuclient.NewFileClientStore()
 
 	c := &JujuClient{
-		store: store,
+		store:       store,
+		charmhubURL: "https://api.charmhub.io",
 	}
 	for _, opt := range opts {
 		opt(c)
@@ -87,6 +102,75 @@ func NewJujuClient(opts ...JujuClientOption) (*JujuClient, error) {
 	}
 
 	return c, nil
+}
+
+type charmhubFindResponse struct {
+	Results []struct {
+		Name string `json:"name"`
+		Type string `json:"type"`
+	} `json:"results"`
+}
+
+// CharmhubSuggestions queries Charmhub for charm names used by deploy autocomplete.
+func (c *JujuClient) CharmhubSuggestions(ctx context.Context, query string, limit int) ([]string, error) {
+	baseURL := strings.TrimRight(strings.TrimSpace(c.charmhubURL), "/")
+	if baseURL == "" {
+		return nil, fmt.Errorf("charmhub URL is empty")
+	}
+
+	endpoint, err := url.Parse(baseURL + "/v2/charms/find")
+	if err != nil {
+		return nil, fmt.Errorf("parsing charmhub URL: %w", err)
+	}
+	params := endpoint.Query()
+	params.Set("fields", "name,type")
+	if q := strings.TrimSpace(query); q != "" {
+		params.Set("q", q)
+	}
+	endpoint.RawQuery = params.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("building charmhub request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("querying charmhub: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
+		return nil, fmt.Errorf("charmhub returned %s: %s", resp.Status, strings.TrimSpace(string(body)))
+	}
+
+	var payload charmhubFindResponse
+	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+		return nil, fmt.Errorf("decoding charmhub response: %w", err)
+	}
+
+	seen := make(map[string]struct{}, len(payload.Results))
+	out := make([]string, 0, len(payload.Results))
+	for _, item := range payload.Results {
+		if item.Type != "" && item.Type != "charm" {
+			continue
+		}
+		name := strings.TrimSpace(item.Name)
+		if name == "" {
+			continue
+		}
+		if _, ok := seen[name]; ok {
+			continue
+		}
+		seen[name] = struct{}{}
+		out = append(out, name)
+		if limit > 0 && len(out) >= limit {
+			break
+		}
+	}
+	return out, nil
 }
 
 // Close closes any open API connections.
@@ -287,6 +371,77 @@ func (c *JujuClient) ScaleApplication(ctx context.Context, appName string, delta
 	})
 	if err != nil {
 		return fmt.Errorf("scaling %q by %+d: %w", appName, delta, err)
+	}
+	return nil
+}
+
+// DeployApplication deploys a charm from the configured repository into the
+// current model.
+func (c *JujuClient) DeployApplication(ctx context.Context, opts model.DeployOptions) error {
+	if strings.TrimSpace(opts.CharmName) == "" {
+		return fmt.Errorf("charm name cannot be empty")
+	}
+
+	conn, err := c.connect(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = conn.Close() }()
+
+	appClient := application.NewClient(conn)
+	arg := application.DeployFromRepositoryArg{
+		CharmName:       strings.TrimSpace(opts.CharmName),
+		ApplicationName: strings.TrimSpace(opts.ApplicationName),
+		ConfigYAML:      "",
+		Trust:           opts.Trust,
+	}
+	if opts.Channel != "" {
+		channel := strings.TrimSpace(opts.Channel)
+		arg.Channel = &channel
+	}
+	if opts.Base != "" {
+		parsedBase, parseErr := base.ParseBaseFromString(strings.TrimSpace(opts.Base))
+		if parseErr != nil {
+			return fmt.Errorf("parsing base %q: %w", opts.Base, parseErr)
+		}
+		arg.Base = &parsedBase
+	}
+	if opts.Constraints != "" {
+		cons, parseErr := constraints.Parse(strings.TrimSpace(opts.Constraints))
+		if parseErr != nil {
+			return fmt.Errorf("parsing constraints %q: %w", opts.Constraints, parseErr)
+		}
+		arg.Cons = cons
+	}
+	if opts.NumUnits != nil {
+		units := *opts.NumUnits
+		arg.NumUnits = &units
+	}
+	if opts.Revision != nil {
+		rev := *opts.Revision
+		arg.Revision = &rev
+	}
+	if len(opts.Config) > 0 {
+		cfgLines := make([]string, 0, len(opts.Config))
+		for k, v := range opts.Config {
+			cfgLines = append(cfgLines, fmt.Sprintf("%s: %s", k, v))
+		}
+		sort.Strings(cfgLines)
+		arg.ConfigYAML = strings.Join(cfgLines, "\n") + "\n"
+	}
+
+	_, _, errs := appClient.DeployFromRepository(ctx, arg)
+	if len(errs) > 0 {
+		messages := make([]string, 0, len(errs))
+		for _, deployErr := range errs {
+			if deployErr == nil {
+				continue
+			}
+			messages = append(messages, deployErr.Error())
+		}
+		if len(messages) > 0 {
+			return fmt.Errorf("deploying charm %q: %s", opts.CharmName, strings.Join(messages, "; "))
+		}
 	}
 	return nil
 }

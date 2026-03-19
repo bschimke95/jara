@@ -32,6 +32,13 @@ type ScaleRequestMsg struct {
 	Delta   int
 }
 
+// DeployRequestMsg requests deploying a charm with the provided options.
+// ModelName is optional; when set, deployment should target that model.
+type DeployRequestMsg struct {
+	ModelName string
+	Options   model.DeployOptions
+}
+
 // KeyHint represents a single key-description pair for the header hint bar.
 type KeyHint = ui.KeyHint
 
@@ -53,4 +60,10 @@ type View interface {
 // implement this interface.
 type StatusReceiver interface {
 	SetStatus(status *model.FullStatus)
+}
+
+// CharmSuggestionReceiver is implemented by views that can consume external
+// charm name suggestions (e.g. from Charmhub) for deploy autocomplete.
+type CharmSuggestionReceiver interface {
+	SetCharmSuggestions(names []string)
 }
