@@ -168,35 +168,36 @@ type KeyBindingConfig struct {
 // KeysConfig holds all key binding overrides.
 // Any unset binding retains its compiled default.
 type KeysConfig struct {
-	Quit         *KeyBindingConfig `yaml:"quit,omitempty"`
-	Help         *KeyBindingConfig `yaml:"help,omitempty"`
-	Back         *KeyBindingConfig `yaml:"back,omitempty"`
-	Enter        *KeyBindingConfig `yaml:"enter,omitempty"`
-	Command      *KeyBindingConfig `yaml:"command,omitempty"`
-	Filter       *KeyBindingConfig `yaml:"filter,omitempty"`
-	Up           *KeyBindingConfig `yaml:"up,omitempty"`
-	Down         *KeyBindingConfig `yaml:"down,omitempty"`
-	PageUp       *KeyBindingConfig `yaml:"pageUp,omitempty"`
-	PageDown     *KeyBindingConfig `yaml:"pageDown,omitempty"`
-	Top          *KeyBindingConfig `yaml:"top,omitempty"`
-	Bottom       *KeyBindingConfig `yaml:"bottom,omitempty"`
-	CancelInput  *KeyBindingConfig `yaml:"cancelInput,omitempty"`
-	Tab          *KeyBindingConfig `yaml:"tab,omitempty"`
-	ScaleUp      *KeyBindingConfig `yaml:"scaleUp,omitempty"`
-	ScaleDown    *KeyBindingConfig `yaml:"scaleDown,omitempty"`
-	Deploy       *KeyBindingConfig `yaml:"deploy,omitempty"`
-	LogsJump     *KeyBindingConfig `yaml:"logsJump,omitempty"`
-	LogsView     *KeyBindingConfig `yaml:"logsView,omitempty"`
-	ClearFilter  *KeyBindingConfig `yaml:"clearFilter,omitempty"`
-	SearchOpen   *KeyBindingConfig `yaml:"searchOpen,omitempty"`
-	SearchNext   *KeyBindingConfig `yaml:"searchNext,omitempty"`
-	SearchPrev   *KeyBindingConfig `yaml:"searchPrev,omitempty"`
-	FilterOpen   *KeyBindingConfig `yaml:"filterOpen,omitempty"`
-	UnitsNav     *KeyBindingConfig `yaml:"unitsNav,omitempty"`
-	RelationsNav *KeyBindingConfig `yaml:"relationsNav,omitempty"`
-	ApplyFilter  *KeyBindingConfig `yaml:"applyFilter,omitempty"`
-	Right        *KeyBindingConfig `yaml:"right,omitempty"`
-	Left         *KeyBindingConfig `yaml:"left,omitempty"`
+	Quit            *KeyBindingConfig `yaml:"quit,omitempty"`
+	Help            *KeyBindingConfig `yaml:"help,omitempty"`
+	Back            *KeyBindingConfig `yaml:"back,omitempty"`
+	Enter           *KeyBindingConfig `yaml:"enter,omitempty"`
+	Command         *KeyBindingConfig `yaml:"command,omitempty"`
+	Filter          *KeyBindingConfig `yaml:"filter,omitempty"`
+	Up              *KeyBindingConfig `yaml:"up,omitempty"`
+	Down            *KeyBindingConfig `yaml:"down,omitempty"`
+	PageUp          *KeyBindingConfig `yaml:"pageUp,omitempty"`
+	PageDown        *KeyBindingConfig `yaml:"pageDown,omitempty"`
+	Top             *KeyBindingConfig `yaml:"top,omitempty"`
+	Bottom          *KeyBindingConfig `yaml:"bottom,omitempty"`
+	CancelInput     *KeyBindingConfig `yaml:"cancelInput,omitempty"`
+	Tab             *KeyBindingConfig `yaml:"tab,omitempty"`
+	ScaleUp         *KeyBindingConfig `yaml:"scaleUp,omitempty"`
+	ScaleDown       *KeyBindingConfig `yaml:"scaleDown,omitempty"`
+	Deploy          *KeyBindingConfig `yaml:"deploy,omitempty"`
+	LogsJump        *KeyBindingConfig `yaml:"logsJump,omitempty"`
+	LogsView        *KeyBindingConfig `yaml:"logsView,omitempty"`
+	ClearFilter     *KeyBindingConfig `yaml:"clearFilter,omitempty"`
+	SearchOpen      *KeyBindingConfig `yaml:"searchOpen,omitempty"`
+	SearchNext      *KeyBindingConfig `yaml:"searchNext,omitempty"`
+	SearchPrev      *KeyBindingConfig `yaml:"searchPrev,omitempty"`
+	FilterOpen      *KeyBindingConfig `yaml:"filterOpen,omitempty"`
+	UnitsNav        *KeyBindingConfig `yaml:"unitsNav,omitempty"`
+	ApplicationsNav *KeyBindingConfig `yaml:"applicationsNav,omitempty"`
+	RelationsNav    *KeyBindingConfig `yaml:"relationsNav,omitempty"`
+	ApplyFilter     *KeyBindingConfig `yaml:"applyFilter,omitempty"`
+	Right           *KeyBindingConfig `yaml:"right,omitempty"`
+	Left            *KeyBindingConfig `yaml:"left,omitempty"`
 }
 
 // NewDefault returns a Config with all compiled defaults.
