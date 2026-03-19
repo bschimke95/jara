@@ -1,0 +1,9 @@
+copilot:
+  # The version of the toolkit to use (matches a Release Tag in canonical/copilot-collections)
+  version: "v0.7.0"
+
+  # Collections selected for this Go codebase
+  collections:
+    - core
+    - common-go
+    - common-documentation
