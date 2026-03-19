@@ -33,6 +33,8 @@ type Client interface {
 	DestroyRelation(ctx context.Context, endpointA, endpointB string) error
 	// CharmhubSuggestions returns charm names from Charmhub for autocomplete.
 	CharmhubSuggestions(ctx context.Context, query string, limit int) ([]string, error)
+	// CharmRelationInfo returns endpoint metadata for a charm from Charmhub.
+	CharmRelationInfo(ctx context.Context, charmName string) (map[string]model.CharmEndpoint, error)
 	// SelectController switches the client to target a different controller.
 	SelectController(name string) error
 	// SelectModel switches the client to target the given model within the

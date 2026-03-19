@@ -84,8 +84,8 @@ func (r *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				if idx >= 0 && idx < len(r.status.Relations) {
 					rel := r.status.Relations[idx]
 					if len(rel.Endpoints) >= 2 {
-						a := fmt.Sprintf("%s:%s", rel.Endpoints[0].ApplicationName, rel.Endpoints[0].Name)
-						b := fmt.Sprintf("%s:%s", rel.Endpoints[1].ApplicationName, rel.Endpoints[1].Name)
+						a := formatEndpoint(rel.Endpoints[0])
+						b := formatEndpoint(rel.Endpoints[1])
 						r.deletingA = a
 						r.deletingB = b
 						r.confirmModal = confirmodal.New(

@@ -283,6 +283,42 @@ func (c *MockClient) CharmhubSuggestions(_ context.Context, query string, limit 
 	return out, nil
 }
 
+// CharmRelationInfo returns synthetic charm endpoint metadata.
+func (c *MockClient) CharmRelationInfo(_ context.Context, charmName string) (map[string]model.CharmEndpoint, error) {
+	data := map[string]map[string]model.CharmEndpoint{
+		"postgresql": {
+			"db":           {Interface: "pgsql", Role: "provider", Description: "Provides the pgsql database interface"},
+			"db-admin":     {Interface: "pgsql", Role: "provider", Description: "Provides administrative database access"},
+			"replication":  {Interface: "pgdata", Role: "peer", Description: "Internal replication between units"},
+			"certificates": {Interface: "tls-certificates", Role: "requirer", Description: "TLS certificates for encryption"},
+			"monitoring":   {Interface: "prometheus-scrape", Role: "provider", Description: "Exposes Prometheus metrics endpoint"},
+		},
+		"ubuntu": {
+			"db":      {Interface: "pgsql", Role: "requirer", Description: "Requires a database connection"},
+			"ingress": {Interface: "ingress", Role: "requirer", Description: "Requires an ingress endpoint"},
+			"logging": {Interface: "loki-push", Role: "requirer", Description: "Push logs to a Loki aggregator"},
+		},
+		"grafana-k8s": {
+			"grafana-source": {Interface: "grafana-datasource", Role: "requirer", Description: "Receives data sources for dashboards"},
+			"database":       {Interface: "pgsql", Role: "requirer", Description: "Requires database for persistence"},
+			"ingress":        {Interface: "ingress", Role: "requirer", Description: "Requires an ingress endpoint"},
+		},
+		"prometheus-k8s": {
+			"grafana-source":   {Interface: "grafana-datasource", Role: "provider", Description: "Provides Prometheus as a Grafana datasource"},
+			"metrics-endpoint": {Interface: "prometheus-scrape", Role: "requirer", Description: "Scrapes metrics from workloads"},
+			"ingress":          {Interface: "ingress", Role: "requirer", Description: "Requires an ingress endpoint"},
+		},
+		"nginx-ingress-integrator": {
+			"ingress":       {Interface: "ingress", Role: "provider", Description: "Provides ingress routing for applications"},
+			"ingress-proxy": {Interface: "ingress", Role: "provider", Description: "Provides proxy-mode ingress routing"},
+		},
+	}
+	if eps, ok := data[charmName]; ok {
+		return eps, nil
+	}
+	return nil, nil
+}
+
 // RelateApplications adds a synthetic relation between two endpoints.
 func (c *MockClient) RelateApplications(_ context.Context, endpointA, endpointB string) error {
 	c.mu.Lock()

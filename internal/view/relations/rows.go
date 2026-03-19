@@ -27,12 +27,10 @@ func Rows(rels []model.Relation) []table.Row {
 	for _, r := range rels {
 		ep1, ep2 := "", ""
 		if len(r.Endpoints) > 0 {
-			ep := r.Endpoints[0]
-			ep1 = fmt.Sprintf("%s:%s", ep.ApplicationName, ep.Name)
+			ep1 = formatEndpoint(r.Endpoints[0])
 		}
 		if len(r.Endpoints) > 1 {
-			ep := r.Endpoints[1]
-			ep2 = fmt.Sprintf("%s:%s", ep.ApplicationName, ep.Name)
+			ep2 = formatEndpoint(r.Endpoints[1])
 		}
 		rows = append(rows, table.Row{
 			fmt.Sprintf("%d", r.ID), ep1, ep2, r.Interface, r.Scope, r.Status,
@@ -57,12 +55,10 @@ func RowsForApp(rels []model.Relation, appName string) []table.Row {
 		}
 		ep1, ep2 := "", ""
 		if len(r.Endpoints) > 0 {
-			ep := r.Endpoints[0]
-			ep1 = fmt.Sprintf("%s:%s", ep.ApplicationName, ep.Name)
+			ep1 = formatEndpoint(r.Endpoints[0])
 		}
 		if len(r.Endpoints) > 1 {
-			ep := r.Endpoints[1]
-			ep2 = fmt.Sprintf("%s:%s", ep.ApplicationName, ep.Name)
+			ep2 = formatEndpoint(r.Endpoints[1])
 		}
 		rows = append(rows, table.Row{
 			fmt.Sprintf("%d", r.ID), ep1, ep2, r.Interface, r.Scope, r.Status,
@@ -118,6 +114,14 @@ func CompactRowsForApp(rels []model.Relation, appName string) []table.Row {
 		rows = append(rows, table.Row{lhs + ifaceSeg + " -> " + rhs})
 	}
 	return rows
+}
+
+// formatEndpoint formats an endpoint as "app:name" or just "app" when name is empty.
+func formatEndpoint(ep model.Endpoint) string {
+	if ep.Name == "" {
+		return ep.ApplicationName
+	}
+	return ep.ApplicationName + ":" + ep.Name
 }
 
 // isCrossModelRelation reports whether the relation key indicates a cross-model

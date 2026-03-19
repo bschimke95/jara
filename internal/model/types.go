@@ -163,3 +163,10 @@ type DeployOptions struct {
 	Revision        *int
 	Trust           bool
 }
+
+// CharmEndpoint describes a single endpoint from a charm's metadata.
+type CharmEndpoint struct {
+	Interface   string
+	Role        string
+	Description string
+}

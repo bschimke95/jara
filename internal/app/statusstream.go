@@ -43,6 +43,11 @@ type charmhubSuggestionsMsg struct {
 	Names []string
 }
 
+type charmEndpointsMsg struct {
+	// Endpoints maps charm name → endpoint name → CharmEndpoint.
+	Endpoints map[string]map[string]model.CharmEndpoint
+}
+
 // startStatusStream begins streaming status updates from the API.
 // It returns a Cmd that connects and sends a statusStreamConnectedMsg.
 func (m *Model) startStatusStream() tea.Cmd {
@@ -134,6 +139,41 @@ func (m Model) pollCharmhubSuggestions() tea.Cmd {
 			return nil
 		}
 		return charmhubSuggestionsMsg{Names: names}
+	}
+}
+
+// pollCharmEndpoints fetches endpoint metadata for all unique charms
+// in the current model status from Charmhub.
+func (m Model) pollCharmEndpoints() tea.Cmd {
+	if m.status == nil {
+		return nil
+	}
+	// Collect unique charm names.
+	charms := make(map[string]struct{})
+	for _, app := range m.status.Applications {
+		if app.Charm != "" {
+			charms[app.Charm] = struct{}{}
+		}
+	}
+	if len(charms) == 0 {
+		return nil
+	}
+	client := m.client
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		result := make(map[string]map[string]model.CharmEndpoint, len(charms))
+		for name := range charms {
+			eps, err := client.CharmRelationInfo(ctx, name)
+			if err != nil || eps == nil {
+				continue
+			}
+			result[name] = eps
+		}
+		if len(result) == 0 {
+			return nil
+		}
+		return charmEndpointsMsg{Endpoints: result}
 	}
 }
 

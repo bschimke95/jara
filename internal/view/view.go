@@ -115,3 +115,9 @@ type StatusReceiver interface {
 type CharmSuggestionReceiver interface {
 	SetCharmSuggestions(names []string)
 }
+
+// CharmEndpointReceiver is implemented by views that consume charm endpoint
+// metadata from Charmhub (relation descriptions, interface info).
+type CharmEndpointReceiver interface {
+	SetCharmEndpoints(endpoints map[string]map[string]model.CharmEndpoint)
+}

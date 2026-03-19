@@ -52,6 +52,8 @@ type Model struct {
 	statusCh     <-chan api.StatusUpdate // receives status snapshots
 	logCancel    context.CancelFunc      // cancels the debug-log stream
 
+	charmEndpointsFetched bool // true once charm endpoint info has been polled
+
 	err   error
 	ready bool
 }
@@ -177,7 +179,15 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				sr.SetStatus(msg.status)
 			}
 		}
-		return m, readNextStatus(msg.ctx, msg.ch)
+		var cmds []tea.Cmd
+		cmds = append(cmds, readNextStatus(msg.ctx, msg.ch))
+		if !m.charmEndpointsFetched {
+			m.charmEndpointsFetched = true
+			if cmd := m.pollCharmEndpoints(); cmd != nil {
+				cmds = append(cmds, cmd)
+			}
+		}
+		return m, tea.Batch(cmds...)
 
 	case statusStreamErrMsg:
 		if msg.ctx.Err() != nil {
@@ -197,6 +207,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case charmEndpointsMsg:
+		for _, v := range m.views {
+			if sr, ok := v.(view.CharmEndpointReceiver); ok {
+				sr.SetCharmEndpoints(msg.Endpoints)
+			}
+		}
+		return m, nil
+
 	case errMsg:
 		m.err = msg.err
 		return m, nil
@@ -206,6 +224,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case view.StartStatusStreamMsg:
+		m.charmEndpointsFetched = false
 		return m, m.startStatusStream()
 
 	case view.StartDebugLogStreamMsg:

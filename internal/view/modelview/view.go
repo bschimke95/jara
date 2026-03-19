@@ -93,6 +93,11 @@ func (m *View) SetCharmSuggestions(names []string) {
 	m.charmhubSuggestions = append([]string(nil), names...)
 }
 
+// SetCharmEndpoints stores charm endpoint metadata from Charmhub.
+func (m *View) SetCharmEndpoints(endpoints map[string]map[string]model.CharmEndpoint) {
+	m.charmEndpoints = endpoints
+}
+
 // KeyHints returns the view-specific key hints for the header.
 func (m *View) KeyHints() []view.KeyHint {
 	bk := func(b key.Binding) string { return b.Help().Key }
@@ -170,7 +175,7 @@ func (m *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.deployModalOpen = true
 			return m, m.deployModal.BeginCharmEdit()
 		case key.Matches(msg, m.keys.Relate):
-			suggestions := relatemodal.BuildSuggestions(m.status)
+			suggestions := relatemodal.BuildSuggestions(m.status, m.charmEndpoints)
 			var rels []model.Relation
 			if m.status != nil {
 				rels = m.status.Relations
