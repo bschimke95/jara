@@ -24,6 +24,9 @@ func TestNewDefault(t *testing.T) {
 	if cfg.Jara.ReadOnly {
 		t.Error("default ReadOnly should be false")
 	}
+	if cfg.Jara.CharmhubURL != DefaultCharmhubURL {
+		t.Errorf("default CharmhubURL = %q, want %q", cfg.Jara.CharmhubURL, DefaultCharmhubURL)
+	}
 }
 
 func TestLoadNonExistentFile(t *testing.T) {
@@ -140,6 +143,9 @@ func TestLoadPreservesDefaultsForZeroValues(t *testing.T) {
 	}
 	if cfg.Jara.LogLevel != DefaultLogLevel {
 		t.Errorf("LogLevel = %q, want %q (default preserved)", cfg.Jara.LogLevel, DefaultLogLevel)
+	}
+	if cfg.Jara.CharmhubURL != DefaultCharmhubURL {
+		t.Errorf("CharmhubURL = %q, want %q (default preserved)", cfg.Jara.CharmhubURL, DefaultCharmhubURL)
 	}
 }
 

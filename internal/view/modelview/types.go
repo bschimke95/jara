@@ -5,6 +5,7 @@ import (
 
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/ui"
+	"github.com/bschimke95/jara/internal/view/deploymodal"
 )
 
 // View is the split-pane model overview.
@@ -20,4 +21,9 @@ type View struct {
 	height       int
 	selectedApp  string
 	pendingScale map[string]int
+
+	deployModalOpen bool
+	deployModal     deploymodal.Modal
+
+	charmhubSuggestions []string
 }
