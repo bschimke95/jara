@@ -52,7 +52,7 @@ func run(_ *cobra.Command, _ []string) error {
 	defer func() { _ = client.Close() }()
 
 	// 6. Build and run the TUI.
-	m := app.New(client, app.WithTheme(theme), app.WithKeyMap(keys), app.WithConfig(cfg))
+	m := app.New(client, app.WithTheme(theme), app.WithKeyMap(keys), app.WithConfig(cfg), app.WithVersion(version))
 	p := tea.NewProgram(m)
 
 	if _, err := p.Run(); err != nil {
