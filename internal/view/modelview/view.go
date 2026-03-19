@@ -7,6 +7,7 @@ import (
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
+	"github.com/charmbracelet/x/ansi"
 
 	"github.com/bschimke95/jara/internal/color"
 	"github.com/bschimke95/jara/internal/model"
@@ -26,7 +27,7 @@ func New(keys ui.KeyMap) *View {
 		table.WithFocused(true),
 		table.WithHeight(10),
 	)
-	at.SetStyles(ui.StyledTable())
+	at.SetStyles(ui.StyledTableHighlightOnly())
 
 	unitCols := units.CompactColumns()
 	ut := table.New(
@@ -96,6 +97,7 @@ func (m *View) KeyHints() []view.KeyHint {
 	return []view.KeyHint{
 		{Key: bk(m.keys.Enter), Desc: "select"},
 		{Key: bk(m.keys.Deploy), Desc: "deploy"},
+		{Key: bk(m.keys.ApplicationsNav), Desc: "apps"},
 		{Key: bk(m.keys.UnitsNav), Desc: "units"},
 		{Key: bk(m.keys.RelationsNav), Desc: "relations"},
 		{Key: bk(m.keys.ScaleUp) + "/" + bk(m.keys.ScaleDown), Desc: "scale"},
@@ -136,6 +138,10 @@ func (m *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	if msg, ok := msg.(tea.KeyPressMsg); ok {
 		switch {
+		case key.Matches(msg, m.keys.ApplicationsNav):
+			return m, func() tea.Msg {
+				return view.NavigateMsg{Target: nav.ApplicationsView}
+			}
 		case key.Matches(msg, m.keys.Deploy):
 			m.deployModal = deploymodal.New("", m.keys, m.charmSuggestions(), m.applicationSuggestions())
 			m.deployModal.SetSize(m.width, m.height)
@@ -196,10 +202,10 @@ func (m *View) View() tea.View {
 func (m *View) renderBackground() string {
 	leftWidth, rightWidth := m.splitWidths()
 
-	leftContent := m.appTable.View()
-	leftBox := ui.BorderBox(
+	leftContent := m.appTableView()
+	leftBox := ui.BorderBoxRawTitle(
 		padToHeight(leftContent, m.height-2),
-		"Applications",
+		m.leftPaneTitle("A", "pplications"),
 		leftWidth,
 	)
 
@@ -222,6 +228,28 @@ func (m *View) renderBackground() string {
 
 	combined := lipgloss.JoinHorizontal(lipgloss.Top, leftBox, rightBox)
 	return combined
+}
+
+func (m *View) appTableView() string {
+	cursor := m.appTable.Cursor()
+	rows := m.appTable.Rows()
+	if cursor >= 0 && cursor < len(rows) {
+		original := rows[cursor]
+		stripped := make(table.Row, len(original))
+		for i, cell := range original {
+			stripped[i] = ansi.Strip(cell)
+		}
+		if len(stripped) > 1 {
+			stripped[1] = color.StatusText(stripped[1])
+		}
+		rows[cursor] = stripped
+		m.appTable.SetRows(rows)
+		defer func() {
+			rows[cursor] = original
+			m.appTable.SetRows(rows)
+		}()
+	}
+	return m.appTable.View()
 }
 
 func (m *View) splitWidths() (int, int) {
@@ -269,6 +297,12 @@ func (m *View) rightPaneTitle(hotkey, rest string) string {
 	}
 	title += " "
 	return title
+}
+
+func (m *View) leftPaneTitle(hotkey, rest string) string {
+	keyStyle := lipgloss.NewStyle().Foreground(color.BorderTitle).Bold(true).Underline(true)
+	textStyle := lipgloss.NewStyle().Foreground(color.BorderTitle).Bold(true)
+	return " " + keyStyle.Render(hotkey) + textStyle.Render(rest) + " "
 }
 
 func (m *View) refreshRightPane() {

@@ -6,6 +6,7 @@ import (
 
 	"charm.land/bubbles/v2/table"
 
+	"github.com/bschimke95/jara/internal/color"
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/ui"
 )
@@ -34,7 +35,7 @@ func applicationRows(apps map[string]model.Application) []table.Row {
 		}
 		result = append(result, table.Row{
 			app.Name,
-			app.Status,
+			color.StatusText(app.Status),
 			app.Charm,
 			app.CharmChannel,
 			fmt.Sprintf("%d", app.CharmRev),

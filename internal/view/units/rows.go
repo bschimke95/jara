@@ -42,8 +42,8 @@ func UnitToCompactRow(u model.Unit) table.Row {
 	} else {
 		name = "  " + u.Name
 	}
-	workload := color.StatusStyle(u.WorkloadStatus).Render(u.WorkloadStatus)
-	agent := color.StatusStyle(u.AgentStatus).Render(u.AgentStatus)
+	workload := color.StatusText(u.WorkloadStatus)
+	agent := color.StatusText(u.AgentStatus)
 	return table.Row{name, workload, agent, u.WorkloadMessage}
 }
 
@@ -66,8 +66,8 @@ func unitToDetailRow(u model.Unit) table.Row {
 	}
 	return table.Row{
 		name,
-		color.StatusStyle(u.WorkloadStatus).Render(u.WorkloadStatus),
-		color.StatusStyle(u.AgentStatus).Render(u.AgentStatus),
+		color.StatusText(u.WorkloadStatus),
+		color.StatusText(u.AgentStatus),
 		u.Machine,
 		u.PublicAddress,
 		ports,

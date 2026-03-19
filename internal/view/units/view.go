@@ -9,6 +9,7 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"github.com/charmbracelet/x/ansi"
 
+	"github.com/bschimke95/jara/internal/color"
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/ui"
@@ -199,6 +200,17 @@ func (u *View) View() tea.View {
 		stripped := make(table.Row, len(original))
 		for i, cell := range original {
 			stripped[i] = ansi.Strip(cell)
+		}
+		if len(stripped) > 0 {
+			if rest, ok := strings.CutPrefix(stripped[0], "★"); ok {
+				stripped[0] = color.ForegroundText(color.HintKey, "★") + rest
+			}
+		}
+		if len(stripped) > 1 {
+			stripped[1] = color.StatusText(stripped[1])
+		}
+		if len(stripped) > 2 {
+			stripped[2] = color.StatusText(stripped[2])
 		}
 		rows[cursor] = stripped
 		u.table.SetRows(rows)

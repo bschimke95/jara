@@ -1,6 +1,7 @@
 package color
 
 import (
+	"fmt"
 	"image/color"
 
 	"charm.land/lipgloss/v2"
@@ -38,6 +39,22 @@ func StatusColor(status string) color.Color {
 // StatusStyle returns a lipgloss style with the foreground set to the status color.
 func StatusStyle(status string) lipgloss.Style {
 	return lipgloss.NewStyle().Foreground(StatusColor(status))
+}
+
+// ForegroundText renders text with only a foreground color sequence and a
+// foreground-only reset. This preserves any outer background highlight.
+func ForegroundText(c color.Color, text string) string {
+	if c == nil || text == "" {
+		return text
+	}
+	r, g, b, _ := c.RGBA()
+	return fmt.Sprintf("\x1b[38;2;%d;%d;%dm%s\x1b[39m", r>>8, g>>8, b>>8, text)
+}
+
+// StatusText renders a Juju status string with its semantic foreground color
+// while preserving any parent-applied background style.
+func StatusText(status string) string {
+	return ForegroundText(StatusColor(status), status)
 }
 
 // Theme colors — k9s-inspired dark blue scheme.

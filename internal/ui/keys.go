@@ -6,35 +6,36 @@ import (
 
 // KeyMap defines the global keybindings for jara.
 type KeyMap struct {
-	Quit         key.Binding
-	Help         key.Binding
-	Back         key.Binding
-	Enter        key.Binding
-	Command      key.Binding
-	Filter       key.Binding
-	Up           key.Binding
-	Down         key.Binding
-	PageUp       key.Binding
-	PageDown     key.Binding
-	Top          key.Binding
-	Bottom       key.Binding
-	CancelInput  key.Binding
-	Tab          key.Binding
-	ScaleUp      key.Binding
-	ScaleDown    key.Binding
-	Deploy       key.Binding // D: deploy a new application charm
-	LogsJump     key.Binding // Shift+L: jump to logs with entity pre-filter
-	LogsView     key.Binding // l: open logs keeping current filter
-	ClearFilter  key.Binding // Shift+D: clear active log filter
-	SearchOpen   key.Binding // /: open inline search (debug-log)
-	SearchNext   key.Binding // n: next search match
-	SearchPrev   key.Binding // N: previous search match
-	FilterOpen   key.Binding // Shift+F: open filter modal (debug-log)
-	UnitsNav     key.Binding // Shift+U: navigate to units view
-	RelationsNav key.Binding // Shift+R: navigate to relations view
-	ApplyFilter  key.Binding // Shift+F: apply filter in modal
-	Right        key.Binding // l/right: move right in modal
-	Left         key.Binding // h/left: move left in modal
+	Quit            key.Binding
+	Help            key.Binding
+	Back            key.Binding
+	Enter           key.Binding
+	Command         key.Binding
+	Filter          key.Binding
+	Up              key.Binding
+	Down            key.Binding
+	PageUp          key.Binding
+	PageDown        key.Binding
+	Top             key.Binding
+	Bottom          key.Binding
+	CancelInput     key.Binding
+	Tab             key.Binding
+	ScaleUp         key.Binding
+	ScaleDown       key.Binding
+	Deploy          key.Binding // D: deploy a new application charm
+	LogsJump        key.Binding // Shift+L: jump to logs with entity pre-filter
+	LogsView        key.Binding // l: open logs keeping current filter
+	ClearFilter     key.Binding // Shift+D: clear active log filter
+	SearchOpen      key.Binding // /: open inline search (debug-log)
+	SearchNext      key.Binding // n: next search match
+	SearchPrev      key.Binding // N: previous search match
+	FilterOpen      key.Binding // Shift+F: open filter modal (debug-log)
+	UnitsNav        key.Binding // Shift+U: navigate to units view
+	ApplicationsNav key.Binding // Shift+A: navigate to applications view
+	RelationsNav    key.Binding // Shift+R: navigate to relations view
+	ApplyFilter     key.Binding // Shift+F: apply filter in modal
+	Right           key.Binding // l/right: move right in modal
+	Left            key.Binding // h/left: move left in modal
 }
 
 // DefaultKeyMap returns the default vim-style keybindings.
@@ -139,6 +140,10 @@ func DefaultKeyMap() KeyMap {
 		UnitsNav: key.NewBinding(
 			key.WithKeys("U"),
 			key.WithHelp("U", "units"),
+		),
+		ApplicationsNav: key.NewBinding(
+			key.WithKeys("A"),
+			key.WithHelp("A", "applications"),
 		),
 		RelationsNav: key.NewBinding(
 			key.WithKeys("R"),
