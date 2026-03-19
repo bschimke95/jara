@@ -26,4 +26,6 @@ type View struct {
 	deployModal     deploymodal.Modal
 
 	charmhubSuggestions []string
+
+	selectModelFn func(name string) error
 }

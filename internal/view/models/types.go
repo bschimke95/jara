@@ -2,6 +2,7 @@ package models
 
 import (
 	"charm.land/bubbles/v2/table"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/ui"
@@ -14,9 +15,12 @@ type UpdatedMsg struct {
 
 // View is the Bubble Tea model for the models list view.
 type View struct {
-	table  table.Model
-	keys   ui.KeyMap
-	width  int
-	height int
-	models []model.ModelSummary
+	table              table.Model
+	keys               ui.KeyMap
+	width              int
+	height             int
+	models             []model.ModelSummary
+	pollFn             func(controller string) tea.Cmd
+	selectControllerFn func(name string) error
+	controllerNameFn   func() string
 }

@@ -119,3 +119,6 @@ func (o *View) renderTree() string {
 
 	return t.String()
 }
+
+func (o *View) Enter(_ view.NavigateContext) (tea.Cmd, error) { return nil, nil }
+func (o *View) Leave() tea.Cmd                                { return nil }

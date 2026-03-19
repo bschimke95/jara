@@ -2,6 +2,7 @@ package controllers
 
 import (
 	"charm.land/bubbles/v2/table"
+	tea "charm.land/bubbletea/v2"
 
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/ui"
@@ -19,4 +20,5 @@ type View struct {
 	width       int
 	height      int
 	controllers []model.Controller
+	pollFn      func() tea.Cmd
 }

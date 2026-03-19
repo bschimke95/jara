@@ -13,7 +13,8 @@ import (
 )
 
 // New creates a new models view.
-func New(keys ui.KeyMap) *View {
+// pollFn is called from Enter to fetch data for the given controller.
+func New(keys ui.KeyMap, pollFn func(controller string) tea.Cmd, selectControllerFn func(string) error, controllerNameFn func() string) *View {
 	cols := columns()
 	t := table.New(
 		table.WithColumns(cols),
@@ -21,7 +22,7 @@ func New(keys ui.KeyMap) *View {
 		table.WithHeight(10),
 	)
 	t.SetStyles(ui.StyledTable())
-	return &View{table: t, keys: keys}
+	return &View{table: t, keys: keys, pollFn: pollFn, selectControllerFn: selectControllerFn, controllerNameFn: controllerNameFn}
 }
 
 func (m *View) SetSize(width, height int) {
@@ -75,3 +76,35 @@ func (m *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *View) View() tea.View {
 	return tea.NewView(m.table.View())
 }
+
+func (m *View) Enter(ctx view.NavigateContext) (tea.Cmd, error) {
+	cols := columns()
+	m.table = table.New(
+		table.WithColumns(cols),
+		table.WithFocused(true),
+		table.WithHeight(10),
+	)
+	m.table.SetStyles(ui.StyledTable())
+	if m.width > 0 {
+		m.table.SetWidth(m.width)
+		m.table.SetHeight(m.height)
+		m.table.SetColumns(ui.ScaleColumns(columns(), m.width))
+	}
+	m.models = nil
+
+	controllerName := ctx.Context
+	if controllerName == "" {
+		controllerName = m.controllerNameFn()
+	}
+	if ctx.Context != "" {
+		if err := m.selectControllerFn(ctx.Context); err != nil {
+			return nil, err
+		}
+	}
+	return tea.Batch(
+		func() tea.Msg { return view.StopStatusStreamMsg{} },
+		m.pollFn(controllerName),
+	), nil
+}
+
+func (m *View) Leave() tea.Cmd { return nil }
