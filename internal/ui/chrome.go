@@ -128,7 +128,7 @@ func LogoHeight() int {
 // HeaderContent renders the inner content for the header box:
 // status info on the left (bottom-aligned), key hints in the center (bottom-aligned, 2-column),
 // logo on the right (top-aligned).
-func HeaderContent(controller, modelName, cloud, region string, hints []KeyHint, innerWidth int) string {
+func HeaderContent(controller, modelName, cloud, region, jaraVersion, jujuVersion string, hints []KeyHint, innerWidth int) string {
 	// Logo height determines header height.
 	logoHeight := LogoHeight()
 
@@ -147,6 +147,8 @@ func HeaderContent(controller, modelName, cloud, region string, hints []KeyHint,
 		labelStyle.Render("Controller: ") + valueStyle.Render(controller),
 		labelStyle.Render("Model:      ") + valueStyle.Render(modelName),
 		labelStyle.Render("Cloud:      ") + valueStyle.Render(cloud+"/"+region),
+		labelStyle.Render("Juju:       ") + valueStyle.Render(jujuVersion),
+		labelStyle.Render("Jara:       ") + valueStyle.Render(jaraVersion),
 	}
 
 	// Pad info block at the top to bottom-align (prepend empty lines).

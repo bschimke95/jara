@@ -33,6 +33,8 @@ type Model struct {
 	cfg    *config.Config
 	status *model.FullStatus
 
+	jaraVersion string
+
 	stack *nav.Stack
 	views map[nav.ViewID]view.View
 
@@ -77,6 +79,13 @@ func WithKeyMap(km ui.KeyMap) Option {
 func WithConfig(cfg *config.Config) Option {
 	return func(m *Model) {
 		m.cfg = cfg
+	}
+}
+
+// WithVersion sets the jara version string displayed in the header.
+func WithVersion(v string) Option {
+	return func(m *Model) {
+		m.jaraVersion = v
 	}
 }
 
@@ -306,7 +315,11 @@ func (m Model) View() tea.View {
 		{Key: bk(m.keys.Quit), Desc: "quit"},
 	}
 	hints := append(currentView.KeyHints(), commonHints...)
-	headerInner := ui.HeaderContent(controllerName, modelName, cloud, region, hints, m.width-2)
+	jujuVersion := ""
+	if m.status != nil {
+		jujuVersion = m.status.Model.Version
+	}
+	headerInner := ui.HeaderContent(controllerName, modelName, cloud, region, m.jaraVersion, jujuVersion, hints, m.width-2)
 	sections = append(sections, ui.BorderBox(headerInner, "", m.width))
 
 	// ── Input bar (command/filter mode, between header and body) ──
