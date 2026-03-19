@@ -39,6 +39,18 @@ type DeployRequestMsg struct {
 	Options   model.DeployOptions
 }
 
+// RelateRequestMsg requests adding a relation between two endpoints.
+type RelateRequestMsg struct {
+	EndpointA string
+	EndpointB string
+}
+
+// DestroyRelationRequestMsg requests removing a relation between two endpoints.
+type DestroyRelationRequestMsg struct {
+	EndpointA string
+	EndpointB string
+}
+
 // KeyHint represents a single key-description pair for the header hint bar.
 type KeyHint = ui.KeyHint
 

@@ -446,6 +446,40 @@ func (c *JujuClient) DeployApplication(ctx context.Context, opts model.DeployOpt
 	return nil
 }
 
+// RelateApplications adds a relation between two endpoints using the
+// Application facade's AddRelation call.
+func (c *JujuClient) RelateApplications(ctx context.Context, endpointA, endpointB string) error {
+	conn, err := c.connect(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = conn.Close() }()
+
+	appClient := application.NewClient(conn)
+	_, err = appClient.AddRelation(ctx, []string{endpointA, endpointB}, nil)
+	if err != nil {
+		return fmt.Errorf("adding relation %q <-> %q: %w", endpointA, endpointB, err)
+	}
+	return nil
+}
+
+// DestroyRelation removes a relation between two endpoints using the
+// Application facade's DestroyRelation call.
+func (c *JujuClient) DestroyRelation(ctx context.Context, endpointA, endpointB string) error {
+	conn, err := c.connect(ctx)
+	if err != nil {
+		return err
+	}
+	defer func() { _ = conn.Close() }()
+
+	appClient := application.NewClient(conn)
+	err = appClient.DestroyRelation(ctx, nil, nil, endpointA, endpointB)
+	if err != nil {
+		return fmt.Errorf("removing relation %q <-> %q: %w", endpointA, endpointB, err)
+	}
+	return nil
+}
+
 // DebugLog connects to the controller and streams debug log messages.
 // The returned channel emits log entries until the context is cancelled
 // or the connection is closed.
@@ -656,16 +690,17 @@ func convertModelInfo(m params.ModelStatusInfo) model.ModelInfo {
 // convertApplication maps params.ApplicationStatus to model.Application.
 func convertApplication(name string, a params.ApplicationStatus) model.Application {
 	app := model.Application{
-		Name:            name,
-		Status:          a.Status.Status,
-		StatusMessage:   a.Status.Info,
-		Charm:           a.Charm,
-		CharmChannel:    a.CharmChannel,
-		CharmRev:        a.CharmRev,
-		Scale:           a.Scale,
-		Exposed:         a.Exposed,
-		WorkloadVersion: a.WorkloadVersion,
-		Since:           a.Status.Since,
+		Name:             name,
+		Status:           a.Status.Status,
+		StatusMessage:    a.Status.Info,
+		Charm:            a.Charm,
+		CharmChannel:     a.CharmChannel,
+		CharmRev:         a.CharmRev,
+		Scale:            a.Scale,
+		Exposed:          a.Exposed,
+		WorkloadVersion:  a.WorkloadVersion,
+		Since:            a.Status.Since,
+		EndpointBindings: a.EndpointBindings,
 	}
 
 	// Base: format as "name@channel" if available.
