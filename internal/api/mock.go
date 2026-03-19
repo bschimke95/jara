@@ -283,6 +283,61 @@ func (c *MockClient) CharmhubSuggestions(_ context.Context, query string, limit 
 	return out, nil
 }
 
+// RelateApplications adds a synthetic relation between two endpoints.
+func (c *MockClient) RelateApplications(_ context.Context, endpointA, endpointB string) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	parseEndpoint := func(ep string) (string, string) {
+		if i := strings.IndexByte(ep, ':'); i >= 0 {
+			return ep[:i], ep[i+1:]
+		}
+		return ep, ep
+	}
+
+	appA, nameA := parseEndpoint(endpointA)
+	appB, nameB := parseEndpoint(endpointB)
+
+	if _, ok := c.status.Applications[appA]; !ok {
+		return fmt.Errorf("application %q not found", appA)
+	}
+	if _, ok := c.status.Applications[appB]; !ok {
+		return fmt.Errorf("application %q not found", appB)
+	}
+
+	nextID := len(c.status.Relations) + 1
+	c.status.Relations = append(c.status.Relations, model.Relation{
+		ID:        nextID,
+		Key:       endpointA + " " + endpointB,
+		Interface: nameA,
+		Status:    "joined",
+		Scope:     "global",
+		Endpoints: []model.Endpoint{
+			{ApplicationName: appA, Name: nameA, Role: "provider"},
+			{ApplicationName: appB, Name: nameB, Role: "requirer"},
+		},
+	})
+	return nil
+}
+
+// DestroyRelation removes a relation matching the given endpoints.
+func (c *MockClient) DestroyRelation(_ context.Context, endpointA, endpointB string) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	for i, r := range c.status.Relations {
+		if len(r.Endpoints) >= 2 {
+			e0 := r.Endpoints[0].ApplicationName + ":" + r.Endpoints[0].Name
+			e1 := r.Endpoints[1].ApplicationName + ":" + r.Endpoints[1].Name
+			if (e0 == endpointA && e1 == endpointB) || (e0 == endpointB && e1 == endpointA) {
+				c.status.Relations = append(c.status.Relations[:i], c.status.Relations[i+1:]...)
+				return nil
+			}
+		}
+	}
+	return fmt.Errorf("relation %q <-> %q not found", endpointA, endpointB)
+}
+
 // DebugLog returns a channel of synthetic log entries.
 func (c *MockClient) DebugLog(ctx context.Context, _ model.DebugLogFilter) (<-chan model.LogEntry, error) {
 	ch := make(chan model.LogEntry)
@@ -381,6 +436,7 @@ func (c *MockClient) buildInitialStatus() *model.FullStatus {
 				Charm: "postgresql", CharmChannel: "14/stable", CharmRev: 468,
 				Scale: 3, Exposed: false, WorkloadVersion: "14.12",
 				Base: "ubuntu@22.04", Since: &oneHourAgo,
+				EndpointBindings: map[string]string{"db": "", "db-admin": "", "replication": "", "certificates": "", "monitoring": ""},
 				Units: []model.Unit{
 					{Name: "postgresql/0", WorkloadStatus: "active", WorkloadMessage: "Live master (14.12)", AgentStatus: "idle", Machine: "0", PublicAddress: "10.0.1.10", Ports: []string{"5432/tcp"}, Leader: true, Since: &oneHourAgo},
 					{Name: "postgresql/1", WorkloadStatus: "active", WorkloadMessage: "Live secondary (14.12)", AgentStatus: "idle", Machine: "1", PublicAddress: "10.0.1.11", Ports: []string{"5432/tcp"}, Since: &oneHourAgo},
@@ -392,6 +448,7 @@ func (c *MockClient) buildInitialStatus() *model.FullStatus {
 				Charm: "ubuntu", CharmChannel: "stable", CharmRev: 24,
 				Scale: 2, Exposed: true, WorkloadVersion: "1.0",
 				Base: "ubuntu@22.04", Since: &tenMinAgo,
+				EndpointBindings: map[string]string{"db": "", "ingress": "", "logging": ""},
 				Units: []model.Unit{
 					{Name: "ubuntu-app/0", WorkloadStatus: "active", WorkloadMessage: "Ready", AgentStatus: "idle", Machine: "3", PublicAddress: "10.0.1.20", Ports: []string{"80/tcp", "443/tcp"}, Leader: true, Since: &tenMinAgo},
 					{Name: "ubuntu-app/1", WorkloadStatus: "active", WorkloadMessage: "Ready", AgentStatus: "idle", Machine: "4", PublicAddress: "10.0.1.21", Ports: []string{"80/tcp", "443/tcp"}, Since: &tenMinAgo},
@@ -401,6 +458,7 @@ func (c *MockClient) buildInitialStatus() *model.FullStatus {
 				Name: "grafana", Status: "blocked", StatusMessage: "Missing relation: database",
 				Charm: "grafana-k8s", CharmChannel: "latest/stable", CharmRev: 106,
 				Scale: 1, Exposed: false, Base: "ubuntu@22.04", Since: &fiveMinAgo,
+				EndpointBindings: map[string]string{"grafana-source": "", "database": "", "ingress": ""},
 				Units: []model.Unit{
 					{Name: "grafana/0", WorkloadStatus: "blocked", WorkloadMessage: "Missing relation: database", AgentStatus: "idle", Machine: "5", PublicAddress: "10.0.1.30", Leader: true, Since: &fiveMinAgo},
 				},
@@ -410,6 +468,7 @@ func (c *MockClient) buildInitialStatus() *model.FullStatus {
 				Charm: "prometheus-k8s", CharmChannel: "latest/stable", CharmRev: 171,
 				Scale: 1, Exposed: false, WorkloadVersion: "2.47.0",
 				Base: "ubuntu@22.04", Since: &fiveMinAgo,
+				EndpointBindings: map[string]string{"grafana-source": "", "metrics-endpoint": "", "ingress": ""},
 				Units: []model.Unit{
 					{Name: "prometheus/0", WorkloadStatus: "waiting", WorkloadMessage: "Waiting for relations", AgentStatus: "idle", Machine: "6", PublicAddress: "10.0.1.40", Ports: []string{"9090/tcp"}, Leader: true, Since: &fiveMinAgo},
 				},
@@ -419,6 +478,7 @@ func (c *MockClient) buildInitialStatus() *model.FullStatus {
 				Charm: "nginx-ingress-integrator", CharmChannel: "latest/stable", CharmRev: 95,
 				Scale: 1, Exposed: true, WorkloadVersion: "1.9.0",
 				Base: "ubuntu@22.04", Since: &oneHourAgo,
+				EndpointBindings: map[string]string{"ingress": "", "ingress-proxy": ""},
 				Units: []model.Unit{
 					{Name: "nginx-ingress/0", WorkloadStatus: "active", WorkloadMessage: "Ingress ready", AgentStatus: "idle", Machine: "7", PublicAddress: "10.0.1.50", Ports: []string{"80/tcp", "443/tcp"}, Leader: true, Since: &oneHourAgo},
 				},

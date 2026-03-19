@@ -263,6 +263,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case view.DeployRequestMsg:
 		return m, m.deployApplication(msg.ModelName, msg.Options)
 
+	case view.RelateRequestMsg:
+		return m, m.relateApplications(msg.EndpointA, msg.EndpointB)
+
+	case view.DestroyRelationRequestMsg:
+		return m, m.destroyRelation(msg.EndpointA, msg.EndpointB)
+
 	case debuglog.FilterChangedMsg:
 		return m, m.startDebugLogStream(msg.Filter)
 	}

@@ -178,3 +178,39 @@ func (m Model) deployApplication(modelName string, opts model.DeployOptions) tea
 		return nil
 	}
 }
+
+// relateApplications returns a Cmd that creates a relation between two endpoints.
+func (m Model) relateApplications(endpointA, endpointB string) tea.Cmd {
+	return func() tea.Msg {
+		if m.cfg != nil && m.cfg.Jara.ReadOnly {
+			return errMsg{fmt.Errorf("write operations are disabled in read-only mode")}
+		}
+		if strings.TrimSpace(endpointA) == "" || strings.TrimSpace(endpointB) == "" {
+			return errMsg{fmt.Errorf("both endpoints are required for a relation")}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		if err := m.client.RelateApplications(ctx, endpointA, endpointB); err != nil {
+			return errMsg{err}
+		}
+		return nil
+	}
+}
+
+// destroyRelation returns a Cmd that removes a relation between two endpoints.
+func (m Model) destroyRelation(endpointA, endpointB string) tea.Cmd {
+	return func() tea.Msg {
+		if m.cfg != nil && m.cfg.Jara.ReadOnly {
+			return errMsg{fmt.Errorf("write operations are disabled in read-only mode")}
+		}
+		if strings.TrimSpace(endpointA) == "" || strings.TrimSpace(endpointB) == "" {
+			return errMsg{fmt.Errorf("both endpoints are required to remove a relation")}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		if err := m.client.DestroyRelation(ctx, endpointA, endpointB); err != nil {
+			return errMsg{err}
+		}
+		return nil
+	}
+}

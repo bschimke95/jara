@@ -23,6 +23,8 @@ type KeyMap struct {
 	ScaleUp         key.Binding
 	ScaleDown       key.Binding
 	Deploy          key.Binding // D: deploy a new application charm
+	Relate          key.Binding // r: add a relation between applications
+	DeleteRelation  key.Binding // D: remove a relation
 	LogsJump        key.Binding // Shift+L: jump to logs with entity pre-filter
 	LogsView        key.Binding // l: open logs keeping current filter
 	ClearFilter     key.Binding // Shift+D: clear active log filter
@@ -108,6 +110,14 @@ func DefaultKeyMap() KeyMap {
 		Deploy: key.NewBinding(
 			key.WithKeys("D"),
 			key.WithHelp("D", "deploy"),
+		),
+		Relate: key.NewBinding(
+			key.WithKeys("r"),
+			key.WithHelp("r", "relate"),
+		),
+		DeleteRelation: key.NewBinding(
+			key.WithKeys("D"),
+			key.WithHelp("D", "delete relation"),
 		),
 		LogsJump: key.NewBinding(
 			key.WithKeys("L"),

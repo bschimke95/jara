@@ -15,6 +15,7 @@ import (
 	"github.com/bschimke95/jara/internal/ui"
 	"github.com/bschimke95/jara/internal/view"
 	"github.com/bschimke95/jara/internal/view/deploymodal"
+	"github.com/bschimke95/jara/internal/view/relatemodal"
 	"github.com/bschimke95/jara/internal/view/relations"
 	"github.com/bschimke95/jara/internal/view/units"
 )
@@ -98,6 +99,7 @@ func (m *View) KeyHints() []view.KeyHint {
 	return []view.KeyHint{
 		{Key: bk(m.keys.Enter), Desc: "select"},
 		{Key: bk(m.keys.Deploy), Desc: "deploy"},
+		{Key: bk(m.keys.Relate), Desc: "relate"},
 		{Key: bk(m.keys.ApplicationsNav), Desc: "apps"},
 		{Key: bk(m.keys.UnitsNav), Desc: "units"},
 		{Key: bk(m.keys.RelationsNav), Desc: "relations"},
@@ -133,6 +135,25 @@ func (m *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
+	if m.relateModalOpen {
+		switch msg := msg.(type) {
+		case relatemodal.AppliedMsg:
+			m.relateModalOpen = false
+			return m, func() tea.Msg {
+				return view.RelateRequestMsg{EndpointA: msg.EndpointA, EndpointB: msg.EndpointB}
+			}
+		case relatemodal.ClosedMsg:
+			m.relateModalOpen = false
+			return m, nil
+		default:
+			updated, cmd := m.relateModal.Update(msg)
+			if rm, ok := updated.(*relatemodal.Modal); ok {
+				m.relateModal = *rm
+			}
+			return m, cmd
+		}
+	}
+
 	if _, ok := msg.(NoModelMsg); ok {
 		return m, func() tea.Msg { return view.GoBackMsg{} }
 	}
@@ -148,6 +169,16 @@ func (m *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.deployModal.SetSize(m.width, m.height)
 			m.deployModalOpen = true
 			return m, m.deployModal.BeginCharmEdit()
+		case key.Matches(msg, m.keys.Relate):
+			suggestions := relatemodal.BuildSuggestions(m.status)
+			var rels []model.Relation
+			if m.status != nil {
+				rels = m.status.Relations
+			}
+			m.relateModal = relatemodal.New(m.keys, suggestions, rels, m.selectedApp)
+			m.relateModal.SetSize(m.width, m.height)
+			m.relateModalOpen = true
+			return m, m.relateModal.BeginEdit()
 		case key.Matches(msg, m.keys.UnitsNav):
 			return m, func() tea.Msg {
 				return view.NavigateMsg{Target: nav.UnitsView, Context: m.selectedApp}
@@ -196,6 +227,9 @@ func (m *View) View() tea.View {
 	background := m.renderBackground()
 	if m.deployModalOpen {
 		return tea.NewView(m.deployModal.Render(background))
+	}
+	if m.relateModalOpen {
+		return tea.NewView(m.relateModal.Render(background))
 	}
 	return tea.NewView(background)
 }
