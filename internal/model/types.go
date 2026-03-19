@@ -41,18 +41,19 @@ type ModelInfo struct {
 
 // Application represents a deployed Juju application.
 type Application struct {
-	Name            string
-	Status          string
-	StatusMessage   string
-	Charm           string
-	CharmChannel    string
-	CharmRev        int
-	Scale           int
-	Exposed         bool
-	WorkloadVersion string
-	Base            string
-	Since           *time.Time
-	Units           []Unit
+	Name             string
+	Status           string
+	StatusMessage    string
+	Charm            string
+	CharmChannel     string
+	CharmRev         int
+	Scale            int
+	Exposed          bool
+	WorkloadVersion  string
+	Base             string
+	Since            *time.Time
+	Units            []Unit
+	EndpointBindings map[string]string // endpoint name → space binding
 }
 
 // Unit represents a single unit of a Juju application.

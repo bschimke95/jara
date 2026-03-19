@@ -6,6 +6,7 @@ import (
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/ui"
 	"github.com/bschimke95/jara/internal/view/deploymodal"
+	"github.com/bschimke95/jara/internal/view/relatemodal"
 )
 
 // View is the split-pane model overview.
@@ -24,6 +25,9 @@ type View struct {
 
 	deployModalOpen bool
 	deployModal     deploymodal.Modal
+
+	relateModalOpen bool
+	relateModal     relatemodal.Modal
 
 	charmhubSuggestions []string
 

@@ -185,6 +185,8 @@ type KeysConfig struct {
 	ScaleUp         *KeyBindingConfig `yaml:"scaleUp,omitempty"`
 	ScaleDown       *KeyBindingConfig `yaml:"scaleDown,omitempty"`
 	Deploy          *KeyBindingConfig `yaml:"deploy,omitempty"`
+	Relate          *KeyBindingConfig `yaml:"relate,omitempty"`
+	DeleteRelation  *KeyBindingConfig `yaml:"deleteRelation,omitempty"`
 	LogsJump        *KeyBindingConfig `yaml:"logsJump,omitempty"`
 	LogsView        *KeyBindingConfig `yaml:"logsView,omitempty"`
 	ClearFilter     *KeyBindingConfig `yaml:"clearFilter,omitempty"`

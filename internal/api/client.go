@@ -26,6 +26,11 @@ type Client interface {
 	ScaleApplication(ctx context.Context, appName string, delta int) error
 	// DeployApplication deploys a charm with deploy options in the current model.
 	DeployApplication(ctx context.Context, opts model.DeployOptions) error
+	// RelateApplications adds a relation between two endpoints.
+	// Each endpoint is either "appName" or "appName:endpointName".
+	RelateApplications(ctx context.Context, endpointA, endpointB string) error
+	// DestroyRelation removes a relation between two endpoints.
+	DestroyRelation(ctx context.Context, endpointA, endpointB string) error
 	// CharmhubSuggestions returns charm names from Charmhub for autocomplete.
 	CharmhubSuggestions(ctx context.Context, query string, limit int) ([]string, error)
 	// SelectController switches the client to target a different controller.
