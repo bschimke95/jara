@@ -30,6 +30,7 @@ type View struct {
 	relateModal     relatemodal.Modal
 
 	charmhubSuggestions []string
+	charmEndpoints      map[string]map[string]model.CharmEndpoint
 
 	selectModelFn func(name string) error
 }

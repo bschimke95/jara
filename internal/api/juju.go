@@ -173,6 +173,73 @@ func (c *JujuClient) CharmhubSuggestions(ctx context.Context, query string, limi
 	return out, nil
 }
 
+// charmhubInfoResponse mirrors the Charmhub /v2/charms/info response for
+// the relations field.
+type charmhubInfoResponse struct {
+	Result struct {
+		Relations struct {
+			Provides map[string]charmhubRelation `json:"provides"`
+			Requires map[string]charmhubRelation `json:"requires"`
+			Peers    map[string]charmhubRelation `json:"peers"`
+		} `json:"relations"`
+	} `json:"result"`
+}
+
+type charmhubRelation struct {
+	Interface   string `json:"interface"`
+	Description string `json:"description"`
+}
+
+// CharmRelationInfo queries Charmhub for a charm's endpoint metadata.
+func (c *JujuClient) CharmRelationInfo(ctx context.Context, charmName string) (map[string]model.CharmEndpoint, error) {
+	baseURL := strings.TrimRight(strings.TrimSpace(c.charmhubURL), "/")
+	if baseURL == "" {
+		return nil, fmt.Errorf("charmhub URL is empty")
+	}
+
+	endpoint, err := url.Parse(baseURL + "/v2/charms/info/" + url.PathEscape(charmName))
+	if err != nil {
+		return nil, fmt.Errorf("parsing charmhub URL: %w", err)
+	}
+	params := endpoint.Query()
+	params.Set("fields", "result.relations")
+	endpoint.RawQuery = params.Encode()
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, endpoint.String(), nil)
+	if err != nil {
+		return nil, fmt.Errorf("building charmhub info request: %w", err)
+	}
+	req.Header.Set("Accept", "application/json")
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("querying charmhub info: %w", err)
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
+		return nil, fmt.Errorf("charmhub info returned %s: %s", resp.Status, strings.TrimSpace(string(body)))
+	}
+
+	var payload charmhubInfoResponse
+	if err := json.NewDecoder(resp.Body).Decode(&payload); err != nil {
+		return nil, fmt.Errorf("decoding charmhub info: %w", err)
+	}
+
+	result := make(map[string]model.CharmEndpoint)
+	for name, r := range payload.Result.Relations.Provides {
+		result[name] = model.CharmEndpoint{Interface: r.Interface, Role: "provider", Description: r.Description}
+	}
+	for name, r := range payload.Result.Relations.Requires {
+		result[name] = model.CharmEndpoint{Interface: r.Interface, Role: "requirer", Description: r.Description}
+	}
+	for name, r := range payload.Result.Relations.Peers {
+		result[name] = model.CharmEndpoint{Interface: r.Interface, Role: "peer", Description: r.Description}
+	}
+	return result, nil
+}
+
 // Close closes any open API connections.
 func (c *JujuClient) Close() error {
 	if c.conn != nil {
