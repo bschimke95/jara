@@ -21,6 +21,10 @@ const (
 
 	// DefaultLogLevel is the default log level.
 	DefaultLogLevel = "info"
+
+	// DefaultCharmhubURL is the default Charmhub API base URL used for
+	// autocomplete suggestions in deploy modal.
+	DefaultCharmhubURL = "https://api.charmhub.io"
 )
 
 // Config is the top-level configuration for jara.
@@ -47,6 +51,9 @@ type JaraConfig struct {
 
 	// ReadOnly disables write operations when true.
 	ReadOnly bool `yaml:"readOnly,omitempty"`
+
+	// CharmhubURL is the base URL for Charmhub API requests.
+	CharmhubURL string `yaml:"charmhubURL,omitempty"`
 
 	// UI holds the theme and key binding configuration.
 	UI UIConfig `yaml:"ui,omitempty"`
@@ -177,6 +184,7 @@ type KeysConfig struct {
 	Tab          *KeyBindingConfig `yaml:"tab,omitempty"`
 	ScaleUp      *KeyBindingConfig `yaml:"scaleUp,omitempty"`
 	ScaleDown    *KeyBindingConfig `yaml:"scaleDown,omitempty"`
+	Deploy       *KeyBindingConfig `yaml:"deploy,omitempty"`
 	LogsJump     *KeyBindingConfig `yaml:"logsJump,omitempty"`
 	LogsView     *KeyBindingConfig `yaml:"logsView,omitempty"`
 	ClearFilter  *KeyBindingConfig `yaml:"clearFilter,omitempty"`
@@ -197,6 +205,7 @@ func NewDefault() *Config {
 		Jara: JaraConfig{
 			RefreshRate: DefaultRefreshRate,
 			LogLevel:    DefaultLogLevel,
+			CharmhubURL: DefaultCharmhubURL,
 		},
 	}
 }
@@ -222,6 +231,9 @@ func (c *Config) Load(path string) error {
 	}
 	if c.Jara.LogLevel == "" {
 		c.Jara.LogLevel = DefaultLogLevel
+	}
+	if c.Jara.CharmhubURL == "" {
+		c.Jara.CharmhubURL = DefaultCharmhubURL
 	}
 
 	return nil

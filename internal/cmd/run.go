@@ -45,7 +45,7 @@ func run(_ *cobra.Command, _ []string) error {
 	keys := config.ResolveKeyMap(cfg.Jara.UI.Keys)
 
 	// 5. Connect to Juju.
-	client, err := api.NewJujuClient()
+	client, err := api.NewJujuClient(api.WithCharmhubURL(cfg.Jara.CharmhubURL))
 	if err != nil {
 		return fmt.Errorf("creating Juju client: %w", err)
 	}

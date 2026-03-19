@@ -149,3 +149,16 @@ type FullStatus struct {
 	Relations    []Relation
 	FetchedAt    time.Time
 }
+
+// DeployOptions captures supported Juju deploy settings collected from the UI.
+type DeployOptions struct {
+	CharmName       string
+	ApplicationName string
+	Channel         string
+	Base            string
+	Constraints     string
+	Config          map[string]string
+	NumUnits        *int
+	Revision        *int
+	Trust           bool
+}

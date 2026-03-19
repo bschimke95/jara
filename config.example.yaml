@@ -23,6 +23,9 @@ jara:
   # Disable write operations (scale, etc.).
   # readOnly: false
 
+  # Charmhub API base URL for deploy modal charm suggestions.
+  # charmhubURL: https://api.charmhub.io
+
   ui:
     # Skin / color theme — k9s-inspired dark blue scheme.
     # All values are hex color strings (e.g. "#00bfff").
