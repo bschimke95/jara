@@ -27,11 +27,12 @@ type ClosedMsg struct{}
 
 // endpointSuggestion carries structured autocomplete data.
 type endpointSuggestion struct {
-	Display   string // "mysql:db" or "mysql"
-	App       string // "mysql"
-	Endpoint  string // "db" (empty for app-only)
-	Interface string // "mysql"
-	Role      string // "provider", "requirer", "peer"
+	Display     string // "mysql:db" or "mysql"
+	App         string // "mysql"
+	Endpoint    string // "db" (empty for app-only)
+	Interface   string // "mysql"
+	Role        string // "provider", "requirer", "peer"
+	Description string // from Charmhub metadata
 }
 
 type fieldFocus int
@@ -39,13 +40,6 @@ type fieldFocus int
 const (
 	focusEndpointA fieldFocus = iota
 	focusEndpointB
-)
-
-type infoMode int
-
-const (
-	infoOff infoMode = iota
-	infoOn
 )
 
 // Modal is the relate-applications overlay.
@@ -56,7 +50,6 @@ type Modal struct {
 
 	focus   fieldFocus
 	editing bool
-	info    infoMode
 
 	input textinput.Model
 
@@ -94,8 +87,8 @@ func New(keys ui.KeyMap, suggestions []endpointSuggestion, relations []model.Rel
 
 // BuildSuggestions constructs endpoint suggestions from the current status.
 // It uses EndpointBindings (all charm endpoints) as the primary source and
-// enriches with interface/role info from active relations where available.
-func BuildSuggestions(status *model.FullStatus) []endpointSuggestion {
+// enriches with interface/role/description from Charmhub and active relations.
+func BuildSuggestions(status *model.FullStatus, charmEndpoints map[string]map[string]model.CharmEndpoint) []endpointSuggestion {
 	if status == nil {
 		return nil
 	}
@@ -122,14 +115,32 @@ func BuildSuggestions(status *model.FullStatus) []endpointSuggestion {
 			App:     name,
 		})
 
+		// Charmhub endpoint metadata for this app's charm.
+		var charmEPs map[string]model.CharmEndpoint
+		if charmEndpoints != nil {
+			charmEPs = charmEndpoints[app.Charm]
+		}
+
 		// One suggestion per endpoint from bindings.
 		for epName := range app.EndpointBindings {
+			// Skip empty endpoint names and endpoints whose name matches
+			// the app name — the bare app suggestion already covers that.
+			if epName == "" || epName == name {
+				continue
+			}
 			key := name + ":" + epName
 			s := endpointSuggestion{
 				Display:  key,
 				App:      name,
 				Endpoint: epName,
 			}
+			// Enrich from Charmhub metadata first.
+			if ce, ok := charmEPs[epName]; ok {
+				s.Interface = ce.Interface
+				s.Role = ce.Role
+				s.Description = ce.Description
+			}
+			// Override interface/role from active relations (more accurate for live state).
 			if ri, ok := relLookup[key]; ok {
 				s.Interface = ri.iface
 				s.Role = ri.role
@@ -167,14 +178,6 @@ func (m *Modal) View() tea.View {
 func (m *Modal) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	kp, isKey := msg.(tea.KeyPressMsg)
 
-	// Info mode: any key dismisses.
-	if m.info == infoOn {
-		if isKey {
-			m.info = infoOff
-		}
-		return m, nil
-	}
-
 	if m.editing {
 		if isKey {
 			switch {
@@ -208,11 +211,6 @@ func (m *Modal) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.autocompleteIndex = 0
 				m.input.Blur()
 				return m, nil
-			case kp.String() == "i":
-				if len(m.autocomplete) > 0 {
-					m.info = infoOn
-					return m, nil
-				}
 			}
 		}
 		var cmd tea.Cmd
@@ -233,8 +231,6 @@ func (m *Modal) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.switchFocus()
 		return m, nil
 	case key.Matches(kp, m.keys.Enter):
-		return m, m.BeginEdit()
-	case kp.String() == "i":
 		return m, m.BeginEdit()
 	}
 	return m, nil
@@ -428,10 +424,6 @@ func (m *Modal) renderField(value string, field fieldFocus, _ int, valueStyle li
 }
 
 func (m *Modal) renderDropdown(width int) []string {
-	if m.info == infoOn {
-		return m.renderInfoBox(width)
-	}
-
 	if len(m.autocomplete) == 0 {
 		return nil
 	}
@@ -440,12 +432,23 @@ func (m *Modal) renderDropdown(width int) []string {
 	itemStyle := lipgloss.NewStyle().Foreground(color.Title)
 	roleStyle := lipgloss.NewStyle().Foreground(color.Muted)
 
-	var lines []string
-	limit := len(m.autocomplete)
-	if limit > 8 {
-		limit = 8
+	maxVisible := 8
+	total := len(m.autocomplete)
+	if maxVisible > total {
+		maxVisible = total
 	}
-	for i := 0; i < limit; i++ {
+
+	// Window around the selected index.
+	start := m.autocompleteIndex - maxVisible/2
+	if start < 0 {
+		start = 0
+	}
+	if start+maxVisible > total {
+		start = total - maxVisible
+	}
+
+	var lines []string
+	for i := start; i < start+maxVisible; i++ {
 		s := m.autocomplete[i]
 		name := truncate(s.Display, width-14)
 		role := ""
@@ -469,84 +472,11 @@ func (m *Modal) renderDropdown(width int) []string {
 	return lines
 }
 
-func (m *Modal) renderInfoBox(width int) []string {
-	if len(m.autocomplete) == 0 || m.autocompleteIndex >= len(m.autocomplete) {
-		return nil
-	}
-
-	sel := m.autocomplete[m.autocompleteIndex]
-	labelStyle := lipgloss.NewStyle().Foreground(color.InfoLabel)
-	valueStyle := lipgloss.NewStyle().Foreground(color.Title)
-	mutedStyle := lipgloss.NewStyle().Foreground(color.Muted)
-
-	var lines []string
-
-	if sel.Endpoint == "" {
-		// App-only suggestion: show all endpoints for this app.
-		lines = append(lines, labelStyle.Render("  Endpoints for ")+valueStyle.Render(sel.App)+labelStyle.Render(":"))
-		for _, s := range m.suggestions {
-			if s.App == sel.App && s.Endpoint != "" {
-				role := ""
-				if s.Role != "" {
-					role = " (" + s.Role + ")"
-				}
-				lines = append(lines, "    "+valueStyle.Render(s.Display)+mutedStyle.Render(role))
-			}
-		}
-		if len(lines) == 1 {
-			lines = append(lines, mutedStyle.Render("    (no known endpoints)"))
-		}
-	} else {
-		// Specific endpoint info.
-		lines = append(lines, labelStyle.Render("  Interface:  ")+valueStyle.Render(sel.Interface))
-		lines = append(lines, labelStyle.Render("  Role:       ")+valueStyle.Render(sel.Role))
-
-		// Find scope from relations.
-		for _, rel := range m.relations {
-			for _, ep := range rel.Endpoints {
-				if ep.ApplicationName == sel.App && ep.Name == sel.Endpoint {
-					lines = append(lines, labelStyle.Render("  Scope:      ")+valueStyle.Render(rel.Scope))
-					break
-				}
-			}
-			if len(lines) > 2 {
-				break
-			}
-		}
-
-		// Active relations for this endpoint.
-		lines = append(lines, "")
-		lines = append(lines, labelStyle.Render("  Active relations:"))
-		found := false
-		for _, rel := range m.relations {
-			for _, ep := range rel.Endpoints {
-				if ep.ApplicationName == sel.App && ep.Name == sel.Endpoint {
-					for _, peer := range rel.Endpoints {
-						if peer.ApplicationName != sel.App || peer.Name != sel.Endpoint {
-							peerStr := peer.ApplicationName + ":" + peer.Name
-							lines = append(lines, "    → "+valueStyle.Render(peerStr)+mutedStyle.Render(" ("+rel.Status+")"))
-							found = true
-						}
-					}
-				}
-			}
-		}
-		if !found {
-			lines = append(lines, mutedStyle.Render("    (none)"))
-		}
-	}
-
-	// Pad to at least fill the dropdown area.
-	_ = width
-	return lines
-}
-
 func (m *Modal) renderFooter() string {
 	keyStyle := lipgloss.NewStyle().Foreground(color.HintKey).Bold(true)
 	descStyle := lipgloss.NewStyle().Foreground(color.HintDesc)
 	parts := []string{
 		keyStyle.Render("Tab") + descStyle.Render(" next"),
-		keyStyle.Render("i") + descStyle.Render(" info"),
 		keyStyle.Render("Enter") + descStyle.Render(" relate"),
 		keyStyle.Render("Esc") + descStyle.Render(" close"),
 	}
