@@ -5,7 +5,9 @@ import (
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
+	"github.com/charmbracelet/x/ansi"
 
+	"github.com/bschimke95/jara/internal/color"
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/ui"
@@ -21,7 +23,7 @@ func New(keys ui.KeyMap) *View {
 		table.WithFocused(true),
 		table.WithHeight(10),
 	)
-	t.SetStyles(ui.StyledTable())
+	t.SetStyles(ui.StyledTableHighlightOnly())
 	return &View{table: t, keys: keys}
 }
 
@@ -116,11 +118,33 @@ func (a *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (a *View) View() tea.View {
-	background := a.table.View()
+	background := a.tableView()
 	if a.deployModalOpen {
 		return tea.NewView(a.deployModal.Render(background))
 	}
 	return tea.NewView(background)
+}
+
+func (a *View) tableView() string {
+	cursor := a.table.Cursor()
+	rows := a.table.Rows()
+	if cursor >= 0 && cursor < len(rows) {
+		original := rows[cursor]
+		stripped := make(table.Row, len(original))
+		for i, cell := range original {
+			stripped[i] = ansi.Strip(cell)
+		}
+		if len(stripped) > 1 {
+			stripped[1] = color.StatusText(stripped[1])
+		}
+		rows[cursor] = stripped
+		a.table.SetRows(rows)
+		defer func() {
+			rows[cursor] = original
+			a.table.SetRows(rows)
+		}()
+	}
+	return a.table.View()
 }
 
 func (a *View) charmSuggestions() []string {
