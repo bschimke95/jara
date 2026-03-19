@@ -20,7 +20,7 @@ import (
 )
 
 // New creates a new model overview.
-func New(keys ui.KeyMap) *View {
+func New(keys ui.KeyMap, selectModelFn func(string) error) *View {
 	appCols := applicationColumns()
 	at := table.New(
 		table.WithColumns(appCols),
@@ -51,6 +51,7 @@ func New(keys ui.KeyMap) *View {
 		relationTable: rt,
 		keys:          keys,
 		pendingScale:  make(map[string]int),
+		selectModelFn: selectModelFn,
 	}
 }
 
@@ -365,4 +366,21 @@ func (m *View) applicationSuggestions() []string {
 		out = append(out, name)
 	}
 	return out
+}
+
+func (m *View) Enter(ctx view.NavigateContext) (tea.Cmd, error) {
+	if ctx.Context != "" {
+		if err := m.selectModelFn(ctx.Context); err != nil {
+			return nil, err
+		}
+		return tea.Batch(
+			func() tea.Msg { return view.ClearStatusMsg{} },
+			func() tea.Msg { return view.StartStatusStreamMsg{} },
+		), nil
+	}
+	return nil, nil
+}
+
+func (m *View) Leave() tea.Cmd {
+	return func() tea.Msg { return view.StopStatusStreamMsg{} }
 }

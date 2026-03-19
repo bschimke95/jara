@@ -221,3 +221,26 @@ func (u *View) View() tea.View {
 	}
 	return tea.NewView(u.table.View())
 }
+
+func (u *View) Enter(ctx view.NavigateContext) (tea.Cmd, error) {
+	u.appName = ctx.Context
+	u.pendingScale = make(map[string]int)
+	cols := DetailColumns()
+	u.table = table.New(
+		table.WithColumns(cols),
+		table.WithFocused(true),
+		table.WithHeight(10),
+	)
+	u.table.SetStyles(ui.StyledTableHighlightOnly())
+	if u.width > 0 {
+		u.table.SetWidth(u.width)
+		u.table.SetHeight(u.height)
+		u.table.SetColumns(ui.ScaleColumns(DetailColumns(), u.width))
+	}
+	if u.status != nil {
+		u.rebuildRows()
+	}
+	return nil, nil
+}
+
+func (u *View) Leave() tea.Cmd { return nil }

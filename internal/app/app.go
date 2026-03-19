@@ -102,9 +102,6 @@ func New(client api.Client, opts ...Option) Model {
 		cfg:    config.NewDefault(),
 		stack:  nav.NewStack(nav.ModelView),
 		views: map[nav.ViewID]view.View{
-			nav.ControllerView:   controllers.New(keys),
-			nav.ModelsView:       models.New(keys),
-			nav.ModelView:        modelview.New(keys),
 			nav.ApplicationsView: applications.New(keys),
 			nav.UnitsView:        units.New("", keys),
 			nav.MachinesView:     machines.New(keys),
@@ -115,6 +112,16 @@ func New(client api.Client, opts ...Option) Model {
 		input: ti,
 		mode:  modeNormal,
 	}
+
+	m.views[nav.ControllerView] = controllers.New(keys, func() tea.Cmd { return m.pollControllers() })
+	m.views[nav.ModelsView] = models.New(keys,
+		func(ctrl string) tea.Cmd { return m.pollModels(ctrl) },
+		func(name string) error { return m.client.SelectController(name) },
+		func() string { return m.client.ControllerName() },
+	)
+	m.views[nav.ModelView] = modelview.New(keys,
+		func(name string) error { return m.client.SelectModel(name) },
+	)
 
 	for _, opt := range opts {
 		opt(&m)
@@ -139,7 +146,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// ── Infrastructure: stream lifecycle & window management ──
 	// These are internal to the app and never reach views.
 	case startupMsg:
-		return m, tea.Batch(m.startStatusStream(), m.pollControllers(), m.pollCharmhubSuggestions())
+		return m, tea.Batch(m.startStatusStream(), m.pollCharmhubSuggestions())
 
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
@@ -192,6 +199,30 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case errMsg:
 		m.err = msg.err
+		return m, nil
+
+	case view.StopStatusStreamMsg:
+		m.stopStatusStream()
+		return m, nil
+
+	case view.StartStatusStreamMsg:
+		return m, m.startStatusStream()
+
+	case view.StartDebugLogStreamMsg:
+		return m, m.startDebugLogStream(msg.Filter)
+
+	case view.StopDebugLogStreamMsg:
+		m.stopDebugLogStream()
+		return m, nil
+
+	case view.ClearStatusMsg:
+		m.status = nil
+		m.err = nil
+		for _, v := range m.views {
+			if sr, ok := v.(view.StatusReceiver); ok {
+				sr.SetStatus(nil)
+			}
+		}
 		return m, nil
 	}
 

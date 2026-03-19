@@ -3,128 +3,57 @@ package app
 import (
 	tea "charm.land/bubbletea/v2"
 
-	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/view"
-	"github.com/bschimke95/jara/internal/view/debuglog"
-	"github.com/bschimke95/jara/internal/view/models"
-	"github.com/bschimke95/jara/internal/view/units"
 )
 
 func (m Model) handleNavigate(msg view.NavigateMsg) (Model, tea.Cmd) {
-	var cmds []tea.Cmd
-
-	// Navigating to ModelsView: if a controller context is provided, switch to it;
-	// otherwise use the currently active controller. Either way, populate the list.
-	if msg.Target == nav.ModelsView {
-		controllerName := msg.Context
-		if controllerName == "" {
-			controllerName = m.client.ControllerName()
+	target := m.views[msg.Target]
+	target.SetSize(m.width, m.contentHeight())
+	if m.status != nil {
+		if sr, ok := target.(view.StatusReceiver); ok {
+			sr.SetStatus(m.status)
 		}
-		// Always stop the status stream when leaving a model view for the
-		// models list — prevents stale updates from the old model arriving
-		// after a new model is selected on a different controller.
-		m.stopStatusStream()
-		if msg.Context != "" {
-			if err := m.client.SelectController(msg.Context); err != nil {
-				m.err = err
-				return m, nil
-			}
-		}
-		m.err = nil
-		// Reset the models view so we start fresh.
-		mv := models.New(m.keys)
-		mv.SetSize(m.width, m.contentHeight())
-		m.views[nav.ModelsView] = mv
-		m.stack.Push(nav.StackEntry{View: nav.ModelsView, Context: controllerName})
-		return m, m.pollModels(controllerName)
 	}
 
-	// Selecting a model from the ModelsView: switch to it and show the model detail.
-	if msg.Target == nav.ModelView && msg.Context != "" {
-		if err := m.client.SelectModel(msg.Context); err != nil {
-			m.err = err
-			return m, nil
-		}
-		m.status = nil
-		m.err = nil
-		for _, v := range m.views {
-			if sr, ok := v.(view.StatusReceiver); ok {
-				sr.SetStatus(nil)
-			}
-		}
-		m.stack.Push(nav.StackEntry{View: nav.ModelView, Context: msg.Context})
-		return m, m.startStatusStream()
+	navCtx := view.NavigateContext{Context: msg.Context, Filter: msg.Filter}
+	cmd, err := target.Enter(navCtx)
+	if err != nil {
+		m.err = err
+		return m, nil
 	}
+	m.err = nil
 
 	m.stack.Push(nav.StackEntry{View: msg.Target, Context: msg.Context})
-
-	if msg.Target == nav.UnitsView && msg.Context != "" {
-		uv := units.New(msg.Context, m.keys)
-		uv.SetSize(m.width, m.contentHeight())
-		if m.status != nil {
-			uv.SetStatus(m.status)
-		}
-		m.views[nav.UnitsView] = uv
+	if cmd != nil {
+		return m, cmd
 	}
-
-	if msg.Target == nav.DebugLogView {
-		var filter model.DebugLogFilter
-		if msg.Filter != nil {
-			// Explicit new filter (e.g. entity pre-fill from another view):
-			// create a fresh view instance so the buffer is clean.
-			dl := debuglog.New(m.keys)
-			dl.SetSize(m.width, m.contentHeight())
-			filter = *msg.Filter
-			dl.SetFilter(filter)
-			if m.status != nil {
-				dl.SetStatus(m.status)
-			}
-			m.views[nav.DebugLogView] = dl
-		} else {
-			// No new filter: reuse the existing view and its current filter so
-			// the user's filter state is preserved across navigation.
-			if existing, ok := m.views[nav.DebugLogView].(*debuglog.View); ok {
-				filter = existing.ActiveFilter()
-			} else {
-				dl := debuglog.New(m.keys)
-				dl.SetSize(m.width, m.contentHeight())
-				if m.status != nil {
-					dl.SetStatus(m.status)
-				}
-				m.views[nav.DebugLogView] = dl
-			}
-		}
-		cmds = append(cmds, m.startDebugLogStream(filter))
-	}
-
-	return m, tea.Batch(cmds...)
+	return m, nil
 }
 
 func (m Model) handleBack() (Model, tea.Cmd) {
 	prev := m.stack.Current()
 	if _, ok := m.stack.Pop(); ok {
-		// Stop streams when leaving their associated views.
-		if prev.View == nav.DebugLogView {
-			m.stopDebugLogStream()
+		var cmds []tea.Cmd
+
+		if cmd := m.views[prev.View].Leave(); cmd != nil {
+			cmds = append(cmds, cmd)
 		}
-		if prev.View == nav.ModelView {
-			m.stopStatusStream()
-		}
+
 		current := m.stack.Current()
-		if current.View == nav.UnitsView && current.Context == "" {
-			uv := units.New("", m.keys)
-			uv.SetSize(m.width, m.contentHeight())
-			if m.status != nil {
-				uv.SetStatus(m.status)
-			}
-			m.views[nav.UnitsView] = uv
+
+		cmd, err := m.views[current.View].Enter(view.NavigateContext{Context: current.Context})
+		if err != nil {
+			// Re-push to undo the pop — back navigation failed.
+			m.stack.Push(prev)
+			m.err = err
+			return m, nil
 		}
-		// Re-populate the models list whenever we land back on it, using the
-		// controller name stored in the stack entry's context.
-		if current.View == nav.ModelsView && current.Context != "" {
-			return m, m.pollModels(current.Context)
+		if cmd != nil {
+			cmds = append(cmds, cmd)
 		}
+
+		return m, tea.Batch(cmds...)
 	}
 	return m, nil
 }

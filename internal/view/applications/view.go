@@ -170,3 +170,6 @@ func (a *View) applicationSuggestions() []string {
 	}
 	return out
 }
+
+func (a *View) Enter(_ view.NavigateContext) (tea.Cmd, error) { return nil, nil }
+func (a *View) Leave() tea.Cmd                                { return nil }

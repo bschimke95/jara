@@ -42,6 +42,14 @@ type DeployRequestMsg struct {
 // KeyHint represents a single key-description pair for the header hint bar.
 type KeyHint = ui.KeyHint
 
+// NavigateContext carries parameters passed to a view on Enter.
+type NavigateContext struct {
+	// Context is an optional string parameter (e.g. app name, controller name).
+	Context string
+	// Filter is an optional debug-log filter.
+	Filter *model.DebugLogFilter
+}
+
 // View is the interface all resource views must implement.
 // Each view is self-contained: it owns its own rendering, types, and messages.
 type View interface {
@@ -53,7 +61,35 @@ type View interface {
 	// KeyHints returns the view-specific key hints to display in the header.
 	// These are merged on top of the global hints by the app chrome.
 	KeyHints() []KeyHint
+
+	// Enter is called when the view becomes active (navigated to or returned
+	// to via back). Views use this to refresh data or reset internal state.
+	// The returned command is batched with any app-level commands.
+	// A non-nil error aborts the navigation.
+	Enter(ctx NavigateContext) (tea.Cmd, error)
+
+	// Leave is called when the view is about to become inactive (navigated
+	// away from). Views use this to clean up transient state. The returned
+	// command is batched with any app-level commands.
+	Leave() tea.Cmd
 }
+
+// StopStatusStreamMsg requests the app stop the active status stream.
+type StopStatusStreamMsg struct{}
+
+// StartStatusStreamMsg requests the app start a new status stream.
+type StartStatusStreamMsg struct{}
+
+// StartDebugLogStreamMsg requests the app start a debug-log stream.
+type StartDebugLogStreamMsg struct {
+	Filter model.DebugLogFilter
+}
+
+// StopDebugLogStreamMsg requests the app stop the active debug-log stream.
+type StopDebugLogStreamMsg struct{}
+
+// ClearStatusMsg requests the app clear the cached status on all views.
+type ClearStatusMsg struct{}
 
 // StatusReceiver is implemented by views that consume model status updates.
 // Views that don't need FullStatus (e.g. Controllers, Models) simply don't

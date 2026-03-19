@@ -77,3 +77,6 @@ func (m *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m *View) View() tea.View {
 	return tea.NewView(m.table.View())
 }
+
+func (m *View) Enter(_ view.NavigateContext) (tea.Cmd, error) { return nil, nil }
+func (m *View) Leave() tea.Cmd                                { return nil }

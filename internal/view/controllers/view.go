@@ -13,7 +13,8 @@ import (
 )
 
 // New creates a new controllers view.
-func New(keys ui.KeyMap) *View {
+// pollFn is called from Enter to fetch data; it must return a tea.Cmd.
+func New(keys ui.KeyMap, pollFn func() tea.Cmd) *View {
 	cols := columns()
 	t := table.New(
 		table.WithColumns(cols),
@@ -21,7 +22,7 @@ func New(keys ui.KeyMap) *View {
 		table.WithHeight(10),
 	)
 	t.SetStyles(ui.StyledTable())
-	return &View{table: t, keys: keys}
+	return &View{table: t, keys: keys, pollFn: pollFn}
 }
 
 func (c *View) SetSize(width, height int) {
@@ -71,3 +72,6 @@ func (c *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (c *View) View() tea.View {
 	return tea.NewView(c.table.View())
 }
+
+func (c *View) Enter(_ view.NavigateContext) (tea.Cmd, error) { return c.pollFn(), nil }
+func (c *View) Leave() tea.Cmd                                { return nil }
