@@ -472,3 +472,28 @@ func (d *View) jumpToNextMatch(dir int) {
 	d.offset = d.searchMatches[d.searchIdx]
 	d.paused = true
 }
+
+func (d *View) Enter(ctx view.NavigateContext) (tea.Cmd, error) {
+	if ctx.Filter != nil {
+		si := textinput.New()
+		si.Prompt = "/"
+		si.CharLimit = 128
+		d.lines = make([]string, 0, maxLogLines)
+		d.rawEntries = make([]model.LogEntry, 0, maxLogLines)
+		d.searchInput = si
+		d.mode = debugModeNormal
+		d.searchQuery = ""
+		d.searchMatches = nil
+		d.offset = 0
+		d.paused = false
+		d.seenModules = nil
+		d.activeFilter = *ctx.Filter
+	}
+	return func() tea.Msg {
+		return view.StartDebugLogStreamMsg{Filter: d.activeFilter}
+	}, nil
+}
+
+func (d *View) Leave() tea.Cmd {
+	return func() tea.Msg { return view.StopDebugLogStreamMsg{} }
+}

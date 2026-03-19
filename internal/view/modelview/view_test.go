@@ -11,7 +11,7 @@ import (
 )
 
 func TestUpdateDeployStartsInput(t *testing.T) {
-	v := New(ui.DefaultKeyMap())
+	v := New(ui.DefaultKeyMap(), func(string) error { return nil })
 	v.SetSize(120, 30)
 
 	_, cmd := v.Update(tea.KeyPressMsg{Text: "D", Code: 'D'})
@@ -24,7 +24,7 @@ func TestUpdateDeployStartsInput(t *testing.T) {
 }
 
 func TestUpdateApplicationsNavShortcut(t *testing.T) {
-	v := New(ui.DefaultKeyMap())
+	v := New(ui.DefaultKeyMap(), func(string) error { return nil })
 	v.SetSize(120, 30)
 
 	_, cmd := v.Update(tea.KeyPressMsg{Text: "A", Code: 'A'})
