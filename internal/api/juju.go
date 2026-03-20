@@ -424,6 +424,10 @@ func (c *JujuClient) Status(ctx context.Context) (*model.FullStatus, error) {
 
 // ScaleApplication adjusts the unit count for an application by delta
 // (positive to scale up, negative to scale down).
+//
+// For CAAS (Kubernetes) models this uses the ScaleApplication API.
+// For IAAS (machine) models it uses AddUnits / DestroyUnits instead,
+// because the ScaleApplication API is only supported on container models.
 func (c *JujuClient) ScaleApplication(ctx context.Context, appName string, delta int) error {
 	conn, err := c.connect(ctx)
 	if err != nil {
@@ -431,13 +435,68 @@ func (c *JujuClient) ScaleApplication(ctx context.Context, appName string, delta
 	}
 	defer func() { _ = conn.Close() }()
 
+	modelType, err := c.currentModelType()
+	if err != nil {
+		return fmt.Errorf("determining model type: %w", err)
+	}
+
 	appClient := application.NewClient(conn)
-	_, err = appClient.ScaleApplication(ctx, application.ScaleApplicationParams{
-		ApplicationName: appName,
-		ScaleChange:     delta,
+
+	if modelType == "caas" {
+		_, err = appClient.ScaleApplication(ctx, application.ScaleApplicationParams{
+			ApplicationName: appName,
+			ScaleChange:     delta,
+		})
+		if err != nil {
+			return fmt.Errorf("scaling %q by %+d: %w", appName, delta, err)
+		}
+		return nil
+	}
+
+	// IAAS model: use AddUnits / DestroyUnits.
+	if delta > 0 {
+		_, err = appClient.AddUnits(ctx, application.AddUnitsParams{
+			ApplicationName: appName,
+			NumUnits:        delta,
+		})
+		if err != nil {
+			return fmt.Errorf("adding %d unit(s) to %q: %w", delta, appName, err)
+		}
+		return nil
+	}
+
+	// Scale down: fetch status to identify which units to remove.
+	statusClient := client.NewClient(conn, nopLogger{})
+	result, err := statusClient.Status(ctx, &client.StatusArgs{
+		Patterns: []string{},
 	})
 	if err != nil {
-		return fmt.Errorf("scaling %q by %+d: %w", appName, delta, err)
+		return fmt.Errorf("fetching status for scale-down: %w", err)
+	}
+
+	app, ok := result.Applications[appName]
+	if !ok {
+		return fmt.Errorf("application %q not found", appName)
+	}
+
+	// Collect unit names and sort so we remove the highest-numbered first.
+	unitNames := make([]string, 0, len(app.Units))
+	for name := range app.Units {
+		unitNames = append(unitNames, name)
+	}
+	sort.Strings(unitNames)
+
+	removeCount := -delta
+	if removeCount > len(unitNames) {
+		removeCount = len(unitNames)
+	}
+	toDestroy := unitNames[len(unitNames)-removeCount:]
+
+	_, err = appClient.DestroyUnits(ctx, application.DestroyUnitsParams{
+		Units: toDestroy,
+	})
+	if err != nil {
+		return fmt.Errorf("removing %d unit(s) from %q: %w", -delta, appName, err)
 	}
 	return nil
 }
@@ -545,6 +604,20 @@ func (c *JujuClient) DestroyRelation(ctx context.Context, endpointA, endpointB s
 		return fmt.Errorf("removing relation %q <-> %q: %w", endpointA, endpointB, err)
 	}
 	return nil
+}
+
+// currentModelType returns the model type ("iaas" or "caas") for the
+// currently targeted model by reading from the local client store.
+func (c *JujuClient) currentModelType() (string, error) {
+	modelName, err := c.store.CurrentModel(c.controllerName)
+	if err != nil {
+		return "", fmt.Errorf("resolving current model: %w", err)
+	}
+	details, err := c.store.ModelByName(c.controllerName, modelName)
+	if err != nil {
+		return "", fmt.Errorf("getting model details: %w", err)
+	}
+	return string(details.ModelType), nil
 }
 
 // DebugLog connects to the controller and streams debug log messages.
