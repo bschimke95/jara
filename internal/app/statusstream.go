@@ -180,6 +180,9 @@ func (m Model) pollCharmEndpoints() tea.Cmd {
 // scaleApplication returns a Cmd that calls ScaleApplication on the API client.
 func (m Model) scaleApplication(appName string, delta int) tea.Cmd {
 	return func() tea.Msg {
+		if m.cfg != nil && m.cfg.Jara.ReadOnly {
+			return errMsg{fmt.Errorf("write operations are disabled in read-only mode")}
+		}
 		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 		defer cancel()
 		if err := m.client.ScaleApplication(ctx, appName, delta); err != nil {
