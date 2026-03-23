@@ -303,11 +303,12 @@ func (m Model) updateActiveView(msg tea.Msg) (Model, tea.Cmd) {
 }
 
 func (m Model) contentHeight() int {
-	// Layout: header box (logo height + 2 borders) + body box borders (2)
-	// + optional input bar (variable height).
-	logoHeight := ui.LogoHeight()
-	headerHeight := logoHeight + 2 // +2 for top and bottom borders
-	chrome := headerHeight + 2     // +2 for body box borders
+	// Layout: body box borders (2) + optional input bar (variable height).
+	chrome := 2 // body box borders
+	if !m.cfg.Jara.Headless {
+		// Header box: logo height + 2 borders.
+		chrome += ui.LogoHeight() + 2
+	}
 	chrome += m.inputBarHeight()
 	// When the debug-log search bar is visible it occupies 3 rows (bordered box).
 	if m.stack.Current().View == nav.DebugLogView {
@@ -354,29 +355,31 @@ func (m Model) View() tea.View {
 
 	var sections []string
 
-	// ── Header box: status info (left) + key hints (center) + logo (right) ──
-	controllerName := m.client.ControllerName()
-	modelName, cloud, region := "", "", ""
-	if m.status != nil {
-		modelName = m.status.Model.Name
-		cloud = m.status.Model.Cloud
-		region = m.status.Model.Region
-	}
-	// Combine common hints with the active view's own key hints.
 	currentView := m.views[m.stack.Current().View]
-	bk := func(b key.Binding) string { return b.Help().Key }
-	commonHints := []ui.KeyHint{
-		{Key: bk(m.keys.Command), Desc: "cmd"},
-		{Key: bk(m.keys.Help), Desc: "help"},
-		{Key: bk(m.keys.Quit), Desc: "quit"},
+
+	// ── Header box: status info (left) + key hints (center) + logo (right) ──
+	if !m.cfg.Jara.Headless {
+		controllerName := m.client.ControllerName()
+		modelName, cloud, region := "", "", ""
+		if m.status != nil {
+			modelName = m.status.Model.Name
+			cloud = m.status.Model.Cloud
+			region = m.status.Model.Region
+		}
+		bk := func(b key.Binding) string { return b.Help().Key }
+		commonHints := []ui.KeyHint{
+			{Key: bk(m.keys.Command), Desc: "cmd"},
+			{Key: bk(m.keys.Help), Desc: "help"},
+			{Key: bk(m.keys.Quit), Desc: "quit"},
+		}
+		hints := append(currentView.KeyHints(), commonHints...)
+		jujuVersion := ""
+		if m.status != nil {
+			jujuVersion = m.status.Model.Version
+		}
+		headerInner := ui.HeaderContent(controllerName, modelName, cloud, region, m.jaraVersion, jujuVersion, hints, m.width-2)
+		sections = append(sections, ui.BorderBox(headerInner, "", m.width))
 	}
-	hints := append(currentView.KeyHints(), commonHints...)
-	jujuVersion := ""
-	if m.status != nil {
-		jujuVersion = m.status.Model.Version
-	}
-	headerInner := ui.HeaderContent(controllerName, modelName, cloud, region, m.jaraVersion, jujuVersion, hints, m.width-2)
-	sections = append(sections, ui.BorderBox(headerInner, "", m.width))
 
 	// ── Input bar (command/filter mode, between header and body) ──
 	if m.mode != modeNormal {
