@@ -27,6 +27,27 @@ func TestDeployApplicationReadOnly(t *testing.T) {
 	}
 }
 
+func TestScaleApplicationReadOnly(t *testing.T) {
+	cfg := config.NewDefault()
+	cfg.Jara.ReadOnly = true
+
+	client := api.NewMockClient()
+	_ = client.SelectModel("admin/default")
+
+	m := Model{
+		client: client,
+		cfg:    cfg,
+	}
+
+	msg := m.scaleApplication("postgresql", 1)()
+	if msg == nil {
+		t.Fatal("expected error message in read-only mode")
+	}
+	if _, ok := msg.(errMsg); !ok {
+		t.Fatalf("msg type = %T, want errMsg", msg)
+	}
+}
+
 func TestDeployApplicationTargetsModel(t *testing.T) {
 	client := api.NewMockClient()
 	m := Model{
