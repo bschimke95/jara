@@ -11,6 +11,7 @@ type Flags struct {
 	ReadOnly    *bool
 	Command     *string
 	ConfigFile  *string
+	Demo        *bool
 }
 
 // NewFlags returns a Flags struct with all nil pointers (nothing overridden).

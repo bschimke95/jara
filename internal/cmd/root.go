@@ -124,4 +124,15 @@ func initJaraFlags() {
 		"",
 		"Override the default view/command on launch",
 	)
+
+	// Demo mode (hidden) — use MockClient instead of a real Juju connection.
+	var demo bool
+	jaraFlags.Demo = &demo
+	rootCmd.Flags().BoolVar(
+		jaraFlags.Demo,
+		"demo",
+		false,
+		"Use synthetic mock data instead of a live Juju connection",
+	)
+	_ = rootCmd.Flags().MarkHidden("demo")
 }
