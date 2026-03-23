@@ -127,12 +127,12 @@
 > ./jara --demo
 ╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
 │                                                                                                                   │
-│                                      <enter> select  <+/-> scale                       ██╗ █████╗ ██████╗  █████╗ │
-│Controller: prod-aws                  <D> deploy      <L> logs (app)                    ██║██╔══██╗██╔══██╗██╔══██╗│
-│Model:                                <r> relate      <l> logs                          ██║███████║██████╔╝███████║│
-│Cloud:      /                         <A> apps        <:> cmd                      ██   ██║██╔══██║██╔══██╗██╔══██║│
-│Juju:                                 <U> units       <?> help                     ╚█████╔╝██║  ██║██║  ██║██║  ██║│
-│Jara:       86b2989-dirty             <R> relations   <q> quit                      ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+│                                    <enter> select  <+/-> scale                         ██╗ █████╗ ██████╗  █████╗ │
+│Controller: prod-aws                <D> deploy      <L> logs (app)                      ██║██╔══██╗██╔══██╗██╔══██╗│
+│Model:                              <r> relate      <l> logs                            ██║███████║██████╔╝███████║│
+│Cloud:      /                       <A> apps        <:> cmd                        ██   ██║██╔══██║██╔══██╗██╔══██║│
+│Juju:                               <U> units       <?> help                       ╚█████╔╝██║  ██║██║  ██║██║  ██║│
+│Jara:       test                    <R> relations   <q> quit                        ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
 ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─────────────────────────── Applications ───────────────────────────╮╭─────────────────── Units ───────────────────╮
 │ NAME      STATUS  CHARM      CHANN…  R…  S…  EX…  MESSAGE          ││ UNIT         WORK…  AGENT  MESSAGE          │
@@ -174,7 +174,7 @@
 │Model:      production                <r> relate      <l> logs                          ██║███████║██████╔╝███████║│
 │Cloud:      aws/us-east-1             <A> apps        <:> cmd                      ██   ██║██╔══██║██╔══██╗██╔══██║│
 │Juju:       3.6.1                     <U> units       <?> help                     ╚█████╔╝██║  ██║██║  ██║██║  ██║│
-│Jara:       86b2989-dirty             <R> relations   <q> quit                      ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+│Jara:       test                      <R> relations   <q> quit                      ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
 ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─────────────────────────── Applications ───────────────────────────╮╭────────────── Units(grafana) ───────────────╮
 │ NAME      STATUS  CHARM      CHANN…  R…  S…  EX…  MESSAGE          ││ UNIT         WORK…  AGENT  MESSAGE          │
@@ -216,7 +216,7 @@
 │Model:      production                                                                  ██║███████║██████╔╝███████║│
 │Cloud:      aws/us-east-1                <+/-> scale      <:> cmd                  ██   ██║██╔══██║██╔══██╗██╔══██║│
 │Juju:       3.6.1                        <L> logs (unit)  <?> help                 ╚█████╔╝██║  ██║██║  ██║██║  ██║│
-│Jara:       86b2989-dirty                <l> logs         <q> quit                  ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+│Jara:       test                         <l> logs         <q> quit                  ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
 ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭───────────────────────────────────────────────── Units(grafana) ──────────────────────────────────────────────────╮
 │ UNIT                  WORKLOAD    AGENT       MACHI…  ADDRESS        PORTS          MESSAGE
@@ -258,7 +258,7 @@
 │Model:      production                                                                  ██║███████║██████╔╝███████║│
 │Cloud:      aws/us-east-1                <+/-> scale      <:> cmd                  ██   ██║██╔══██║██╔══██╗██╔══██║│
 │Juju:       3.6.1                        <L> logs (unit)  <?> help                 ╚█████╔╝██║  ██║██║  ██║██║  ██║│
-│Jara:       86b2989-dirty                <l> logs         <q> quit                  ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+│Jara:       test                         <l> logs         <q> quit                  ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
 ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭───────────────────────────────────────────────── Units(grafana) ──────────────────────────────────────────────────╮
 │ UNIT                  WORKLOAD    AGENT       MACHI…  ADDRESS        PORTS          MESSAGE
@@ -300,7 +300,7 @@
 │Model:      production                                                                  ██║███████║██████╔╝███████║│
 │Cloud:      aws/us-east-1                <+/-> scale      <:> cmd                  ██   ██║██╔══██║██╔══██╗██╔══██║│
 │Juju:       3.6.1                        <L> logs (unit)  <?> help                 ╚█████╔╝██║  ██║██║  ██║██║  ██║│
-│Jara:       86b2989-dirty                <l> logs         <q> quit                  ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+│Jara:       test                         <l> logs         <q> quit                  ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
 ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭───────────────────────────────────────────────── Units(grafana) ──────────────────────────────────────────────────╮
 │ UNIT                  WORKLOAD    AGENT       MACHI…  ADDRESS        PORTS          MESSAGE
@@ -342,7 +342,7 @@
 │Model:      production                                                                  ██║███████║██████╔╝███████║│
 │Cloud:      aws/us-east-1                <+/-> scale      <:> cmd                  ██   ██║██╔══██║██╔══██╗██╔══██║│
 │Juju:       3.6.1                        <L> logs (unit)  <?> help                 ╚█████╔╝██║  ██║██║  ██║██║  ██║│
-│Jara:       86b2989-dirty                <l> logs         <q> quit                  ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+│Jara:       test                         <l> logs         <q> quit                  ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
 ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭───────────────────────────────────────────────── Units(grafana) ──────────────────────────────────────────────────╮
 │ UNIT                  WORKLOAD    AGENT       MACHI…  ADDRESS        PORTS          MESSAGE
@@ -384,259 +384,7 @@
 │Model:      production                <r> relate      <l> logs                          ██║███████║██████╔╝███████║│
 │Cloud:      aws/us-east-1             <A> apps        <:> cmd                      ██   ██║██╔══██║██╔══██╗██╔══██║│
 │Juju:       3.6.1                     <U> units       <?> help                     ╚█████╔╝██║  ██║██║  ██║██║  ██║│
-│Jara:       86b2989-dirty             <R> relations   <q> quit                      ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
-╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─────────────────────────── Applications ───────────────────────────╮╭────────────── Units(grafana) ───────────────╮
-│ NAME      STATUS  CHARM      CHANN…  R…  S…  EX…  MESSAGE          ││ UNIT         WORK…  AGENT  MESSAGE          │
-│ grafana   block…  grafana-…  lates…  1…  1   no   Missing relatio… ││ ★ grafana/0  bloc…  idle   Missing relatio… │
-│ nginx-i…  active  nginx-in…  lates…  95  1   yes  Ingress ready    ││                                             │
-│ postgre…  active  postgres…  14/st…  4…  3   no   Live master (14… ││                                             │
-│ prometh…  waiti…  promethe…  lates…  1…  1   no   Waiting for rel… ││                                             │
-│ ubuntu-…  active  ubuntu     stable  24  2   yes  Ready            ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    │╰─────────────────────────────────────────────╯
-│                                                                    │╭──────────── Relations(grafana) ─────────────╮
-│                                                                    ││ RELATION                                    │
-│                                                                    ││ grafana:grafana-source -> prometheus:grafa… │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-
-
-────────────────────────────────────────────────────────────────────────────────
-> ./jara --demo
-╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│                                                                                                                   │
-│                                      <enter> select  <+/-> scale                       ██╗ █████╗ ██████╗  █████╗ │
-│Controller: prod-aws                  <D> deploy      <L> logs (app)                    ██║██╔══██╗██╔══██╗██╔══██╗│
-│Model:      production                <r> relate      <l> logs                          ██║███████║██████╔╝███████║│
-│Cloud:      aws/us-east-1             <A> apps        <:> cmd                      ██   ██║██╔══██║██╔══██╗██╔══██║│
-│Juju:       3.6.1                     <U> units       <?> help                     ╚█████╔╝██║  ██║██║  ██║██║  ██║│
-│Jara:       86b2989-dirty             <R> relations   <q> quit                      ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
-╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭─────────────────────────── Applications ───────────────────────────╮╭────────────── Units(grafana) ───────────────╮
-│ NAME      STATUS  CHARM      CHANN…  R…  S…  EX…  MESSAGE          ││ UNIT         WORK…  AGENT  MESSAGE          │
-│ grafana   block…  grafana-…  lates…  1…  1   no   Missing relatio… ││ ★ grafana/0  bloc…  idle   Missing relatio… │
-│ nginx-i…  active  nginx-in…  lates…  95  1   yes  Ingress ready    ││                                             │
-│ postgre…  active  postgres…  14/st…  4…  3   no   Live master (14… ││                                             │
-│ prometh…  waiti…  promethe…  lates…  1…  1   no   Waiting for rel… ││                                             │
-│ ubuntu-…  active  ubuntu     stable  24  2   yes  Ready            ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    │╰─────────────────────────────────────────────╯
-│                                                                    │╭──────────── Relations(grafana) ─────────────╮
-│                                                                    ││ RELATION                                    │
-│                                                                    ││ grafana:grafana-source -> prometheus:grafa… │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-╰────────────────────────────────────────────────────────────────────╯╰─────────────────────────────────────────────╯
-
-────────────────────────────────────────────────────────────────────────────────
-> ./jara --demo
-╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│                                                                                                                   │
-│                                                                                        ██╗ █████╗ ██████╗  █████╗ │
-│Controller: prod-aws                                                                    ██║██╔══██╗██╔══██╗██╔══██╗│
-│Model:      production                                                                  ██║███████║██████╔╝███████║│
-│Cloud:      aws/us-east-1                  <D> delete  <:> cmd                     ██   ██║██╔══██║██╔══██╗██╔══██║│
-│Juju:       3.6.1                          <L> logs    <?> help                    ╚█████╔╝██║  ██║██║  ██║██║  ██║│
-│Jara:       86b2989-dirty                  <l> logs    <q> quit                     ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
-╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭──────────────────────────────────────────────────── Relations ────────────────────────────────────────────────────╮
-│ ID     ENDPOINT 1                     ENDPOINT 2                     INTERFACE               TYPE      STATUS
-│ 1      postgresql:db                  ubuntu-app:db                  pgsql                   global    joined
-│ 2      prometheus:grafana-source      grafana:grafana-source         grafana-datasource      global    joined
-│ 3      nginx-ingress:ingress          ubuntu-app:ingress             ingress                 global    joined
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-────────────────────────────────────────────────────────────────────────────────
-> ./jara --demo
-╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│                                                                                                                   │
-│                                                                                        ██╗ █████╗ ██████╗  █████╗ │
-│Controller: prod-aws                                                                    ██║██╔══██╗██╔══██╗██╔══██╗│
-│Model:      production                                                                  ██║███████║██████╔╝███████║│
-│Cloud:      aws/us-east-1                  <D> delete  <:> cmd                     ██   ██║██╔══██║██╔══██╗██╔══██║│
-│Juju:       3.6.1                          <L> logs    <?> help                    ╚█████╔╝██║  ██║██║  ██║██║  ██║│
-│Jara:       86b2989-dirty                  <l> logs    <q> quit                     ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
-╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭──────────────────────────────────────────────────── Relations ────────────────────────────────────────────────────╮
-│ ID     ENDPOINT 1                     ENDPOINT 2                     INTERFACE               TYPE      STATUS
-│ 1      postgresql:db                  ubuntu-app:db                  pgsql                   global    joined
-│ 2      prometheus:grafana-source      grafana:grafana-source         grafana-datasource      global    joined
-│ 3      nginx-ingress:ingress          ubuntu-app:ingress             ingress                 global    joined
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-────────────────────────────────────────────────────────────────────────────────
-> ./jara --demo
-╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│                                                                                                                   │
-│                                                                                        ██╗ █████╗ ██████╗  █████╗ │
-│Controller: prod-aws                                                                    ██║██╔══██╗██╔══██╗██╔══██╗│
-│Model:      production                                                                  ██║███████║██████╔╝███████║│
-│Cloud:      aws/us-east-1                  <D> delete  <:> cmd                     ██   ██║██╔══██║██╔══██╗██╔══██║│
-│Juju:       3.6.1                          <L> logs    <?> help                    ╚█████╔╝██║  ██║██║  ██║██║  ██║│
-│Jara:       86b2989-dirty                  <l> logs    <q> quit                     ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
-╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭──────────────────────────────────────────────────── Relations ────────────────────────────────────────────────────╮
-│ ID     ENDPOINT 1                     ENDPOINT 2                     INTERFACE               TYPE      STATUS
-│ 1      postgresql:db                  ubuntu-app:db                  pgsql                   global    joined
-│ 2      prometheus:grafana-source      grafana:grafana-source         grafana-datasource      global    joined
-│ 3      nginx-ingress:ingress          ubuntu-app:ingress             ingress                 global    joined
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-────────────────────────────────────────────────────────────────────────────────
-> ./jara --demo
-╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│                                                                                                                   │
-│                                                                                        ██╗ █████╗ ██████╗  █████╗ │
-│Controller: prod-aws                                                                    ██║██╔══██╗██╔══██╗██╔══██╗│
-│Model:      production                                                                  ██║███████║██████╔╝███████║│
-│Cloud:      aws/us-east-1                  <D> delete  <:> cmd                     ██   ██║██╔══██║██╔══██╗██╔══██║│
-│Juju:       3.6.1                          <L> logs    <?> help                    ╚█████╔╝██║  ██║██║  ██║██║  ██║│
-│Jara:       86b2989-dirty                  <l> logs    <q> quit                     ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
-╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭──────────────────────────────────────────────────── Relations ────────────────────────────────────────────────────╮
-│ ID     ENDPOINT 1                     ENDPOINT 2                     INTERFACE               TYPE      STATUS
-│ 1      postgresql:db                  ubuntu-app:db                  pgsql                   global    joined
-│ 2      prometheus:grafana-source      grafana:grafana-source         grafana-datasource      global    joined
-│ 3      nginx-ingress:ingress          ubuntu-app:ingress             ingress                 global    joined
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-│
-────────────────────────────────────────────────────────────────────────────────
-> ./jara --demo
-╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│                                                                                                                   │
-│                                      <enter> select  <+/-> scale                       ██╗ █████╗ ██████╗  █████╗ │
-│Controller: prod-aws                  <D> deploy      <L> logs (app)                    ██║██╔══██╗██╔══██╗██╔══██╗│
-│Model:      production                <r> relate      <l> logs                          ██║███████║██████╔╝███████║│
-│Cloud:      aws/us-east-1             <A> apps        <:> cmd                      ██   ██║██╔══██║██╔══██╗██╔══██║│
-│Juju:       3.6.1                     <U> units       <?> help                     ╚█████╔╝██║  ██║██║  ██║██║  ██║│
-│Jara:       86b2989-dirty             <R> relations   <q> quit                      ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+│Jara:       test                      <R> relations   <q> quit                      ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
 ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─────────────────────────── Applications ───────────────────────────╮╭────────────── Units(grafana) ───────────────╮
 │ NAME      STATUS  CHARM      CHANN…  R…  S…  EX…  MESSAGE          ││ UNIT         WORK…  AGENT  MESSAGE          │
@@ -678,7 +426,259 @@
 │Model:      production                <r> relate      <l> logs                          ██║███████║██████╔╝███████║│
 │Cloud:      aws/us-east-1             <A> apps        <:> cmd                      ██   ██║██╔══██║██╔══██╗██╔══██║│
 │Juju:       3.6.1                     <U> units       <?> help                     ╚█████╔╝██║  ██║██║  ██║██║  ██║│
-│Jara:       86b2989-dirty             <R> relations   <q> quit                      ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+│Jara:       test                      <R> relations   <q> quit                      ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────── Applications ───────────────────────────╮╭────────────── Units(grafana) ───────────────╮
+│ NAME      STATUS  CHARM      CHANN…  R…  S…  EX…  MESSAGE          ││ UNIT         WORK…  AGENT  MESSAGE          │
+│ grafana   block…  grafana-…  lates…  1…  1   no   Missing relatio… ││ ★ grafana/0  bloc…  idle   Missing relatio… │
+│ nginx-i…  active  nginx-in…  lates…  95  1   yes  Ingress ready    ││                                             │
+│ postgre…  active  postgres…  14/st…  4…  3   no   Live master (14… ││                                             │
+│ prometh…  waiti…  promethe…  lates…  1…  1   no   Waiting for rel… ││                                             │
+│ ubuntu-…  active  ubuntu     stable  24  2   yes  Ready            ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    │╰─────────────────────────────────────────────╯
+│                                                                    │╭──────────── Relations(grafana) ─────────────╮
+│                                                                    ││ RELATION                                    │
+│                                                                    ││ grafana:grafana-source -> prometheus:grafa… │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+╰────────────────────────────────────────────────────────────────────╯╰─────────────────────────────────────────────╯
+
+────────────────────────────────────────────────────────────────────────────────
+> ./jara --demo
+╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                   │
+│                                                                                        ██╗ █████╗ ██████╗  █████╗ │
+│Controller: prod-aws                                                                    ██║██╔══██╗██╔══██╗██╔══██╗│
+│Model:      production                                                                  ██║███████║██████╔╝███████║│
+│Cloud:      aws/us-east-1                  <D> delete  <:> cmd                     ██   ██║██╔══██║██╔══██╗██╔══██║│
+│Juju:       3.6.1                          <L> logs    <?> help                    ╚█████╔╝██║  ██║██║  ██║██║  ██║│
+│Jara:       test                           <l> logs    <q> quit                     ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────────────── Relations ────────────────────────────────────────────────────╮
+│ ID     ENDPOINT 1                     ENDPOINT 2                     INTERFACE               TYPE      STATUS
+│ 1      postgresql:db                  ubuntu-app:db                  pgsql                   global    joined
+│ 2      prometheus:grafana-source      grafana:grafana-source         grafana-datasource      global    joined
+│ 3      nginx-ingress:ingress          ubuntu-app:ingress             ingress                 global    joined
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+────────────────────────────────────────────────────────────────────────────────
+> ./jara --demo
+╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                   │
+│                                                                                        ██╗ █████╗ ██████╗  █████╗ │
+│Controller: prod-aws                                                                    ██║██╔══██╗██╔══██╗██╔══██╗│
+│Model:      production                                                                  ██║███████║██████╔╝███████║│
+│Cloud:      aws/us-east-1                  <D> delete  <:> cmd                     ██   ██║██╔══██║██╔══██╗██╔══██║│
+│Juju:       3.6.1                          <L> logs    <?> help                    ╚█████╔╝██║  ██║██║  ██║██║  ██║│
+│Jara:       test                           <l> logs    <q> quit                     ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────────────── Relations ────────────────────────────────────────────────────╮
+│ ID     ENDPOINT 1                     ENDPOINT 2                     INTERFACE               TYPE      STATUS
+│ 1      postgresql:db                  ubuntu-app:db                  pgsql                   global    joined
+│ 2      prometheus:grafana-source      grafana:grafana-source         grafana-datasource      global    joined
+│ 3      nginx-ingress:ingress          ubuntu-app:ingress             ingress                 global    joined
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+────────────────────────────────────────────────────────────────────────────────
+> ./jara --demo
+╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                   │
+│                                                                                        ██╗ █████╗ ██████╗  █████╗ │
+│Controller: prod-aws                                                                    ██║██╔══██╗██╔══██╗██╔══██╗│
+│Model:      production                                                                  ██║███████║██████╔╝███████║│
+│Cloud:      aws/us-east-1                  <D> delete  <:> cmd                     ██   ██║██╔══██║██╔══██╗██╔══██║│
+│Juju:       3.6.1                          <L> logs    <?> help                    ╚█████╔╝██║  ██║██║  ██║██║  ██║│
+│Jara:       test                           <l> logs    <q> quit                     ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────────────── Relations ────────────────────────────────────────────────────╮
+│ ID     ENDPOINT 1                     ENDPOINT 2                     INTERFACE               TYPE      STATUS
+│ 1      postgresql:db                  ubuntu-app:db                  pgsql                   global    joined
+│ 2      prometheus:grafana-source      grafana:grafana-source         grafana-datasource      global    joined
+│ 3      nginx-ingress:ingress          ubuntu-app:ingress             ingress                 global    joined
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+────────────────────────────────────────────────────────────────────────────────
+> ./jara --demo
+╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                   │
+│                                                                                        ██╗ █████╗ ██████╗  █████╗ │
+│Controller: prod-aws                                                                    ██║██╔══██╗██╔══██╗██╔══██╗│
+│Model:      production                                                                  ██║███████║██████╔╝███████║│
+│Cloud:      aws/us-east-1                  <D> delete  <:> cmd                     ██   ██║██╔══██║██╔══██╗██╔══██║│
+│Juju:       3.6.1                          <L> logs    <?> help                    ╚█████╔╝██║  ██║██║  ██║██║  ██║│
+│Jara:       test                           <l> logs    <q> quit                     ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────────────── Relations ────────────────────────────────────────────────────╮
+│ ID     ENDPOINT 1                     ENDPOINT 2                     INTERFACE               TYPE      STATUS
+│ 1      postgresql:db                  ubuntu-app:db                  pgsql                   global    joined
+│ 2      prometheus:grafana-source      grafana:grafana-source         grafana-datasource      global    joined
+│ 3      nginx-ingress:ingress          ubuntu-app:ingress             ingress                 global    joined
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+│
+────────────────────────────────────────────────────────────────────────────────
+> ./jara --demo
+╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                   │
+│                                      <enter> select  <+/-> scale                       ██╗ █████╗ ██████╗  █████╗ │
+│Controller: prod-aws                  <D> deploy      <L> logs (app)                    ██║██╔══██╗██╔══██╗██╔══██╗│
+│Model:      production                <r> relate      <l> logs                          ██║███████║██████╔╝███████║│
+│Cloud:      aws/us-east-1             <A> apps        <:> cmd                      ██   ██║██╔══██║██╔══██╗██╔══██║│
+│Juju:       3.6.1                     <U> units       <?> help                     ╚█████╔╝██║  ██║██║  ██║██║  ██║│
+│Jara:       test                      <R> relations   <q> quit                      ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────── Applications ───────────────────────────╮╭────────────── Units(grafana) ───────────────╮
+│ NAME      STATUS  CHARM      CHANN…  R…  S…  EX…  MESSAGE          ││ UNIT         WORK…  AGENT  MESSAGE          │
+│ grafana   block…  grafana-…  lates…  1…  1   no   Missing relatio… ││ ★ grafana/0  bloc…  idle   Missing relatio… │
+│ nginx-i…  active  nginx-in…  lates…  95  1   yes  Ingress ready    ││                                             │
+│ postgre…  active  postgres…  14/st…  4…  3   no   Live master (14… ││                                             │
+│ prometh…  waiti…  promethe…  lates…  1…  1   no   Waiting for rel… ││                                             │
+│ ubuntu-…  active  ubuntu     stable  24  2   yes  Ready            ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    │╰─────────────────────────────────────────────╯
+│                                                                    │╭──────────── Relations(grafana) ─────────────╮
+│                                                                    ││ RELATION                                    │
+│                                                                    ││ grafana:grafana-source -> prometheus:grafa… │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+
+
+────────────────────────────────────────────────────────────────────────────────
+> ./jara --demo
+╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                   │
+│                                      <enter> select  <+/-> scale                       ██╗ █████╗ ██████╗  █████╗ │
+│Controller: prod-aws                  <D> deploy      <L> logs (app)                    ██║██╔══██╗██╔══██╗██╔══██╗│
+│Model:      production                <r> relate      <l> logs                          ██║███████║██████╔╝███████║│
+│Cloud:      aws/us-east-1             <A> apps        <:> cmd                      ██   ██║██╔══██║██╔══██╗██╔══██║│
+│Juju:       3.6.1                     <U> units       <?> help                     ╚█████╔╝██║  ██║██║  ██║██║  ██║│
+│Jara:       test                      <R> relations   <q> quit                      ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
 ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─────────────────────────── Applications ───────────────────────────╮╭────────────── Units(grafana) ───────────────╮
 │ NAME      STATUS  CHARM      CHANN…  R…  S…  EX…  MESSAGE          ││ UNIT         WORK…  AGENT  MESSAGE          │
@@ -720,7 +720,7 @@
 │Model:      production                   <enter> units   <:> cmd                        ██║███████║██████╔╝███████║│
 │Cloud:      aws/us-east-1                <D> deploy      <?> help                  ██   ██║██╔══██║██╔══██╗██╔══██║│
 │Juju:       3.6.1                        <L> logs (app)  <q> quit                  ╚█████╔╝██║  ██║██║  ██║██║  ██║│
-│Jara:       86b2989-dirty                <l> logs                                   ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+│Jara:       test                         <l> logs                                   ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
 ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭────────────────────────────────────────────────── Applications ───────────────────────────────────────────────────╮
 │ NAME              STATUS       CHARM               CHANNEL        REV   SCALE  EXPOS…  MESSAGE
@@ -762,7 +762,7 @@
 │Model:      production                   <enter> units   <:> cmd                        ██║███████║██████╔╝███████║│
 │Cloud:      aws/us-east-1                <D> deploy      <?> help                  ██   ██║██╔══██║██╔══██╗██╔══██║│
 │Juju:       3.6.1                        <L> logs (app)  <q> quit                  ╚█████╔╝██║  ██║██║  ██║██║  ██║│
-│Jara:       86b2989-dirty                <l> logs                                   ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+│Jara:       test                         <l> logs                                   ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
 ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭────────────────────────────────────────────────── Applications ───────────────────────────────────────────────────╮
 │ NAME              STATUS       CHARM               CHANNEL        REV   SCALE  EXPOS…  MESSAGE
@@ -804,7 +804,7 @@
 │Model:      production                   <enter> units   <:> cmd                        ██║███████║██████╔╝███████║│
 │Cloud:      aws/us-east-1                <D> deploy      <?> help                  ██   ██║██╔══██║██╔══██╗██╔══██║│
 │Juju:       3.6.1                        <L> logs (app)  <q> quit                  ╚█████╔╝██║  ██║██║  ██║██║  ██║│
-│Jara:       86b2989-dirty                <l> logs                                   ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+│Jara:       test                         <l> logs                                   ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
 ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭────────────────────────────────────────────────── Applications ───────────────────────────────────────────────────╮
 │ NAME              STATUS       CHARM               CHANNEL        REV   SCALE  EXPOS…  MESSAGE
@@ -846,7 +846,7 @@
 │Model:      production                   <enter> units   <:> cmd                        ██║███████║██████╔╝███████║│
 │Cloud:      aws/us-east-1                <D> deploy      <?> help                  ██   ██║██╔══██║██╔══██╗██╔══██║│
 │Juju:       3.6.1                        <L> logs (app)  <q> quit                  ╚█████╔╝██║  ██║██║  ██║██║  ██║│
-│Jara:       86b2989-dirty                <l> logs                                   ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+│Jara:       test                         <l> logs                                   ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
 ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭────────────────────────────────────────────────── Applications ───────────────────────────────────────────────────╮
 │ NAME              STATUS       CHARM               CHANNEL        REV   SCALE  EXPOS…  MESSAGE
@@ -888,7 +888,7 @@
 │Model:      production                   <enter> units   <:> cmd                        ██║███████║██████╔╝███████║│
 │Cloud:      aws/us-east-1                <D> deploy      <?> help                  ██   ██║██╔══██║██╔══██╗██╔══██║│
 │Juju:       3.6.1                        <L> logs (app)  <q> quit                  ╚█████╔╝██║  ██║██║  ██║██║  ██║│
-│Jara:       86b2989-dirty                <l> logs                                   ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+│Jara:       test                         <l> logs                                   ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
 ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭────────────────────────────────────────────────── Applications ───────────────────────────────────────────────────╮
 │ NAME              STATUS       CHARM               CHANNEL        REV   SCALE  EXPOS…  MESSAGE
