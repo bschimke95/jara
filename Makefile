@@ -1,4 +1,4 @@
-.PHONY: build lint test test-integration test-vhs test-vhs-update ensure-vhs fmt vet tidy all
+.PHONY: build build-vhs lint test test-integration test-vhs test-vhs-update ensure-vhs fmt vet tidy all
 
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 COMMIT  ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "none")
@@ -31,6 +31,15 @@ vet:
 tidy:
 	go mod tidy
 
+# VHS builds use fixed version strings so golden files are stable across commits.
+VHS_LDFLAGS = -w -s \
+	-X github.com/bschimke95/jara/internal/cmd.version=test \
+	-X github.com/bschimke95/jara/internal/cmd.commit=test \
+	-X github.com/bschimke95/jara/internal/cmd.date=2000-01-01T00:00:00Z
+
+build-vhs:
+	go build -ldflags "$(VHS_LDFLAGS)" -o jara ./cmd/jara
+
 # VHS dependency installer — ensures vhs, ttyd, and ffmpeg are available.
 ensure-vhs:
 	@command -v ffmpeg >/dev/null 2>&1 || { \
@@ -51,7 +60,7 @@ ensure-vhs:
 	}
 
 # VHS integration tests — compare generated ASCII output against golden files.
-test-vhs: build ensure-vhs
+test-vhs: build-vhs ensure-vhs
 	@for tape in tests/vhs/*.tape; do \
 		[ "$$(basename "$$tape")" = "_setup.tape" ] && continue; \
 		echo "▶ $$tape"; \
@@ -61,7 +70,7 @@ test-vhs: build ensure-vhs
 	@echo "\n✓ All VHS tests passed."
 
 # Regenerate golden files from current behavior.
-test-vhs-update: build ensure-vhs
+test-vhs-update: build-vhs ensure-vhs
 	@for tape in tests/vhs/*.tape; do \
 		[ "$$(basename "$$tape")" = "_setup.tape" ] && continue; \
 		echo "▶ $$tape"; \
