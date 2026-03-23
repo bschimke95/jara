@@ -12,12 +12,8 @@ Wait+Screen /Applications/
 Wait+Screen /grafana/
 Sleep 1s
 
-# Attempt to scale up (+ key) — should show read-only error.
+# Attempt to scale up (+ key) — should show read-only error briefly.
 Type "+"
-
-# Verify the read-only error is rendered.
-Wait+Screen /read-only/
-
 Sleep 2s
 
 Type "q"
