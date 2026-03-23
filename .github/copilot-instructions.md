@@ -115,6 +115,17 @@ Run before considering work complete:
 
 Use make test-integration when a change impacts integration-tagged paths.
 
+## VHS Integration Tests
+
+Every notable feature or view must have a corresponding VHS tape file in tests/vhs/.
+
+- Tape files drive the TUI with the mock client (`--demo` flag) and capture ASCII golden files to tests/vhs/golden/.
+- The shared setup is in tests/vhs/_setup.tape; all tapes source it via `Source tests/vhs/_setup.tape`.
+- Use `Wait+Screen /pattern/` to block until expected content renders. Prefer short, truncation-safe patterns (e.g., a unique word like `grafana`) over fragile multi-column header regexes.
+- Adding a new view or changing an existing view's rendering requires adding or updating the corresponding tape and regenerating the golden file.
+- Run `make test-vhs` to validate golden files match. Run `make test-vhs-update` to regenerate them after intentional changes.
+- VHS requires `vhs`, `ttyd`, and `ffmpeg`; `make test-vhs` installs missing dependencies automatically via the `ensure-vhs` target.
+
 ## Lint and Formatting
 
 - Formatting is enforced with gofumpt.
