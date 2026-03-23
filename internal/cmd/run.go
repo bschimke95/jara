@@ -44,12 +44,18 @@ func run(_ *cobra.Command, _ []string) error {
 	theme := config.ResolveTheme(cfg.Jara.UI.Skin)
 	keys := config.ResolveKeyMap(cfg.Jara.UI.Keys)
 
-	// 5. Connect to Juju.
-	client, err := api.NewJujuClient(api.WithCharmhubURL(cfg.Jara.CharmhubURL))
-	if err != nil {
-		return fmt.Errorf("creating Juju client: %w", err)
+	// 5. Connect to Juju (or use mock data in demo mode).
+	var client api.Client
+	if jaraFlags.Demo != nil && *jaraFlags.Demo {
+		client = api.NewMockClient()
+	} else {
+		jujuClient, err := api.NewJujuClient(api.WithCharmhubURL(cfg.Jara.CharmhubURL))
+		if err != nil {
+			return fmt.Errorf("creating Juju client: %w", err)
+		}
+		defer func() { _ = jujuClient.Close() }()
+		client = jujuClient
 	}
-	defer func() { _ = client.Close() }()
 
 	// 6. Build and run the TUI.
 	m := app.New(client, app.WithTheme(theme), app.WithKeyMap(keys), app.WithConfig(cfg), app.WithVersion(version))
