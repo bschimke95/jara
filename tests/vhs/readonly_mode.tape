@@ -15,6 +15,9 @@ Sleep 1s
 # Attempt to scale up (+ key) — should show read-only error.
 Type "+"
 
+# Verify the read-only error is rendered.
+Wait+Screen /read-only/
+
 Sleep 2s
 
 Type "q"
