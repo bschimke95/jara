@@ -3,14 +3,14 @@
 
 Require vhs
 
-Set Shell "zsh"
 Set Width 1200
 Set Height 800
 Set FontSize 14
 Set TypingSpeed 50ms
 
-# Clear the screen so the golden output starts clean.
 Hide
+Type "cd $JARA_ROOT"
+Enter
 Type "clear"
 Enter
 Sleep 500ms

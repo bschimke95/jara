@@ -64,7 +64,7 @@ test-vhs: build-vhs ensure-vhs
 	@for tape in tests/vhs/*.tape; do \
 		[ "$$(basename "$$tape")" = "_setup.tape" ] && continue; \
 		echo "▶ $$tape"; \
-		vhs "$$tape" || exit 1; \
+		JARA_ROOT="$$(pwd)" vhs "$$tape" || exit 1; \
 	done
 	@git diff --exit-code tests/vhs/golden/ || { echo "\n✗ Golden files differ. Run 'make test-vhs-update' to accept changes."; exit 1; }
 	@echo "\n✓ All VHS tests passed."
@@ -74,6 +74,6 @@ test-vhs-update: build-vhs ensure-vhs
 	@for tape in tests/vhs/*.tape; do \
 		[ "$$(basename "$$tape")" = "_setup.tape" ] && continue; \
 		echo "▶ $$tape"; \
-		vhs "$$tape" || exit 1; \
+		JARA_ROOT="$$(pwd)" vhs "$$tape" || exit 1; \
 	done
 	@echo "\n✓ Golden files regenerated. Review and commit the changes."
