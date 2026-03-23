@@ -201,6 +201,13 @@ func (d *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if fm, ok := updated.(*FilterModal); ok {
 				d.filterModal = *fm
 			}
+			// If the modal consumed a key but returned nil cmd, return a
+			// non-nil no-op so the global Back handler does not fire.
+			if cmd == nil {
+				if _, isKey := msg.(tea.KeyPressMsg); isKey {
+					cmd = func() tea.Msg { return nil }
+				}
+			}
 			return d, cmd
 		}
 	}
@@ -225,7 +232,9 @@ func (d *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				d.searchMatches = nil
 				d.mode = debugModeNormal
 				d.searchInput.Blur()
-				return d, nil
+				// Return a non-nil no-op cmd to signal the key was consumed
+				// here, preventing the global Back handler from also firing.
+				return d, func() tea.Msg { return nil }
 			}
 		}
 		var cmd tea.Cmd

@@ -1,0 +1,30 @@
+name: VHS Integration Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  vhs:
+    name: VHS Tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - name: Run VHS integration tests
+        run: make test-vhs
+
+      - name: Upload golden files on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: vhs-golden-files
+          path: tests/vhs/golden/
