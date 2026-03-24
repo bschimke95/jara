@@ -60,13 +60,28 @@ ensure-vhs:
 	}
 
 # VHS integration tests — compare generated ASCII output against golden files.
+# Only the last frame of each .ascii file is compared; intermediate frames are
+# timing-dependent and differ between machines/shells.
 test-vhs: build-vhs ensure-vhs
-	@for tape in tests/vhs/*.tape; do \
+	@fail=0; tmpdir=$$(mktemp -d); \
+	for tape in tests/vhs/*.tape; do \
 		[ "$$(basename "$$tape")" = "_setup.tape" ] && continue; \
 		echo "▶ $$tape"; \
-		JARA_ROOT="$$(pwd)" vhs "$$tape" || exit 1; \
-	done
-	@git diff --exit-code tests/vhs/golden/ || { echo "\n✗ Golden files differ. Run 'make test-vhs-update' to accept changes."; exit 1; }
+		JARA_ROOT="$$(pwd)" vhs "$$tape" || { rm -rf "$$tmpdir"; exit 1; }; \
+	done; \
+	for golden in tests/vhs/golden/*.ascii; do \
+		name=$$(basename "$$golden"); \
+		awk 'BEGIN{prev=""} /^─/{prev=buf; buf=""} {buf=buf$$0"\n"} END{printf "%s", prev}' "$$golden" > "$$tmpdir/new"; \
+		git show HEAD:"tests/vhs/golden/$$name" 2>/dev/null | awk 'BEGIN{prev=""} /^─/{prev=buf; buf=""} {buf=buf$$0"\n"} END{printf "%s", prev}' > "$$tmpdir/old"; \
+		if ! diff -q "$$tmpdir/old" "$$tmpdir/new" > /dev/null 2>&1; then \
+			echo "✗ $$name: last frame differs"; \
+			diff "$$tmpdir/old" "$$tmpdir/new" || true; \
+			fail=1; \
+		fi; \
+	done; \
+	git checkout -- tests/vhs/golden/; \
+	rm -rf "$$tmpdir"; \
+	if [ $$fail -ne 0 ]; then echo "\n✗ Golden files differ. Run 'make test-vhs-update' to accept changes."; exit 1; fi
 	@echo "\n✓ All VHS tests passed."
 
 # Regenerate golden files from current behavior.
