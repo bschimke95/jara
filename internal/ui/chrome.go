@@ -221,28 +221,39 @@ func HeaderContent(controller, modelName, cloud, region, jaraVersion, jujuVersio
 	return lipgloss.JoinHorizontal(lipgloss.Top, infoBlock, spacer1, hintBlock, spacer2, logoRendered)
 }
 
-// CrumbBar renders the k9s-style navigation crumbs row.
-// In k9s this looks like: <resource_type> [context]
-func CrumbBar(viewName string, context string, width int) string {
-	crumbStyle := lipgloss.NewStyle().
+// CrumbBar renders the full navigation stack as a breadcrumb bar.
+// Each entry in crumbs is rendered as a pill; the last (current) entry is
+// highlighted with CrumbBg; ancestors use CrumbBgAlt. Entries are joined
+// by a › separator.
+func CrumbBar(crumbs []string, width int) string {
+	if len(crumbs) == 0 {
+		return lipgloss.NewStyle().Width(width).Render("")
+	}
+
+	activeStyle := lipgloss.NewStyle().
 		Foreground(color.CrumbFg).
 		Background(color.CrumbBg).
 		Bold(true).
 		Padding(0, 1)
+	ancestorStyle := lipgloss.NewStyle().
+		Foreground(color.CrumbFg).
+		Background(color.CrumbBgAlt).
+		Padding(0, 1)
+	sepStyle := lipgloss.NewStyle().Foreground(color.Subtle)
 
-	parts := []string{crumbStyle.Render(viewName)}
-	if context != "" {
-		ctxStyle := lipgloss.NewStyle().
-			Foreground(color.CrumbFg).
-			Background(color.CrumbBgAlt).
-			Padding(0, 1)
-		parts = append(parts, ctxStyle.Render(context))
+	var parts []string
+	for i, crumb := range crumbs {
+		if i == len(crumbs)-1 {
+			parts = append(parts, activeStyle.Render(crumb))
+		} else {
+			parts = append(parts, ancestorStyle.Render(crumb))
+			parts = append(parts, sepStyle.Render(" › "))
+		}
 	}
 
-	crumbs := lipgloss.JoinHorizontal(lipgloss.Center, parts...)
-
+	bar := lipgloss.JoinHorizontal(lipgloss.Center, parts...)
 	barStyle := lipgloss.NewStyle().Width(width)
-	return barStyle.Render(crumbs)
+	return " " + barStyle.Render(bar) + "\n"
 }
 
 // Footer renders the k9s-style bottom hint bar showing key bindings.

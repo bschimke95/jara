@@ -303,8 +303,9 @@ func (m Model) updateActiveView(msg tea.Msg) (Model, tea.Cmd) {
 }
 
 func (m Model) contentHeight() int {
-	// Layout: body box borders (2) + optional input bar (variable height).
+	// Layout: body box borders (2) + optional input bar (variable height) + breadcrumb bar (1).
 	chrome := 2 // body box borders
+	chrome += 2 // breadcrumb bar + bottom padding
 	if !m.cfg.Jara.Headless {
 		// Header box: logo height + 2 borders.
 		chrome += ui.LogoHeight() + 2
@@ -439,6 +440,9 @@ func (m Model) View() tea.View {
 			sections = append(sections, ui.BorderBox(bodyContent, bodyTitle, m.width))
 		}
 	}
+
+	// ── Breadcrumb bar ──
+	sections = append(sections, ui.CrumbBar(m.stack.Breadcrumbs(), m.width))
 
 	// ── Error line ──
 	if m.err != nil {

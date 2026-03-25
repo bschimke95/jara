@@ -21,6 +21,8 @@ type NavigateMsg struct {
 	Context string
 	// Filter is an optional debug-log filter applied when Target is DebugLogView.
 	Filter *model.DebugLogFilter
+	// ResetStack discards the navigation history and makes Target the sole entry.
+	ResetStack bool
 }
 
 // GoBackMsg requests navigation back to the previous view.

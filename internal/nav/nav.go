@@ -163,6 +163,11 @@ func (s *Stack) Breadcrumbs() []string {
 	return crumbs
 }
 
+// Reset replaces the stack with a single entry, discarding all history.
+func (s *Stack) Reset(entry StackEntry) {
+	s.entries = []StackEntry{entry}
+}
+
 // Depth returns the current stack depth.
 func (s *Stack) Depth() int {
 	return len(s.entries)
