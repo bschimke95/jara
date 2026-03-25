@@ -32,6 +32,7 @@ type Model struct {
 	client api.Client
 	cfg    *config.Config
 	status *model.FullStatus
+	styles *color.Styles
 
 	jaraVersion string
 
@@ -61,11 +62,12 @@ type Model struct {
 // Option configures the root Model.
 type Option func(*Model)
 
-// WithTheme applies a resolved theme to the color package globals.
-func WithTheme(t *config.Theme) Option {
-	return func(_ *Model) {
-		if t != nil {
-			t.Apply()
+// WithStyles sets the resolved styles on the model and applies the legacy
+// global color variables for backward compatibility during migration.
+func WithStyles(s *color.Styles) Option {
+	return func(m *Model) {
+		if s != nil {
+			m.styles = s
 		}
 	}
 }
@@ -102,32 +104,34 @@ func New(client api.Client, opts ...Option) Model {
 	m := Model{
 		client: client,
 		cfg:    config.NewDefault(),
+		styles: color.DefaultStyles(),
 		stack:  nav.NewStack(nav.ModelView),
-		views: map[nav.ViewID]view.View{
-			nav.ApplicationsView: applications.New(keys),
-			nav.UnitsView:        units.New("", keys),
-			nav.MachinesView:     machines.New(keys),
-			nav.RelationsView:    relations.New(keys),
-			nav.DebugLogView:     debuglog.New(keys),
-		},
-		keys:  keys,
-		input: ti,
-		mode:  modeNormal,
+		views:  make(map[nav.ViewID]view.View),
+		keys:   keys,
+		input:  ti,
+		mode:   modeNormal,
 	}
-
-	m.views[nav.ControllerView] = controllers.New(keys, func() tea.Cmd { return m.pollControllers() })
-	m.views[nav.ModelsView] = models.New(keys,
-		func(ctrl string) tea.Cmd { return m.pollModels(ctrl) },
-		func(name string) error { return m.client.SelectController(name) },
-		func() string { return m.client.ControllerName() },
-	)
-	m.views[nav.ModelView] = modelview.New(keys,
-		func(name string) error { return m.client.SelectModel(name) },
-	)
 
 	for _, opt := range opts {
 		opt(&m)
 	}
+
+	s := m.styles
+
+	m.views[nav.ApplicationsView] = applications.New(keys, s)
+	m.views[nav.UnitsView] = units.New("", keys, s)
+	m.views[nav.MachinesView] = machines.New(keys, s)
+	m.views[nav.RelationsView] = relations.New(keys, s)
+	m.views[nav.DebugLogView] = debuglog.New(keys, s)
+	m.views[nav.ControllerView] = controllers.New(keys, s, func() tea.Cmd { return m.pollControllers() })
+	m.views[nav.ModelsView] = models.New(keys, s,
+		func(ctrl string) tea.Cmd { return m.pollModels(ctrl) },
+		func(name string) error { return m.client.SelectController(name) },
+		func() string { return m.client.ControllerName() },
+	)
+	m.views[nav.ModelView] = modelview.New(keys, s,
+		func(name string) error { return m.client.SelectModel(name) },
+	)
 
 	return m
 }
@@ -378,8 +382,8 @@ func (m Model) View() tea.View {
 		if m.status != nil {
 			jujuVersion = m.status.Model.Version
 		}
-		headerInner := ui.HeaderContent(controllerName, modelName, cloud, region, m.jaraVersion, jujuVersion, hints, m.width-2)
-		sections = append(sections, ui.BorderBox(headerInner, "", m.width))
+		headerInner := ui.HeaderContent(controllerName, modelName, cloud, region, m.jaraVersion, jujuVersion, hints, m.width-2, m.styles)
+		sections = append(sections, ui.BorderBox(headerInner, "", m.width, m.styles))
 	}
 
 	// ── Input bar (command/filter mode, between header and body) ──
@@ -419,7 +423,7 @@ func (m Model) View() tea.View {
 		var rawTitle string
 		if m.stack.Current().View == nav.DebugLogView {
 			if dl, ok := m.views[nav.DebugLogView].(*debuglog.View); ok {
-				titleStyle := lipgloss.NewStyle().Foreground(color.BorderTitle).Bold(true)
+				titleStyle := lipgloss.NewStyle().Foreground(m.styles.BorderTitleColor).Bold(true)
 				rawTitle = titleStyle.Render(" "+bodyTitle+" ") + dl.FilterTitle()
 			}
 		}
@@ -435,18 +439,18 @@ func (m Model) View() tea.View {
 		}
 		bodyContent := strings.Join(contentLines, "\n")
 		if rawTitle != "" {
-			sections = append(sections, ui.BorderBoxRawTitle(bodyContent, rawTitle, m.width))
+			sections = append(sections, ui.BorderBoxRawTitle(bodyContent, rawTitle, m.width, m.styles))
 		} else {
-			sections = append(sections, ui.BorderBox(bodyContent, bodyTitle, m.width))
+			sections = append(sections, ui.BorderBox(bodyContent, bodyTitle, m.width, m.styles))
 		}
 	}
 
 	// ── Breadcrumb bar ──
-	sections = append(sections, ui.CrumbBar(m.stack.Breadcrumbs(), m.width))
+	sections = append(sections, ui.CrumbBar(m.stack.Breadcrumbs(), m.width, m.styles))
 
 	// ── Error line ──
 	if m.err != nil {
-		errStyle := lipgloss.NewStyle().Foreground(color.Error)
+		errStyle := lipgloss.NewStyle().Foreground(m.styles.ErrorColor)
 		sections = append(sections, errStyle.Render(" Error: "+m.err.Error()))
 	}
 

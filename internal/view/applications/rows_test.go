@@ -3,6 +3,7 @@ package applications
 import (
 	"testing"
 
+	"github.com/bschimke95/jara/internal/color"
 	"github.com/bschimke95/jara/internal/model"
 )
 
@@ -54,7 +55,7 @@ func TestRows(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := rows(tt.apps)
+			got := rows(tt.apps, color.DefaultStyles())
 			if len(got) != tt.wantRows {
 				t.Fatalf("rows() returned %d rows, want %d", len(got), tt.wantRows)
 			}
@@ -68,7 +69,7 @@ func TestRowsSortedOrder(t *testing.T) {
 		"alpine":     {Name: "alpine"},
 		"postgresql": {Name: "postgresql"},
 	}
-	got := rows(apps)
+	got := rows(apps, color.DefaultStyles())
 	want := []string{"alpine", "postgresql", "zookeeper"}
 	for i, row := range got {
 		if row[0] != want[i] {
@@ -91,7 +92,7 @@ func TestRowsExposedField(t *testing.T) {
 			apps := map[string]model.Application{
 				"app": {Name: "app", Exposed: tt.exposed},
 			}
-			got := rows(apps)
+			got := rows(apps, color.DefaultStyles())
 			if got[0][6] != tt.want {
 				t.Errorf("exposed field = %q, want %q", got[0][6], tt.want)
 			}

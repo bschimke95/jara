@@ -15,7 +15,7 @@ func containsIgnoreCase(s, substr string) bool {
 	return strings.Contains(strings.ToLower(s), strings.ToLower(substr))
 }
 
-func highlightSearchMatch(line, query string) string {
+func highlightSearchMatch(line, query string, s *color.Styles) string {
 	lower := strings.ToLower(line)
 	lq := strings.ToLower(query)
 	idx := strings.Index(lower, lq)
@@ -23,33 +23,33 @@ func highlightSearchMatch(line, query string) string {
 		return line
 	}
 	hl := lipgloss.NewStyle().
-		Foreground(color.SearchHighlightFg).
-		Background(color.SearchHighlightBg)
+		Foreground(s.SearchHighlightFgColor).
+		Background(s.SearchHighlightBgColor)
 	return line[:idx] + hl.Render(line[idx:idx+len(query)]) + line[idx+len(query):]
 }
 
-func severityColor(severity string) lipgloss.Style {
+func severityColor(severity string, s *color.Styles) lipgloss.Style {
 	switch strings.ToUpper(severity) {
 	case "ERROR", "CRITICAL":
-		return lipgloss.NewStyle().Foreground(color.CheckRed)
+		return lipgloss.NewStyle().Foreground(s.CheckRedColor)
 	case "WARNING":
-		return lipgloss.NewStyle().Foreground(color.StatusColor("waiting"))
+		return lipgloss.NewStyle().Foreground(s.StatusColor("waiting"))
 	case "INFO":
-		return lipgloss.NewStyle().Foreground(color.Primary)
+		return lipgloss.NewStyle().Foreground(s.Primary)
 	case "DEBUG":
-		return lipgloss.NewStyle().Foreground(color.Muted)
+		return lipgloss.NewStyle().Foreground(s.Muted)
 	case "TRACE":
-		return lipgloss.NewStyle().Foreground(color.Subtle)
+		return lipgloss.NewStyle().Foreground(s.Subtle)
 	default:
-		return lipgloss.NewStyle().Foreground(color.Subtle)
+		return lipgloss.NewStyle().Foreground(s.Subtle)
 	}
 }
 
-func formatLogEntry(entry model.LogEntry, width int) string {
-	entityStyle := lipgloss.NewStyle().Foreground(color.Primary)
-	tsStyle := lipgloss.NewStyle().Foreground(color.Muted)
-	sevStyle := severityColor(entry.Severity)
-	moduleStyle := lipgloss.NewStyle().Foreground(color.Secondary)
+func formatLogEntry(entry model.LogEntry, width int, s *color.Styles) string {
+	entityStyle := lipgloss.NewStyle().Foreground(s.Primary)
+	tsStyle := lipgloss.NewStyle().Foreground(s.Muted)
+	sevStyle := severityColor(entry.Severity, s)
+	moduleStyle := lipgloss.NewStyle().Foreground(s.Secondary)
 
 	ts := entry.Timestamp.Format(time.TimeOnly)
 
@@ -68,16 +68,16 @@ func formatLogEntry(entry model.LogEntry, width int) string {
 	return line
 }
 
-func formatLogEntryHighlighted(entry model.LogEntry, width int, query string) string {
-	entityStyle := lipgloss.NewStyle().Foreground(color.Primary)
-	tsStyle := lipgloss.NewStyle().Foreground(color.Muted)
-	sevStyle := severityColor(entry.Severity)
-	moduleStyle := lipgloss.NewStyle().Foreground(color.Secondary)
+func formatLogEntryHighlighted(entry model.LogEntry, width int, query string, s *color.Styles) string {
+	entityStyle := lipgloss.NewStyle().Foreground(s.Primary)
+	tsStyle := lipgloss.NewStyle().Foreground(s.Muted)
+	sevStyle := severityColor(entry.Severity, s)
+	moduleStyle := lipgloss.NewStyle().Foreground(s.Secondary)
 
 	ts := entry.Timestamp.Format(time.TimeOnly)
 
-	highlightField := func(s string) string {
-		return highlightSearchMatch(s, query)
+	highlightField := func(str string) string {
+		return highlightSearchMatch(str, query, s)
 	}
 
 	line := fmt.Sprintf(" %s %s %s %s %s",

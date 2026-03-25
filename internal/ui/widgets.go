@@ -4,7 +4,6 @@ import (
 	"sort"
 
 	"charm.land/bubbles/v2/table"
-	"charm.land/lipgloss/v2"
 
 	"github.com/bschimke95/jara/internal/color"
 )
@@ -47,52 +46,34 @@ func ScaleColumns(cols []table.Column, availableWidth int) []table.Column {
 
 // StyledTable returns the standard table styles: primary-colored bold header,
 // highlighted selected row with crumb foreground.
-func StyledTable() table.Styles {
-	s := table.DefaultStyles()
-	s.Header = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(color.Primary).
-		Padding(0, 1)
-	s.Selected = lipgloss.NewStyle().
-		Foreground(color.CrumbFg).
-		Background(color.Highlight).
-		Bold(true)
-	s.Cell = lipgloss.NewStyle().
-		Padding(0, 1)
-	return s
+func StyledTable(s *color.Styles) table.Styles {
+	ts := table.DefaultStyles()
+	ts.Header = s.Header
+	ts.Selected = s.SelectedRow
+	ts.Cell = s.Cell
+	return ts
 }
 
 // StyledTableHighlightOnly is like StyledTable but the selected row only sets a
 // background highlight without overriding the cell foreground colour. This lets
 // pre-coloured status values (workload, agent) remain readable when highlighted.
-func StyledTableHighlightOnly() table.Styles {
-	s := table.DefaultStyles()
-	s.Header = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(color.Primary).
-		Padding(0, 1)
-	s.Selected = lipgloss.NewStyle().
-		Background(color.Highlight).
-		Bold(true)
-	s.Cell = lipgloss.NewStyle().
-		Padding(0, 1)
-	return s
+func StyledTableHighlightOnly(s *color.Styles) table.Styles {
+	ts := table.DefaultStyles()
+	ts.Header = s.Header
+	ts.Selected = s.SelectedRowBgOnly
+	ts.Cell = s.Cell
+	return ts
 }
 
 // UnfocusedTableStyles returns dimmed table styles for inactive/read-only panes.
 // The selected style is intentionally identical to the cell style so that
 // the cursor row carries no highlight in a non-interactive pane.
-func UnfocusedTableStyles() table.Styles {
-	s := table.DefaultStyles()
-	s.Header = lipgloss.NewStyle().
-		Bold(true).
-		Foreground(color.Muted).
-		Padding(0, 1)
-	s.Selected = lipgloss.NewStyle().
-		Foreground(color.Title)
-	s.Cell = lipgloss.NewStyle().
-		Padding(0, 1)
-	return s
+func UnfocusedTableStyles(s *color.Styles) table.Styles {
+	ts := table.DefaultStyles()
+	ts.Header = s.UnfocusedHeader
+	ts.Selected = s.UnfocusedSelected
+	ts.Cell = s.Cell
+	return ts
 }
 
 // SortedKeys returns the sorted keys of a map.

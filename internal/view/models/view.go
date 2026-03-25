@@ -6,6 +6,7 @@ import (
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/bschimke95/jara/internal/color"
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/ui"
@@ -14,15 +15,15 @@ import (
 
 // New creates a new models view.
 // pollFn is called from Enter to fetch data for the given controller.
-func New(keys ui.KeyMap, pollFn func(controller string) tea.Cmd, selectControllerFn func(string) error, controllerNameFn func() string) *View {
+func New(keys ui.KeyMap, styles *color.Styles, pollFn func(controller string) tea.Cmd, selectControllerFn func(string) error, controllerNameFn func() string) *View {
 	cols := columns()
 	t := table.New(
 		table.WithColumns(cols),
 		table.WithFocused(true),
 		table.WithHeight(10),
 	)
-	t.SetStyles(ui.StyledTable())
-	return &View{table: t, keys: keys, pollFn: pollFn, selectControllerFn: selectControllerFn, controllerNameFn: controllerNameFn}
+	t.SetStyles(ui.StyledTable(styles))
+	return &View{table: t, keys: keys, styles: styles, pollFn: pollFn, selectControllerFn: selectControllerFn, controllerNameFn: controllerNameFn}
 }
 
 func (m *View) SetSize(width, height int) {
@@ -84,7 +85,7 @@ func (m *View) Enter(ctx view.NavigateContext) (tea.Cmd, error) {
 		table.WithFocused(true),
 		table.WithHeight(10),
 	)
-	m.table.SetStyles(ui.StyledTable())
+	m.table.SetStyles(ui.StyledTable(m.styles))
 	if m.width > 0 {
 		m.table.SetWidth(m.width)
 		m.table.SetHeight(m.height)

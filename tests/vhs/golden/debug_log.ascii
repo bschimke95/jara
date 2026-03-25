@@ -1649,48 +1649,6 @@
 ╭──────────────────────────────────────────── Debug Log  ▸ level=WARNING────────────────────────────────────────────╮
 │ unit-postgresql-0: 12:00:00 INFO juju.worker.uniter running hook: config-changed                                  │
 │ unit-ubuntu-app-0: 12:00:00 DEBUG juju.state agent connected to controller                                        │
-│  match 1/1  (n/N to navigate)                                                                                     │
-│                                                                                                                   │
-│                                                                                                                   │
-│                                                                                                                   │
-│                                                                                                                   │
-│                                                                                                                   │
-│                         ╭─────────────────────── Debug Log Filter ───────────────────────╮                        │
-│                         │╭──── Filters ─────╮  ╭──────────────── Level ─────────────────╮│                        │
-│                         ││▶ Level             ││▶ ✘ TRACE                               ││                        │
-│                         ││  Applications      ││  ✘ DEBUG                               ││                        │
-│                         ││  Units             ││  ✘ INFO                                ││                        │
-│                         ││  Machines          ││  ✔ WARNING                             ││                        │
-│                         ││  Modules           ││  ✘ ERROR                               ││                        │
-│                         ││  Labels            │╰────────────────────────────────────────╯│                        │
-│                         │╰──────────────────╯                                            │                        │
-│                         │ <k/up/j/down> move  │  <enter> select  │  <h/←/esc> back  │  <F> apply  │  <esc> close│ │
-│                         ╰────────────────────────────────────────────────────────────────╯                        │
-│                                                                                                                   │
-│                                                                                                                   │
-│                                                                                                                   │
-│                                                                                                                   │
-│                                                                                                                   │
-│                                                                                                                   │
-│                                                                                                                   │
-│                                                                                                                   │
-│                                                                                                                   │
-╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-  Model  ›  Debug Log
-────────────────────────────────────────────────────────────────────────────────
-> ./jara --demo
-╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
-│                                                                                                                   │
-│                                                                                        ██╗ █████╗ ██████╗  █████╗ │
-│Controller: prod-aws              <esc> back        </> search                          ██║██╔══██╗██╔══██╗██╔══██╗│
-│Model:      production            <G> bottom        <n/N> next/prev match               ██║███████║██████╔╝███████║│
-│Cloud:      aws/us-east-1         <g> top           <:> cmd                        ██   ██║██╔══██║██╔══██╗██╔══██║│
-│Juju:       3.6.1                 <F> filter        <?> help                       ╚█████╔╝██║  ██║██║  ██║██║  ██║│
-│Jara:       test                  <D> clear filter  <q> quit                        ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
-╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
-╭──────────────────────────────────────────── Debug Log  ▸ level=WARNING────────────────────────────────────────────╮
-│ unit-postgresql-0: 12:00:00 INFO juju.worker.uniter running hook: config-changed                                  │
-│ unit-ubuntu-app-0: 12:00:00 DEBUG juju.state agent connected to controller                                        │
 │ machine-0: 12:00:01 WARNING juju.apiserver hook failed: install                                                   │
 │  match 1/2  (n/N to navigate)                                                                                     │
 │                                                                                                                   │
@@ -1820,6 +1778,48 @@
 │ machine-0: 12:00:01 WARNING juju.apiserver hook failed: install                                                   │
 │  match 1/2  (n/N to navigate)                                                                                     │
 │                                                                                                                   │
+│                                                                                                                   │
+│                                                                                                                   │
+│                                                                                                                   │
+│                         ╭─────────────────────── Debug Log Filter ───────────────────────╮                        │
+│                         │╭──── Filters ─────╮  ╭──────────────── Level ─────────────────╮│                        │
+│                         ││▶ Level             ││▶ ✘ TRACE                               ││                        │
+│                         ││  Applications      ││  ✘ DEBUG                               ││                        │
+│                         ││  Units             ││  ✘ INFO                                ││                        │
+│                         ││  Machines          ││  ✔ WARNING                             ││                        │
+│                         ││  Modules           ││  ✘ ERROR                               ││                        │
+│                         ││  Labels            │╰────────────────────────────────────────╯│                        │
+│                         │╰──────────────────╯                                            │                        │
+│                         │ <k/up/j/down> move  │  <enter> select  │  <h/←/esc> back  │  <F> apply  │  <esc> close│ │
+│                         ╰────────────────────────────────────────────────────────────────╯                        │
+│                                                                                                                   │
+│                                                                                                                   │
+│                                                                                                                   │
+│                                                                                                                   │
+│                                                                                                                   │
+│                                                                                                                   │
+│                                                                                                                   │
+│                                                                                                                   │
+│                                                                                                                   │
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+  Model  ›  Debug Log
+────────────────────────────────────────────────────────────────────────────────
+> ./jara --demo
+╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                   │
+│                                                                                        ██╗ █████╗ ██████╗  █████╗ │
+│Controller: prod-aws              <esc> back        </> search                          ██║██╔══██╗██╔══██╗██╔══██╗│
+│Model:      production            <G> bottom        <n/N> next/prev match               ██║███████║██████╔╝███████║│
+│Cloud:      aws/us-east-1         <g> top           <:> cmd                        ██   ██║██╔══██║██╔══██╗██╔══██║│
+│Juju:       3.6.1                 <F> filter        <?> help                       ╚█████╔╝██║  ██║██║  ██║██║  ██║│
+│Jara:       test                  <D> clear filter  <q> quit                        ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭──────────────────────────────────────────── Debug Log  ▸ level=WARNING────────────────────────────────────────────╮
+│ unit-postgresql-0: 12:00:00 INFO juju.worker.uniter running hook: config-changed                                  │
+│ unit-ubuntu-app-0: 12:00:00 DEBUG juju.state agent connected to controller                                        │
+│ machine-0: 12:00:01 WARNING juju.apiserver hook failed: install                                                   │
+│ unit-grafana-0: 12:00:01 ERROR juju.worker.provisioner relation joined: db                                        │
+│  match 1/2  (n/N to navigate)                                                                                     │
 │                                                                                                                   │
 │                                                                                                                   │
 │                                                                                                                   │

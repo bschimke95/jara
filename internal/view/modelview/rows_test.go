@@ -3,6 +3,7 @@ package modelview
 import (
 	"testing"
 
+	"github.com/bschimke95/jara/internal/color"
 	"github.com/bschimke95/jara/internal/model"
 )
 
@@ -32,7 +33,7 @@ func TestApplicationRows(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := applicationRows(tt.apps)
+			got := applicationRows(tt.apps, color.DefaultStyles())
 			if len(got) != tt.wantRows {
 				t.Fatalf("applicationRows() len = %d, want %d", len(got), tt.wantRows)
 			}
@@ -46,7 +47,7 @@ func TestApplicationRowsSortedOrder(t *testing.T) {
 		"app": {Name: "app"},
 		"mid": {Name: "mid"},
 	}
-	got := applicationRows(apps)
+	got := applicationRows(apps, color.DefaultStyles())
 	want := []string{"app", "mid", "zk"}
 	for i, row := range got {
 		if row[0] != want[i] {

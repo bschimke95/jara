@@ -8,6 +8,7 @@ import (
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/bschimke95/jara/internal/color"
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/ui"
@@ -16,15 +17,15 @@ import (
 )
 
 // New creates a new relations view.
-func New(keys ui.KeyMap) *View {
+func New(keys ui.KeyMap, styles *color.Styles) *View {
 	cols := Columns()
 	t := table.New(
 		table.WithColumns(cols),
 		table.WithFocused(true),
 		table.WithHeight(10),
 	)
-	t.SetStyles(ui.StyledTable())
-	return &View{table: t, keys: keys}
+	t.SetStyles(ui.StyledTable(styles))
+	return &View{table: t, keys: keys, styles: styles}
 }
 
 func (r *View) SetSize(width, height int) {
@@ -90,6 +91,7 @@ func (r *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						r.deletingB = b
 						r.confirmModal = confirmodal.New(
 							r.keys,
+							r.styles,
 							"Delete Relation",
 							fmt.Sprintf("Remove relation %s ↔ %s?", a, b),
 						)

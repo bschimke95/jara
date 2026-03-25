@@ -4,6 +4,7 @@ import (
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/bschimke95/jara/internal/color"
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/ui"
 )
@@ -17,6 +18,7 @@ type UpdatedMsg struct {
 type View struct {
 	table       table.Model
 	keys        ui.KeyMap
+	styles      *color.Styles
 	width       int
 	height      int
 	controllers []model.Controller

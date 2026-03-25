@@ -64,6 +64,7 @@ type ClosedMsg struct{}
 // Modal is a two-pane overlay for configuring deploy options.
 type Modal struct {
 	keys      ui.KeyMap
+	styles    *color.Styles
 	modelName string
 
 	charmSuggestions []string
@@ -96,12 +97,13 @@ type Modal struct {
 }
 
 // New creates a new deploy modal.
-func New(modelName string, keys ui.KeyMap, charmSuggestions, appSuggestions []string) Modal {
+func New(modelName string, keys ui.KeyMap, styles *color.Styles, charmSuggestions, appSuggestions []string) Modal {
 	ti := textinput.New()
 	ti.CharLimit = 256
 	ti.Placeholder = "Enter value"
 	return Modal{
 		keys:             keys,
+		styles:           styles,
 		modelName:        modelName,
 		input:            ti,
 		charmSuggestions: sortedUnique(charmSuggestions),
@@ -461,11 +463,11 @@ func (m *Modal) Render(background string) string {
 
 	leftContent := m.renderLeftPane(leftW)
 	rightContent := m.renderRightPane(rightW)
-	leftBox := ui.BorderBox(leftContent, "Deploy options", leftW+2)
-	rightBox := ui.BorderBox(rightContent, fieldNames[m.leftCursor], rightW+2)
+	leftBox := ui.BorderBox(leftContent, "Deploy options", leftW+2, m.styles)
+	rightBox := ui.BorderBox(rightContent, fieldNames[m.leftCursor], rightW+2, m.styles)
 	combined := lipgloss.JoinHorizontal(lipgloss.Top, leftBox, rightBox)
 	if m.validationErr != "" {
-		errStyle := lipgloss.NewStyle().Foreground(color.Error)
+		errStyle := lipgloss.NewStyle().Foreground(m.styles.ErrorColor)
 		combined += "\n" + errStyle.Render("  "+m.validationErr)
 	}
 	combined += "\n" + m.renderFooter()
@@ -474,8 +476,8 @@ func (m *Modal) Render(background string) string {
 	if m.modelName != "" {
 		title = " Deploy Charm(" + m.modelName + ") "
 	}
-	titleStyle := lipgloss.NewStyle().Foreground(color.Primary).Bold(true)
-	box := ui.BorderBoxRawTitle(combined, titleStyle.Render(title), outerW)
+	titleStyle := lipgloss.NewStyle().Foreground(m.styles.Primary).Bold(true)
+	box := ui.BorderBoxRawTitle(combined, titleStyle.Render(title), outerW, m.styles)
 
 	modalH := lipgloss.Height(box)
 	x := (m.width - outerW) / 2
@@ -497,9 +499,9 @@ func (m *Modal) Render(background string) string {
 }
 
 func (m *Modal) renderLeftPane(width int) string {
-	selectedStyle := lipgloss.NewStyle().Foreground(color.CrumbFg).Background(color.Highlight).Bold(true)
-	focusedStyle := lipgloss.NewStyle().Foreground(color.Title)
-	mutedStyle := lipgloss.NewStyle().Foreground(color.Muted)
+	selectedStyle := lipgloss.NewStyle().Foreground(m.styles.CrumbFgColor).Background(m.styles.Highlight).Bold(true)
+	focusedStyle := lipgloss.NewStyle().Foreground(m.styles.Title)
+	mutedStyle := lipgloss.NewStyle().Foreground(m.styles.Muted)
 
 	var rows []string
 	for i, name := range fieldNames {
@@ -522,13 +524,13 @@ func (m *Modal) renderLeftPane(width int) string {
 }
 
 func (m *Modal) renderRightPane(width int) string {
-	labelStyle := lipgloss.NewStyle().Foreground(color.InfoLabel)
-	valueStyle := lipgloss.NewStyle().Foreground(color.Title)
-	hintStyle := lipgloss.NewStyle().Foreground(color.Muted)
-	selectedStyle := lipgloss.NewStyle().Foreground(color.CrumbFg).Background(color.Highlight).Bold(true)
+	labelStyle := lipgloss.NewStyle().Foreground(m.styles.InfoLabelColor)
+	valueStyle := lipgloss.NewStyle().Foreground(m.styles.Title)
+	hintStyle := lipgloss.NewStyle().Foreground(m.styles.Muted)
+	selectedStyle := lipgloss.NewStyle().Foreground(m.styles.CrumbFgColor).Background(m.styles.Highlight).Bold(true)
 
 	if m.editing {
-		inputLine := valueStyle.Render(m.input.Value()) + lipgloss.NewStyle().Foreground(color.Primary).Render("█")
+		inputLine := valueStyle.Render(m.input.Value()) + lipgloss.NewStyle().Foreground(m.styles.Primary).Render("█")
 		lines := []string{inputLine, hintStyle.Render("Enter: save  Tab: complete  Esc: cancel")}
 		if len(m.autocomplete) > 0 {
 			lines = append(lines, hintStyle.Render("Suggestions:"))
@@ -596,9 +598,9 @@ func (m *Modal) renderSimple(background string) string {
 	}
 
 	content := m.renderSimplePane(rightW - 2)
-	combined := ui.BorderBox(content, "Charm", rightW)
+	combined := ui.BorderBox(content, "Charm", rightW, m.styles)
 	if m.validationErr != "" {
-		errStyle := lipgloss.NewStyle().Foreground(color.Error)
+		errStyle := lipgloss.NewStyle().Foreground(m.styles.ErrorColor)
 		combined += "\n" + errStyle.Render("  "+m.validationErr)
 	}
 	combined += "\n" + m.renderSimpleFooter()
@@ -607,8 +609,8 @@ func (m *Modal) renderSimple(background string) string {
 	if m.modelName != "" {
 		title = " Deploy Charm(" + m.modelName + ") "
 	}
-	titleStyle := lipgloss.NewStyle().Foreground(color.Primary).Bold(true)
-	box := ui.BorderBoxRawTitle(combined, titleStyle.Render(title), rightW+4)
+	titleStyle := lipgloss.NewStyle().Foreground(m.styles.Primary).Bold(true)
+	box := ui.BorderBoxRawTitle(combined, titleStyle.Render(title), rightW+4, m.styles)
 
 	modalH := lipgloss.Height(box)
 	x := (m.width - (rightW + 4)) / 2
@@ -630,13 +632,13 @@ func (m *Modal) renderSimple(background string) string {
 }
 
 func (m *Modal) renderSimplePane(width int) string {
-	valueStyle := lipgloss.NewStyle().Foreground(color.Title)
-	hintStyle := lipgloss.NewStyle().Foreground(color.Muted)
-	selectedStyle := lipgloss.NewStyle().Foreground(color.CrumbFg).Background(color.Highlight).Bold(true)
+	valueStyle := lipgloss.NewStyle().Foreground(m.styles.Title)
+	hintStyle := lipgloss.NewStyle().Foreground(m.styles.Muted)
+	selectedStyle := lipgloss.NewStyle().Foreground(m.styles.CrumbFgColor).Background(m.styles.Highlight).Bold(true)
 
 	lines := []string{}
 	if m.editing {
-		inputLine := valueStyle.Render(m.input.Value()) + lipgloss.NewStyle().Foreground(color.Primary).Render("█")
+		inputLine := valueStyle.Render(m.input.Value()) + lipgloss.NewStyle().Foreground(m.styles.Primary).Render("█")
 		lines = append(lines, inputLine)
 	} else {
 		v := m.charm
@@ -666,8 +668,8 @@ func (m *Modal) renderSimplePane(width int) string {
 }
 
 func (m *Modal) renderSimpleFooter() string {
-	keyStyle := lipgloss.NewStyle().Foreground(color.HintKey).Bold(true)
-	descStyle := lipgloss.NewStyle().Foreground(color.HintDesc)
+	keyStyle := lipgloss.NewStyle().Foreground(m.styles.HintKeyColor).Bold(true)
+	descStyle := lipgloss.NewStyle().Foreground(m.styles.HintDescColor)
 	parts := []string{
 		keyStyle.Render("Enter") + descStyle.Render(" search/edit"),
 		keyStyle.Render("Tab") + descStyle.Render(" complete"),
@@ -679,8 +681,8 @@ func (m *Modal) renderSimpleFooter() string {
 }
 
 func (m *Modal) renderFooter() string {
-	keyStyle := lipgloss.NewStyle().Foreground(color.HintKey).Bold(true)
-	descStyle := lipgloss.NewStyle().Foreground(color.HintDesc)
+	keyStyle := lipgloss.NewStyle().Foreground(m.styles.HintKeyColor).Bold(true)
+	descStyle := lipgloss.NewStyle().Foreground(m.styles.HintDescColor)
 	parts := []string{
 		keyStyle.Render("↑/↓") + descStyle.Render(" move"),
 		keyStyle.Render("→/Enter") + descStyle.Render(" open/edit"),

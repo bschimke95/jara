@@ -17,15 +17,15 @@ import (
 )
 
 // New creates a new units view. If appName is non-empty, only that app's units are shown.
-func New(appName string, keys ui.KeyMap) *View {
+func New(appName string, keys ui.KeyMap, styles *color.Styles) *View {
 	cols := DetailColumns()
 	t := table.New(
 		table.WithColumns(cols),
 		table.WithFocused(true),
 		table.WithHeight(10),
 	)
-	t.SetStyles(ui.StyledTableHighlightOnly())
-	return &View{table: t, keys: keys, appName: appName, pendingScale: make(map[string]int)}
+	t.SetStyles(ui.StyledTableHighlightOnly(styles))
+	return &View{table: t, keys: keys, styles: styles, appName: appName, pendingScale: make(map[string]int)}
 }
 
 func (u *View) SetSize(width, height int) {
@@ -80,9 +80,9 @@ func (u *View) rebuildRows() {
 	var rows []table.Row
 	if u.appName != "" {
 		if app, ok := u.status.Applications[u.appName]; ok {
-			rows = DetailRowsForApp(app)
+			rows = DetailRowsForApp(app, u.styles)
 			if delta := u.pendingScale[u.appName]; delta != 0 {
-				pending := PendingDetailRows(u.appName, app.Units, delta)
+				pending := PendingDetailRows(u.appName, app.Units, delta, u.styles)
 				if delta < 0 {
 					tail := len(rows) - len(pending)
 					if tail < 0 {
@@ -95,13 +95,13 @@ func (u *View) rebuildRows() {
 			}
 		}
 	} else {
-		rows = DetailRows(u.status.Applications)
+		rows = DetailRows(u.status.Applications, u.styles)
 		for appName, delta := range u.pendingScale {
 			if delta == 0 {
 				continue
 			}
 			app := u.status.Applications[appName]
-			pending := PendingDetailRows(appName, app.Units, delta)
+			pending := PendingDetailRows(appName, app.Units, delta, u.styles)
 			if delta < 0 {
 				prefix := "  " + appName + "/"
 				end := -1
@@ -203,14 +203,14 @@ func (u *View) View() tea.View {
 		}
 		if len(stripped) > 0 {
 			if rest, ok := strings.CutPrefix(stripped[0], "★"); ok {
-				stripped[0] = color.ForegroundText(color.HintKey, "★") + rest
+				stripped[0] = color.ForegroundText(u.styles.HintKeyColor, "★") + rest
 			}
 		}
 		if len(stripped) > 1 {
-			stripped[1] = color.StatusText(stripped[1])
+			stripped[1] = u.styles.StatusText(stripped[1])
 		}
 		if len(stripped) > 2 {
-			stripped[2] = color.StatusText(stripped[2])
+			stripped[2] = u.styles.StatusText(stripped[2])
 		}
 		rows[cursor] = stripped
 		u.table.SetRows(rows)
@@ -231,7 +231,7 @@ func (u *View) Enter(ctx view.NavigateContext) (tea.Cmd, error) {
 		table.WithFocused(true),
 		table.WithHeight(10),
 	)
-	u.table.SetStyles(ui.StyledTableHighlightOnly())
+	u.table.SetStyles(ui.StyledTableHighlightOnly(u.styles))
 	if u.width > 0 {
 		u.table.SetWidth(u.width)
 		u.table.SetHeight(u.height)

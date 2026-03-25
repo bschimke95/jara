@@ -21,14 +21,14 @@ import (
 )
 
 // New creates a new model overview.
-func New(keys ui.KeyMap, selectModelFn func(string) error) *View {
+func New(keys ui.KeyMap, styles *color.Styles, selectModelFn func(string) error) *View {
 	appCols := applicationColumns()
 	at := table.New(
 		table.WithColumns(appCols),
 		table.WithFocused(true),
 		table.WithHeight(10),
 	)
-	at.SetStyles(ui.StyledTableHighlightOnly())
+	at.SetStyles(ui.StyledTableHighlightOnly(styles))
 
 	unitCols := units.CompactColumns()
 	ut := table.New(
@@ -36,7 +36,7 @@ func New(keys ui.KeyMap, selectModelFn func(string) error) *View {
 		table.WithFocused(false),
 		table.WithHeight(5),
 	)
-	ut.SetStyles(ui.UnfocusedTableStyles())
+	ut.SetStyles(ui.UnfocusedTableStyles(styles))
 
 	relCols := relations.CompactColumn()
 	rt := table.New(
@@ -44,13 +44,14 @@ func New(keys ui.KeyMap, selectModelFn func(string) error) *View {
 		table.WithFocused(false),
 		table.WithHeight(5),
 	)
-	rt.SetStyles(ui.UnfocusedTableStyles())
+	rt.SetStyles(ui.UnfocusedTableStyles(styles))
 
 	return &View{
 		appTable:      at,
 		unitTable:     ut,
 		relationTable: rt,
 		keys:          keys,
+		styles:        styles,
 		pendingScale:  make(map[string]int),
 		selectModelFn: selectModelFn,
 	}
@@ -68,7 +69,7 @@ func (m *View) SetStatus(status *model.FullStatus) {
 	if status == nil {
 		return
 	}
-	m.appTable.SetRows(applicationRows(status.Applications))
+	m.appTable.SetRows(applicationRows(status.Applications, m.styles))
 	for appName, delta := range m.pendingScale {
 		app, ok := status.Applications[appName]
 		if !ok {
@@ -170,7 +171,7 @@ func (m *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return view.NavigateMsg{Target: nav.ApplicationsView}
 			}
 		case key.Matches(msg, m.keys.Deploy):
-			m.deployModal = deploymodal.New("", m.keys, m.charmSuggestions(), m.applicationSuggestions())
+			m.deployModal = deploymodal.New("", m.keys, m.styles, m.charmSuggestions(), m.applicationSuggestions())
 			m.deployModal.SetSize(m.width, m.height)
 			m.deployModalOpen = true
 			return m, m.deployModal.BeginCharmEdit()
@@ -180,7 +181,7 @@ func (m *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.status != nil {
 				rels = m.status.Relations
 			}
-			m.relateModal = relatemodal.New(m.keys, suggestions, rels, m.selectedApp)
+			m.relateModal = relatemodal.New(m.keys, m.styles, suggestions, rels, m.selectedApp)
 			m.relateModal.SetSize(m.width, m.height)
 			m.relateModalOpen = true
 			return m, m.relateModal.BeginEdit()
@@ -247,6 +248,7 @@ func (m *View) renderBackground() string {
 		padToHeight(leftContent, m.height-2),
 		m.leftPaneTitle("A", "pplications"),
 		leftWidth,
+		m.styles,
 	)
 
 	halfH := (m.height - 4) / 2
@@ -258,11 +260,13 @@ func (m *View) renderBackground() string {
 		padToHeight(m.unitTable.View(), halfH),
 		m.rightPaneTitle("U", "nits"),
 		rightWidth,
+		m.styles,
 	)
 	relBox := ui.BorderBoxRawTitle(
 		padToHeight(m.relationTable.View(), halfH),
 		m.rightPaneTitle("R", "elations"),
 		rightWidth,
+		m.styles,
 	)
 	rightBox := lipgloss.JoinVertical(lipgloss.Left, unitBox, relBox)
 
@@ -280,7 +284,7 @@ func (m *View) appTableView() string {
 			stripped[i] = ansi.Strip(cell)
 		}
 		if len(stripped) > 1 {
-			stripped[1] = color.StatusText(stripped[1])
+			stripped[1] = m.styles.StatusText(stripped[1])
 		}
 		rows[cursor] = stripped
 		m.appTable.SetRows(rows)
@@ -329,8 +333,8 @@ func (m *View) recalcLayout() {
 }
 
 func (m *View) rightPaneTitle(hotkey, rest string) string {
-	keyStyle := lipgloss.NewStyle().Foreground(color.BorderTitle).Bold(true).Underline(true)
-	textStyle := lipgloss.NewStyle().Foreground(color.BorderTitle).Bold(true)
+	keyStyle := lipgloss.NewStyle().Foreground(m.styles.BorderTitleColor).Bold(true).Underline(true)
+	textStyle := lipgloss.NewStyle().Foreground(m.styles.BorderTitleColor).Bold(true)
 	title := " " + keyStyle.Render(hotkey) + textStyle.Render(rest)
 	if m.selectedApp != "" {
 		title += textStyle.Render("(" + m.selectedApp + ")")
@@ -340,8 +344,8 @@ func (m *View) rightPaneTitle(hotkey, rest string) string {
 }
 
 func (m *View) leftPaneTitle(hotkey, rest string) string {
-	keyStyle := lipgloss.NewStyle().Foreground(color.BorderTitle).Bold(true).Underline(true)
-	textStyle := lipgloss.NewStyle().Foreground(color.BorderTitle).Bold(true)
+	keyStyle := lipgloss.NewStyle().Foreground(m.styles.BorderTitleColor).Bold(true).Underline(true)
+	textStyle := lipgloss.NewStyle().Foreground(m.styles.BorderTitleColor).Bold(true)
 	return " " + keyStyle.Render(hotkey) + textStyle.Render(rest) + " "
 }
 
@@ -362,9 +366,9 @@ func (m *View) refreshRightPane() {
 	m.selectedApp = appName
 
 	if app, ok := m.status.Applications[appName]; ok {
-		rows := units.CompactRowsForApp(app)
+		rows := units.CompactRowsForApp(app, m.styles)
 		if delta := m.pendingScale[appName]; delta != 0 {
-			pending := units.PendingCompactRows(appName, app.Units, delta)
+			pending := units.PendingCompactRows(appName, app.Units, delta, m.styles)
 			if delta < 0 {
 				tail := len(rows) - len(pending)
 				if tail < 0 {

@@ -16,15 +16,15 @@ import (
 )
 
 // New creates a new applications view.
-func New(keys ui.KeyMap) *View {
+func New(keys ui.KeyMap, styles *color.Styles) *View {
 	cols := columns()
 	t := table.New(
 		table.WithColumns(cols),
 		table.WithFocused(true),
 		table.WithHeight(10),
 	)
-	t.SetStyles(ui.StyledTableHighlightOnly())
-	return &View{table: t, keys: keys}
+	t.SetStyles(ui.StyledTableHighlightOnly(styles))
+	return &View{table: t, keys: keys, styles: styles}
 }
 
 func (a *View) SetSize(width, height int) {
@@ -39,7 +39,7 @@ func (a *View) SetSize(width, height int) {
 func (a *View) SetStatus(status *model.FullStatus) {
 	a.status = status
 	if status != nil {
-		a.table.SetRows(rows(status.Applications))
+		a.table.SetRows(rows(status.Applications, a.styles))
 	}
 }
 
@@ -84,7 +84,7 @@ func (a *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyPressMsg:
 		if key.Matches(msg, a.keys.Deploy) {
-			a.deployModal = deploymodal.New("", a.keys, a.charmSuggestions(), a.applicationSuggestions())
+			a.deployModal = deploymodal.New("", a.keys, a.styles, a.charmSuggestions(), a.applicationSuggestions())
 			a.deployModal.SetSize(a.width, a.height)
 			a.deployModalOpen = true
 			return a, a.deployModal.BeginCharmEdit()
@@ -135,7 +135,7 @@ func (a *View) tableView() string {
 			stripped[i] = ansi.Strip(cell)
 		}
 		if len(stripped) > 1 {
-			stripped[1] = color.StatusText(stripped[1])
+			stripped[1] = a.styles.StatusText(stripped[1])
 		}
 		rows[cursor] = stripped
 		a.table.SetRows(rows)

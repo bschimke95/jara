@@ -5,6 +5,7 @@ import (
 
 	"charm.land/bubbles/v2/textinput"
 
+	"github.com/bschimke95/jara/internal/color"
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/ui"
 )
@@ -41,6 +42,7 @@ const (
 // View is the Bubble Tea model for the debug-log streaming view.
 type View struct {
 	keys   ui.KeyMap
+	styles *color.Styles
 	width  int
 	height int
 

@@ -45,6 +45,7 @@ const (
 // Modal is the relate-applications overlay.
 type Modal struct {
 	keys   ui.KeyMap
+	styles *color.Styles
 	width  int
 	height int
 
@@ -67,13 +68,14 @@ type Modal struct {
 
 // New creates a new relate modal.
 // prefill is an optional app name to pre-populate endpoint A.
-func New(keys ui.KeyMap, suggestions []endpointSuggestion, relations []model.Relation, prefill string) Modal {
+func New(keys ui.KeyMap, styles *color.Styles, suggestions []endpointSuggestion, relations []model.Relation, prefill string) Modal {
 	ti := textinput.New()
 	ti.CharLimit = 128
 	ti.Placeholder = "app:endpoint"
 
 	m := Modal{
 		keys:        keys,
+		styles:      styles,
 		input:       ti,
 		suggestions: suggestions,
 		relations:   relations,
@@ -348,13 +350,13 @@ func (m *Modal) Render(background string) string {
 
 	content := m.renderContent(innerW - 2)
 	if m.validationErr != "" {
-		errStyle := lipgloss.NewStyle().Foreground(color.Error)
+		errStyle := lipgloss.NewStyle().Foreground(m.styles.ErrorColor)
 		content += "\n" + errStyle.Render("  "+m.validationErr)
 	}
 	content += "\n" + m.renderFooter()
 
-	titleStyle := lipgloss.NewStyle().Foreground(color.Primary).Bold(true)
-	box := ui.BorderBoxRawTitle(content, titleStyle.Render(" Add Relation "), innerW+4)
+	titleStyle := lipgloss.NewStyle().Foreground(m.styles.Primary).Bold(true)
+	box := ui.BorderBoxRawTitle(content, titleStyle.Render(" Add Relation "), innerW+4, m.styles)
 
 	modalH := lipgloss.Height(box)
 	x := (m.width - (innerW + 4)) / 2
@@ -376,8 +378,8 @@ func (m *Modal) Render(background string) string {
 }
 
 func (m *Modal) renderContent(width int) string {
-	labelStyle := lipgloss.NewStyle().Foreground(color.InfoLabel).Bold(true)
-	valueStyle := lipgloss.NewStyle().Foreground(color.Title)
+	labelStyle := lipgloss.NewStyle().Foreground(m.styles.InfoLabelColor).Bold(true)
+	valueStyle := lipgloss.NewStyle().Foreground(m.styles.Title)
 
 	var lines []string
 
@@ -409,7 +411,7 @@ func (m *Modal) renderContent(width int) string {
 
 func (m *Modal) renderField(value string, field fieldFocus, _ int, valueStyle lipgloss.Style) string {
 	if m.focus == field && m.editing {
-		inputLine := valueStyle.Render(m.input.Value()) + lipgloss.NewStyle().Foreground(color.Primary).Render("█")
+		inputLine := valueStyle.Render(m.input.Value()) + lipgloss.NewStyle().Foreground(m.styles.Primary).Render("█")
 		return "  " + inputLine
 	}
 	v := value
@@ -424,9 +426,9 @@ func (m *Modal) renderDropdown(width int) []string {
 		return nil
 	}
 
-	selectedStyle := lipgloss.NewStyle().Foreground(color.CrumbFg).Background(color.Highlight).Bold(true)
-	itemStyle := lipgloss.NewStyle().Foreground(color.Title)
-	roleStyle := lipgloss.NewStyle().Foreground(color.Muted)
+	selectedStyle := lipgloss.NewStyle().Foreground(m.styles.CrumbFgColor).Background(m.styles.Highlight).Bold(true)
+	itemStyle := lipgloss.NewStyle().Foreground(m.styles.Title)
+	roleStyle := lipgloss.NewStyle().Foreground(m.styles.Muted)
 
 	maxVisible := 8
 	total := len(m.autocomplete)
@@ -469,8 +471,8 @@ func (m *Modal) renderDropdown(width int) []string {
 }
 
 func (m *Modal) renderFooter() string {
-	keyStyle := lipgloss.NewStyle().Foreground(color.HintKey).Bold(true)
-	descStyle := lipgloss.NewStyle().Foreground(color.HintDesc)
+	keyStyle := lipgloss.NewStyle().Foreground(m.styles.HintKeyColor).Bold(true)
+	descStyle := lipgloss.NewStyle().Foreground(m.styles.HintDescColor)
 	parts := []string{
 		keyStyle.Render("Tab") + descStyle.Render(" next"),
 		keyStyle.Render("Enter") + descStyle.Render(" relate"),

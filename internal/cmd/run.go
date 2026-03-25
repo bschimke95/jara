@@ -41,7 +41,7 @@ func run(_ *cobra.Command, _ []string) error {
 	}
 
 	// 4. Resolve theme and key bindings from config.
-	theme := config.ResolveTheme(cfg.Jara.UI.Skin)
+	styles := config.ResolveStyles(cfg.Jara.UI.Skin)
 	keys := config.ResolveKeyMap(cfg.Jara.UI.Keys)
 
 	// 5. Connect to Juju (or use mock data in demo mode).
@@ -58,7 +58,7 @@ func run(_ *cobra.Command, _ []string) error {
 	}
 
 	// 6. Build and run the TUI.
-	m := app.New(client, app.WithTheme(theme), app.WithKeyMap(keys), app.WithConfig(cfg), app.WithVersion(version))
+	m := app.New(client, app.WithStyles(styles), app.WithKeyMap(keys), app.WithConfig(cfg), app.WithVersion(version))
 	p := tea.NewProgram(m)
 
 	if _, err := p.Run(); err != nil {
