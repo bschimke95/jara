@@ -206,11 +206,7 @@ func (m *Modal) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				// On endpoint B, try to apply.
 				return m.tryApply()
 			case key.Matches(kp, m.keys.Back):
-				m.editing = false
-				m.autocomplete = nil
-				m.autocompleteIndex = 0
-				m.input.Blur()
-				return m, nil
+				return m, func() tea.Msg { return ClosedMsg{} }
 			}
 		}
 		var cmd tea.Cmd

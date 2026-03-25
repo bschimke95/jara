@@ -1,0 +1,546 @@
+>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> ./jara --demo
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> ./jara --demo
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+────────────────────────────────────────────────────────────────────────────────
+> ./jara --demo
+╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                   │
+│                                    <enter> select  <+/-> scale                         ██╗ █████╗ ██████╗  █████╗ │
+│Controller: prod-aws                <D> deploy      <L> logs (app)                      ██║██╔══██╗██╔══██╗██╔══██╗│
+│Model:                              <r> relate      <l> logs                            ██║███████║██████╔╝███████║│
+│Cloud:      /                       <A> apps        <:> cmd                        ██   ██║██╔══██║██╔══██╗██╔══██║│
+│Juju:                               <U> units       <?> help                       ╚█████╔╝██║  ██║██║  ██║██║  ██║│
+│Jara:       test                    <R> relations   <q> quit                        ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────── Applications ───────────────────────────╮╭─────────────────── Units ───────────────────╮
+│ NAME      STATUS  CHARM      CHANN…  R…  S…  EX…  MESSAGE          ││ UNIT         WORK…  AGENT  MESSAGE          │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    │╰─────────────────────────────────────────────╯
+│                                                                    │╭───────────────── Relations ─────────────────╮
+│                                                                    ││ RELATION                                    │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+╰────────────────────────────────────────────────────────────────────╯╰─────────────────────────────────────────────╯
+
+
+  Model
+────────────────────────────────────────────────────────────────────────────────
+> ./jara --demo
+╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                   │
+│                                      <enter> select  <+/-> scale                       ██╗ █████╗ ██████╗  █████╗ │
+│Controller: prod-aws                  <D> deploy      <L> logs (app)                    ██║██╔══██╗██╔══██╗██╔══██╗│
+│Model:      production                <r> relate      <l> logs                          ██║███████║██████╔╝███████║│
+│Cloud:      aws/us-east-1             <A> apps        <:> cmd                      ██   ██║██╔══██║██╔══██╗██╔══██║│
+│Juju:       3.6.1                     <U> units       <?> help                     ╚█████╔╝██║  ██║██║  ██║██║  ██║│
+│Jara:       test                      <R> relations   <q> quit                      ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────── Applications ───────────────────────────╮╭────────────── Units(grafana) ───────────────╮
+│ NAME      STATUS  CHARM      CHANN…  R…  S…  EX…  MESSAGE          ││ UNIT         WORK…  AGENT  MESSAGE          │
+│ grafana   block…  grafana-…  lates…  1…  1   no   Missing relatio… ││ ★ grafana/0  bloc…  idle   Missing relatio… │
+│ nginx-i…  active  nginx-in…  lates…  95  1   yes  Ingress ready    ││                                             │
+│ postgre…  active  postgres…  14/st…  4…  3   no   Live master (14… ││                                             │
+│ prometh…  waiti…  promethe…  lates…  1…  1   no   Waiting for rel… ││                                             │
+│ ubuntu-…  active  ubuntu     stable  24  2   yes  Ready            ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    │╰─────────────────────────────────────────────╯
+│                                                                    │╭──────────── Relations(grafana) ─────────────╮
+│                                                                    ││ RELATION                                    │
+│                                                                    ││ grafana:grafana-source -> prometheus:grafa… │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+╰────────────────────────────────────────────────────────────────────╯╰─────────────────────────────────────────────╯
+
+
+  Model
+────────────────────────────────────────────────────────────────────────────────
+> ./jara --demo
+╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                   │
+│                                      <enter> select  <+/-> scale                       ██╗ █████╗ ██████╗  █████╗ │
+│Controller: prod-aws                  <D> deploy      <L> logs (app)                    ██║██╔══██╗██╔══██╗██╔══██╗│
+│Model:      production                <r> relate      <l> logs                          ██║███████║██████╔╝███████║│
+│Cloud:      aws/us-east-1             <A> apps        <:> cmd                      ██   ██║██╔══██║██╔══██╗██╔══██║│
+│Juju:       3.6.1                     <U> units       <?> help                     ╚█████╔╝██║  ██║██║  ██║██║  ██║│
+│Jara:       test                      <R> relations   <q> quit                      ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────── Applications ───────────────────────────╮╭────────────── Units(grafana) ───────────────╮
+│ NAME      STATUS  CHARM      CHANN…  R…  S…  EX…  MESSAGE          ││ UNIT         WORK…  AGENT  MESSAGE          │
+│ grafana   block…  grafana-…  lates…  1…  1   no   Missing relatio… ││ ★ grafana/0  bloc…  idle   Missing relatio… │
+│ nginx-i…  active  nginx-in…  lates…  95  1   yes  Ingress ready    ││                                             │
+│ postgre…  active  postgres…  14/st…  4…  3   no   Live master (14… ││                                             │
+│ prometh…  waiti…  promethe…  lates…  1…  1   no   Waiting for rel… ││                                             │
+│ ubuntu-…  active  ubuntu    ╭──────────────────── Add Relation ────────────────────╮                              │
+│                             │Endpoint A                                            │                              │
+│                             │  grafana                                             │                              │
+│                             │                                                      │                              │
+│                             │▶ Endpoint B                                          │                              │
+│                             │  █                                                   │                              │
+│                             │  grafana                                             │                              │
+│                             │  grafana:database                      requirer      │──────────────────────────────╯
+│                             │  grafana:grafana-source                requirer      │lations(grafana) ─────────────╮
+│                             │  grafana:ingress                       requirer      │                              │
+│                             │  nginx-ingress                                       │a-source -> prometheus:grafa… │
+│                             │  nginx-ingress:ingress                 provider      │                              │
+│                             │  nginx-ingress:ingress-proxy           provider      │                              │
+│                             │  postgresql                                          │                              │
+│                             │Tab next  •  Enter relate  •  Esc close               │                              │
+│                             ╰──────────────────────────────────────────────────────╯                              │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+╰────────────────────────────────────────────────────────────────────╯╰─────────────────────────────────────────────╯
+
+
+  Model
+────────────────────────────────────────────────────────────────────────────────
+> ./jara --demo
+╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                   │
+│                                      <enter> select  <+/-> scale                       ██╗ █████╗ ██████╗  █████╗ │
+│Controller: prod-aws                  <D> deploy      <L> logs (app)                    ██║██╔══██╗██╔══██╗██╔══██╗│
+│Model:      production                <r> relate      <l> logs                          ██║███████║██████╔╝███████║│
+│Cloud:      aws/us-east-1             <A> apps        <:> cmd                      ██   ██║██╔══██║██╔══██╗██╔══██║│
+│Juju:       3.6.1                     <U> units       <?> help                     ╚█████╔╝██║  ██║██║  ██║██║  ██║│
+│Jara:       test                      <R> relations   <q> quit                      ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────── Applications ───────────────────────────╮╭────────────── Units(grafana) ───────────────╮
+│ NAME      STATUS  CHARM      CHANN…  R…  S…  EX…  MESSAGE          ││ UNIT         WORK…  AGENT  MESSAGE          │
+│ grafana   block…  grafana-…  lates…  1…  1   no   Missing relatio… ││ ★ grafana/0  bloc…  idle   Missing relatio… │
+│ nginx-i…  active  nginx-in…  lates…  95  1   yes  Ingress ready    ││                                             │
+│ postgre…  active  postgres…  14/st…  4…  3   no   Live master (14… ││                                             │
+│ prometh…  waiti…  promethe…  lates…  1…  1   no   Waiting for rel… ││                                             │
+│ ubuntu-…  active  ubuntu    ╭──────────────────── Add Relation ────────────────────╮                              │
+│                             │Endpoint A                                            │                              │
+│                             │  grafana                                             │                              │
+│                             │                                                      │                              │
+│                             │▶ Endpoint B                                          │                              │
+│                             │  █                                                   │                              │
+│                             │  grafana                                             │                              │
+│                             │  grafana:database                      requirer      │──────────────────────────────╯
+│                             │  grafana:grafana-source                requirer      │lations(grafana) ─────────────╮
+│                             │  grafana:ingress                       requirer      │                              │
+│                             │  nginx-ingress                                       │a-source -> prometheus:grafa… │
+│                             │  nginx-ingress:ingress                 provider      │                              │
+│                             │  nginx-ingress:ingress-proxy           provider      │                              │
+│                             │  postgresql                                          │                              │
+│                             │Tab next  •  Enter relate  •  Esc close               │                              │
+│                             ╰──────────────────────────────────────────────────────╯                              │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+╰────────────────────────────────────────────────────────────────────╯╰─────────────────────────────────────────────╯
+
+
+  Model
+────────────────────────────────────────────────────────────────────────────────
+> ./jara --demo
+╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                   │
+│                                      <enter> select  <+/-> scale                       ██╗ █████╗ ██████╗  █████╗ │
+│Controller: prod-aws                  <D> deploy      <L> logs (app)                    ██║██╔══██╗██╔══██╗██╔══██╗│
+│Model:      production                <r> relate      <l> logs                          ██║███████║██████╔╝███████║│
+│Cloud:      aws/us-east-1             <A> apps        <:> cmd                      ██   ██║██╔══██║██╔══██╗██╔══██║│
+│Juju:       3.6.1                     <U> units       <?> help                     ╚█████╔╝██║  ██║██║  ██║██║  ██║│
+│Jara:       test                      <R> relations   <q> quit                      ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────── Applications ───────────────────────────╮╭────────────── Units(grafana) ───────────────╮
+│ NAME      STATUS  CHARM      CHANN…  R…  S…  EX…  MESSAGE          ││ UNIT         WORK…  AGENT  MESSAGE          │
+│ grafana   block…  grafana-…  lates…  1…  1   no   Missing relatio… ││ ★ grafana/0  bloc…  idle   Missing relatio… │
+│ nginx-i…  active  nginx-in…  lates…  95  1   yes  Ingress ready    ││                                             │
+│ postgre…  active  postgres…  14/st…  4…  3   no   Live master (14… ││                                             │
+│ prometh…  waiti…  promethe…  lates…  1…  1   no   Waiting for rel… ││                                             │
+│ ubuntu-…  active  ubuntu    ╭──────────────────── Add Relation ────────────────────╮                              │
+│                             │Endpoint A                                            │                              │
+│                             │  grafana                                             │                              │
+│                             │                                                      │                              │
+│                             │▶ Endpoint B                                          │                              │
+│                             │  █                                                   │                              │
+│                             │  grafana                                             │                              │
+│                             │  grafana:database                      requirer      │──────────────────────────────╯
+│                             │  grafana:grafana-source                requirer      │lations(grafana) ─────────────╮
+│                             │  grafana:ingress                       requirer      │                              │
+│                             │  nginx-ingress                                       │a-source -> prometheus:grafa… │
+│                             │  nginx-ingress:ingress                 provider      │                              │
+│                             │  nginx-ingress:ingress-proxy           provider      │                              │
+│                             │  postgresql                                          │                              │
+│                             │Tab next  •  Enter relate  •  Esc close               │                              │
+│                             ╰──────────────────────────────────────────────────────╯                              │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+╰────────────────────────────────────────────────────────────────────╯╰─────────────────────────────────────────────╯
+
+
+  Model
+────────────────────────────────────────────────────────────────────────────────
+> ./jara --demo
+╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                   │
+│                                      <enter> select  <+/-> scale                       ██╗ █████╗ ██████╗  █████╗ │
+│Controller: prod-aws                  <D> deploy      <L> logs (app)                    ██║██╔══██╗██╔══██╗██╔══██╗│
+│Model:      production                <r> relate      <l> logs                          ██║███████║██████╔╝███████║│
+│Cloud:      aws/us-east-1             <A> apps        <:> cmd                      ██   ██║██╔══██║██╔══██╗██╔══██║│
+│Juju:       3.6.1                     <U> units       <?> help                     ╚█████╔╝██║  ██║██║  ██║██║  ██║│
+│Jara:       test                      <R> relations   <q> quit                      ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────── Applications ───────────────────────────╮╭────────────── Units(grafana) ───────────────╮
+│ NAME      STATUS  CHARM      CHANN…  R…  S…  EX…  MESSAGE          ││ UNIT         WORK…  AGENT  MESSAGE          │
+│ grafana   block…  grafana-…  lates…  1…  1   no   Missing relatio… ││ ★ grafana/0  bloc…  idle   Missing relatio… │
+│ nginx-i…  active  nginx-in…  lates…  95  1   yes  Ingress ready    ││                                             │
+│ postgre…  active  postgres…  14/st…  4…  3   no   Live master (14… ││                                             │
+│ prometh…  waiti…  promethe…  lates…  1…  1   no   Waiting for rel… ││                                             │
+│ ubuntu-…  active  ubuntu    ╭──────────────────── Add Relation ────────────────────╮                              │
+│                             │Endpoint A                                            │                              │
+│                             │  grafana                                             │                              │
+│                             │                                                      │                              │
+│                             │▶ Endpoint B                                          │                              │
+│                             │  █                                                   │                              │
+│                             │  grafana                                             │                              │
+│                             │  grafana:database                      requirer      │──────────────────────────────╯
+│                             │  grafana:grafana-source                requirer      │lations(grafana) ─────────────╮
+│                             │  grafana:ingress                       requirer      │                              │
+│                             │  nginx-ingress                                       │a-source -> prometheus:grafa… │
+│                             │  nginx-ingress:ingress                 provider      │                              │
+│                             │  nginx-ingress:ingress-proxy           provider      │                              │
+│                             │  postgresql                                          │                              │
+│                             │Tab next  •  Enter relate  •  Esc close               │                              │
+│                             ╰──────────────────────────────────────────────────────╯                              │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+╰────────────────────────────────────────────────────────────────────╯╰─────────────────────────────────────────────╯
+
+
+  Model
+────────────────────────────────────────────────────────────────────────────────
+> ./jara --demo
+╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                   │
+│                                      <enter> select  <+/-> scale                       ██╗ █████╗ ██████╗  █████╗ │
+│Controller: prod-aws                  <D> deploy      <L> logs (app)                    ██║██╔══██╗██╔══██╗██╔══██╗│
+│Model:      production                <r> relate      <l> logs                          ██║███████║██████╔╝███████║│
+│Cloud:      aws/us-east-1             <A> apps        <:> cmd                      ██   ██║██╔══██║██╔══██╗██╔══██║│
+│Juju:       3.6.1                     <U> units       <?> help                     ╚█████╔╝██║  ██║██║  ██║██║  ██║│
+│Jara:       test                      <R> relations   <q> quit                      ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────── Applications ───────────────────────────╮╭────────────── Units(grafana) ───────────────╮
+│ NAME      STATUS  CHARM      CHANN…  R…  S…  EX…  MESSAGE          ││ UNIT         WORK…  AGENT  MESSAGE          │
+│ grafana   block…  grafana-…  lates…  1…  1   no   Missing relatio… ││ ★ grafana/0  bloc…  idle   Missing relatio… │
+│ nginx-i…  active  nginx-in…  lates…  95  1   yes  Ingress ready    ││                                             │
+│ postgre…  active  postgres…  14/st…  4…  3   no   Live master (14… ││                                             │
+│ prometh…  waiti…  promethe…  lates…  1…  1   no   Waiting for rel… ││                                             │
+│ ubuntu-…  active  ubuntu     stable  24  2   yes  Ready            ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    │╰─────────────────────────────────────────────╯
+│                                                                    │╭──────────── Relations(grafana) ─────────────╮
+│                                                                    ││ RELATION                                    │
+│                                                                    ││ grafana:grafana-source -> prometheus:grafa… │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+╰────────────────────────────────────────────────────────────────────╯╰─────────────────────────────────────────────╯
+
+
+  Model
+────────────────────────────────────────────────────────────────────────────────
+> ./jara --demo
+╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                   │
+│                                      <enter> select  <+/-> scale                       ██╗ █████╗ ██████╗  █████╗ │
+│Controller: prod-aws                  <D> deploy      <L> logs (app)                    ██║██╔══██╗██╔══██╗██╔══██╗│
+│Model:      production                <r> relate      <l> logs                          ██║███████║██████╔╝███████║│
+│Cloud:      aws/us-east-1             <A> apps        <:> cmd                      ██   ██║██╔══██║██╔══██╗██╔══██║│
+│Juju:       3.6.1                     <U> units       <?> help                     ╚█████╔╝██║  ██║██║  ██║██║  ██║│
+│Jara:       test                      <R> relations   <q> quit                      ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────── Applications ───────────────────────────╮╭────────────── Units(grafana) ───────────────╮
+│ NAME      STATUS  CHARM      CHANN…  R…  S…  EX…  MESSAGE          ││ UNIT         WORK…  AGENT  MESSAGE          │
+│ grafana   block…  grafana-…  lates…  1…  1   no   Missing relatio… ││ ★ grafana/0  bloc…  idle   Missing relatio… │
+│ nginx-i…  active  nginx-in…  lates…  95  1   yes  Ingress ready    ││                                             │
+│ postgre…  active  postgres…  14/st…  4…  3   no   Live master (14… ││                                             │
+│ prometh…  waiti…  promethe…  lates…  1…  1   no   Waiting for rel… ││                                             │
+│ ubuntu-…  active  ubuntu     stable  24  2   yes  Ready            ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    │╰─────────────────────────────────────────────╯
+│                                                                    │╭──────────── Relations(grafana) ─────────────╮
+│                                                                    ││ RELATION                                    │
+│                                                                    ││ grafana:grafana-source -> prometheus:grafa… │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+╰────────────────────────────────────────────────────────────────────╯╰─────────────────────────────────────────────╯
+
+
+  Model
+────────────────────────────────────────────────────────────────────────────────
+> ./jara --demo
+╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                   │
+│                                      <enter> select  <+/-> scale                       ██╗ █████╗ ██████╗  █████╗ │
+│Controller: prod-aws                  <D> deploy      <L> logs (app)                    ██║██╔══██╗██╔══██╗██╔══██╗│
+│Model:      production                <r> relate      <l> logs                          ██║███████║██████╔╝███████║│
+│Cloud:      aws/us-east-1             <A> apps        <:> cmd                      ██   ██║██╔══██║██╔══██╗██╔══██║│
+│Juju:       3.6.1                     <U> units       <?> help                     ╚█████╔╝██║  ██║██║  ██║██║  ██║│
+│Jara:       test                      <R> relations   <q> quit                      ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────── Applications ───────────────────────────╮╭────────────── Units(grafana) ───────────────╮
+│ NAME      STATUS  CHARM      CHANN…  R…  S…  EX…  MESSAGE          ││ UNIT         WORK…  AGENT  MESSAGE          │
+│ grafana   block…  grafana-…  lates…  1…  1   no   Missing relatio… ││ ★ grafana/0  bloc…  idle   Missing relatio… │
+│ nginx-i…  active  nginx-in…  lates…  95  1   yes  Ingress ready    ││                                             │
+│ postgre…  active  postgres…  14/st…  4…  3   no   Live master (14… ││                                             │
+│ prometh…  waiti…  promethe…  lates…  1…  1   no   Waiting for rel… ││                                             │
+│ ubuntu-…  active  ubuntu     stable  24  2   yes  Ready            ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    │╰─────────────────────────────────────────────╯
+│                                                                    │╭──────────── Relations(grafana) ─────────────╮
+│                                                                    ││ RELATION                                    │
+│                                                                    ││ grafana:grafana-source -> prometheus:grafa… │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+╰────────────────────────────────────────────────────────────────────╯╰─────────────────────────────────────────────╯
+
+
+  Model
+────────────────────────────────────────────────────────────────────────────────
+> ./jara --demo
+╭───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╮
+│                                                                                                                   │
+│                                      <enter> select  <+/-> scale                       ██╗ █████╗ ██████╗  █████╗ │
+│Controller: prod-aws                  <D> deploy      <L> logs (app)                    ██║██╔══██╗██╔══██╗██╔══██╗│
+│Model:      production                <r> relate      <l> logs                          ██║███████║██████╔╝███████║│
+│Cloud:      aws/us-east-1             <A> apps        <:> cmd                      ██   ██║██╔══██║██╔══██╗██╔══██║│
+│Juju:       3.6.1                     <U> units       <?> help                     ╚█████╔╝██║  ██║██║  ██║██║  ██║│
+│Jara:       test                      <R> relations   <q> quit                      ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
+╭─────────────────────────── Applications ───────────────────────────╮╭────────────── Units(grafana) ───────────────╮
+│ NAME      STATUS  CHARM      CHANN…  R…  S…  EX…  MESSAGE          ││ UNIT         WORK…  AGENT  MESSAGE          │
+│ grafana   block…  grafana-…  lates…  1…  1   no   Missing relatio… ││ ★ grafana/0  bloc…  idle   Missing relatio… │
+│ nginx-i…  active  nginx-in…  lates…  95  1   yes  Ingress ready    ││                                             │
+│ postgre…  active  postgres…  14/st…  4…  3   no   Live master (14… ││                                             │
+│ prometh…  waiti…  promethe…  lates…  1…  1   no   Waiting for rel… ││                                             │
+│ ubuntu-…  active  ubuntu     stable  24  2   yes  Ready            ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    │╰─────────────────────────────────────────────╯
+│                                                                    │╭──────────── Relations(grafana) ─────────────╮
+│                                                                    ││ RELATION                                    │
+│                                                                    ││ grafana:grafana-source -> prometheus:grafa… │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+│                                                                    ││                                             │
+╰────────────────────────────────────────────────────────────────────╯╰─────────────────────────────────────────────╯
+
+
+  Model
+────────────────────────────────────────────────────────────────────────────────
