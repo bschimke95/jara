@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/bschimke95/jara/internal/color"
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/ui"
 )
@@ -440,7 +441,7 @@ func TestContainsIgnoreCase(t *testing.T) {
 // ── DebugLog helpers ──────────────────────────────────────────────────────────
 
 func TestDebugLog_SetFilterActiveFilter(t *testing.T) {
-	d := New(ui.DefaultKeyMap())
+	d := New(ui.DefaultKeyMap(), color.DefaultStyles())
 	f := model.DebugLogFilter{Level: "DEBUG", Applications: []string{"mysql"}}
 	d.SetFilter(f)
 	got := d.ActiveFilter()
@@ -450,7 +451,7 @@ func TestDebugLog_SetFilterActiveFilter(t *testing.T) {
 }
 
 func TestDebugLog_IsModalOpen(t *testing.T) {
-	d := New(ui.DefaultKeyMap())
+	d := New(ui.DefaultKeyMap(), color.DefaultStyles())
 	if d.IsModalOpen() {
 		t.Error("expected IsModalOpen() = false on new DebugLog")
 	}
@@ -499,7 +500,7 @@ func TestDebugLog_FilterTitle(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			d := New(ui.DefaultKeyMap())
+			d := New(ui.DefaultKeyMap(), color.DefaultStyles())
 			d.SetFilter(tt.filter)
 			got := d.FilterTitle()
 			if tt.wantEmpty && got != "" {
@@ -520,14 +521,14 @@ func TestDebugLog_FilterTitle(t *testing.T) {
 
 func TestDebugLog_BuildSuggestions(t *testing.T) {
 	t.Run("nil status returns empty map", func(t *testing.T) {
-		d := New(ui.DefaultKeyMap())
+		d := New(ui.DefaultKeyMap(), color.DefaultStyles())
 		sugg := d.buildSuggestions()
 		if len(sugg) != 0 {
 			t.Errorf("expected empty suggestions with nil status, got %v", sugg)
 		}
 	})
 	t.Run("applications and units populated from status", func(t *testing.T) {
-		d := New(ui.DefaultKeyMap())
+		d := New(ui.DefaultKeyMap(), color.DefaultStyles())
 		d.status = &model.FullStatus{
 			Applications: map[string]model.Application{
 				"mysql": {
@@ -560,7 +561,7 @@ func TestDebugLog_BuildSuggestions(t *testing.T) {
 		}
 	})
 	t.Run("seenModules included in module suggestions", func(t *testing.T) {
-		d := New(ui.DefaultKeyMap())
+		d := New(ui.DefaultKeyMap(), color.DefaultStyles())
 		d.seenModules = map[string]struct{}{"provider": {}, "worker": {}}
 		sugg := d.buildSuggestions()
 		if len(sugg[leftPaneModules]) != 2 {
@@ -570,7 +571,7 @@ func TestDebugLog_BuildSuggestions(t *testing.T) {
 }
 
 func TestDebugLog_ScrollHelpers(t *testing.T) {
-	d := New(ui.DefaultKeyMap())
+	d := New(ui.DefaultKeyMap(), color.DefaultStyles())
 	for i := 0; i < 50; i++ {
 		d.lines = append(d.lines, "line")
 	}
@@ -591,7 +592,7 @@ func TestDebugLog_ScrollHelpers(t *testing.T) {
 		}
 	})
 	t.Run("visibleLines fallback for zero height", func(t *testing.T) {
-		d2 := New(ui.DefaultKeyMap())
+		d2 := New(ui.DefaultKeyMap(), color.DefaultStyles())
 		if d2.visibleLines() != 20 {
 			t.Errorf("visibleLines() with height=0 should return 20, got %d", d2.visibleLines())
 		}
@@ -599,7 +600,7 @@ func TestDebugLog_ScrollHelpers(t *testing.T) {
 }
 
 func TestDebugLog_RebuildSearchMatches(t *testing.T) {
-	d := New(ui.DefaultKeyMap())
+	d := New(ui.DefaultKeyMap(), color.DefaultStyles())
 	d.rawEntries = []model.LogEntry{
 		{Message: "Hello world", Entity: "unit-mysql-0", Module: "db"},
 		{Message: "another entry", Entity: "unit-wp-0", Module: "web"},
@@ -639,7 +640,7 @@ func TestDebugLog_RebuildSearchMatches(t *testing.T) {
 }
 
 func TestDebugLog_JumpToNextMatch(t *testing.T) {
-	d := New(ui.DefaultKeyMap())
+	d := New(ui.DefaultKeyMap(), color.DefaultStyles())
 	d.lines = make([]string, 10)
 	d.searchMatches = []int{2, 5, 8}
 
@@ -661,7 +662,7 @@ func TestDebugLog_JumpToNextMatch(t *testing.T) {
 		}
 	})
 	t.Run("empty matches is no-op", func(t *testing.T) {
-		d2 := New(ui.DefaultKeyMap())
+		d2 := New(ui.DefaultKeyMap(), color.DefaultStyles())
 		d2.offset = 0
 		d2.jumpToNextMatch(1)
 		if d2.offset != 0 {

@@ -24,7 +24,7 @@ func applicationColumns() []table.Column {
 	}
 }
 
-func applicationRows(apps map[string]model.Application) []table.Row {
+func applicationRows(apps map[string]model.Application, s *color.Styles) []table.Row {
 	names := ui.SortedKeys(apps)
 	result := make([]table.Row, 0, len(names))
 	for _, name := range names {
@@ -35,7 +35,7 @@ func applicationRows(apps map[string]model.Application) []table.Row {
 		}
 		result = append(result, table.Row{
 			app.Name,
-			color.StatusText(app.Status),
+			s.StatusText(app.Status),
 			app.Charm,
 			app.CharmChannel,
 			fmt.Sprintf("%d", app.CharmRev),

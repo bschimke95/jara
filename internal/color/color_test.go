@@ -7,7 +7,9 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
-func TestStatusColor(t *testing.T) {
+func TestDefaultStylesStatusColor(t *testing.T) {
+	s := DefaultStyles()
+
 	tests := []struct {
 		status   string
 		expected string // hex color string
@@ -34,7 +36,7 @@ func TestStatusColor(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.status, func(t *testing.T) {
-			got := StatusColor(tt.status)
+			got := s.StatusColor(tt.status)
 			expected := lipgloss.Color(tt.expected)
 			if got != expected {
 				t.Errorf("StatusColor(%q) = %v, want %v", tt.status, got, expected)
@@ -43,15 +45,16 @@ func TestStatusColor(t *testing.T) {
 	}
 }
 
-func TestStatusStyle(t *testing.T) {
-	tests := []string{"active", "blocked", "idle", "error", "terminated", "unknown", "waiting", "maintenance"}
+func TestDefaultStylesStatusStyle(t *testing.T) {
+	s := DefaultStyles()
 
-	for _, status := range tests {
+	statuses := []string{"active", "blocked", "idle", "error", "terminated", "unknown", "waiting", "maintenance"}
+
+	for _, status := range statuses {
 		t.Run(status, func(t *testing.T) {
-			style := StatusStyle(status)
-			expectedColor := StatusColor(status)
+			style := s.StatusStyle(status)
+			expectedColor := s.StatusColor(status)
 
-			// Check that the style has the correct foreground color
 			if style.GetForeground() != expectedColor {
 				t.Errorf("StatusStyle(%q) foreground = %v, want %v", status, style.GetForeground(), expectedColor)
 			}
@@ -59,69 +62,90 @@ func TestStatusStyle(t *testing.T) {
 	}
 }
 
-func TestStatusStyle_Rendering(t *testing.T) {
+func TestDefaultStylesStatusText(t *testing.T) {
+	s := DefaultStyles()
+
 	statuses := []string{"active", "blocked", "idle", "error", "terminated", "unknown"}
-	for _, s := range statuses {
-		style := StatusStyle(s)
-		rendered := style.Render("test")
+	for _, status := range statuses {
+		rendered := s.StatusText(status)
 		if rendered == "" {
-			t.Errorf("StatusStyle(%q).Render(\"test\") returned empty string", s)
+			t.Errorf("StatusText(%q) returned empty string", status)
 		}
-		// Should contain the text we passed
-		if len(rendered) < 4 {
-			t.Errorf("StatusStyle(%q).Render(\"test\") too short: %q", s, rendered)
+		if len(rendered) < len(status) {
+			t.Errorf("StatusText(%q) too short: %q", status, rendered)
 		}
 	}
 }
 
-func TestThemeColors(t *testing.T) {
-	// Test that our theme color constants are defined and not empty
+func TestDefaultStylesColors(t *testing.T) {
+	s := DefaultStyles()
+
 	colors := map[string]color.Color{
-		"LogoColor":   LogoColor,
-		"Primary":     Primary,
-		"Secondary":   Secondary,
-		"Title":       Title,
-		"Subtle":      Subtle,
-		"Highlight":   Highlight,
-		"Muted":       Muted,
-		"HintKey":     HintKey,
-		"HintDesc":    HintDesc,
-		"CrumbFg":     CrumbFg,
-		"CrumbBg":     CrumbBg,
-		"Border":      Border,
-		"BorderTitle": BorderTitle,
-		"InfoLabel":   InfoLabel,
-		"InfoValue":   InfoValue,
+		"LogoColor":    s.LogoColor,
+		"Primary":      s.Primary,
+		"Secondary":    s.Secondary,
+		"Title":        s.Title,
+		"Subtle":       s.Subtle,
+		"Highlight":    s.Highlight,
+		"Muted":        s.Muted,
+		"HintKeyColor": s.HintKeyColor,
+		"CrumbFgColor": s.CrumbFgColor,
+		"CrumbBgColor": s.CrumbBgColor,
+		"ErrorColor":   s.ErrorColor,
+		"BorderColor":  s.BorderColor,
 	}
 
 	for name, clr := range colors {
 		if clr == nil {
-			t.Errorf("Theme color %s is nil", name)
+			t.Errorf("Color %s is nil", name)
 		}
 	}
 }
 
-func TestColorConsistency(t *testing.T) {
-	// Test that StatusStyle and StatusColor return consistent results
-	statuses := []string{"active", "blocked", "idle", "error", "terminated", "unknown", "waiting", "maintenance"}
-	for _, status := range statuses {
-		styleColor := StatusStyle(status).GetForeground()
-		directColor := StatusColor(status)
-		if styleColor != directColor {
-			t.Errorf("StatusStyle(%q) color %v != StatusColor(%q) color %v", status, styleColor, status, directColor)
-		}
+func TestSetStatusColor(t *testing.T) {
+	s := DefaultStyles()
+
+	s.SetStatusColor("custom", lipgloss.Color("#abcdef"))
+	got := s.StatusColor("custom")
+	want := lipgloss.Color("#abcdef")
+	if got != want {
+		t.Errorf("StatusColor(custom) = %v, want %v", got, want)
 	}
 }
 
-func TestStatusColorType(t *testing.T) {
-	// Test that StatusColor returns the correct type
-	result := StatusColor("active")
-	if result == nil {
-		t.Error("StatusColor should not return nil")
-	}
+func TestRebuildStyles(t *testing.T) {
+	s := DefaultStyles()
 
-	// Should be able to use as color.Color interface
-	if result == nil {
-		t.Error("StatusColor result should implement color.Color interface")
+	// Override a color and rebuild.
+	s.Primary = lipgloss.Color("#ff0000")
+	s.RebuildStyles()
+
+	// The Header style should now use the overridden primary color.
+	if s.Header.GetForeground() != lipgloss.Color("#ff0000") {
+		t.Errorf("Header foreground after rebuild = %v, want #ff0000", s.Header.GetForeground())
+	}
+}
+
+func TestForegroundText(t *testing.T) {
+	result := ForegroundText(lipgloss.Color("#ff0000"), "hello")
+	if result == "" {
+		t.Error("ForegroundText returned empty string")
+	}
+	if len(result) < 5 {
+		t.Errorf("ForegroundText too short: %q", result)
+	}
+}
+
+func TestForegroundTextNil(t *testing.T) {
+	result := ForegroundText(nil, "hello")
+	if result != "hello" {
+		t.Errorf("ForegroundText(nil) = %q, want %q", result, "hello")
+	}
+}
+
+func TestForegroundTextEmpty(t *testing.T) {
+	result := ForegroundText(lipgloss.Color("#ff0000"), "")
+	if result != "" {
+		t.Errorf("ForegroundText empty = %q, want empty", result)
 	}
 }

@@ -5,12 +5,13 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/bschimke95/jara/internal/color"
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/ui"
 )
 
 func TestUpdateDeployStartsInput(t *testing.T) {
-	v := New(ui.DefaultKeyMap())
+	v := New(ui.DefaultKeyMap(), color.DefaultStyles())
 	v.SetSize(120, 30)
 	v.SetStatus(&model.FullStatus{Applications: map[string]model.Application{
 		"postgresql": {Name: "postgresql"},

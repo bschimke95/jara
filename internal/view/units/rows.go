@@ -35,23 +35,23 @@ func DetailColumns() []table.Column {
 }
 
 // UnitToCompactRow builds the compact 4-column row used in the model overview panel.
-func UnitToCompactRow(u model.Unit) table.Row {
+func UnitToCompactRow(u model.Unit, s *color.Styles) table.Row {
 	var name string
 	if u.Leader {
-		name = lipgloss.NewStyle().Foreground(color.HintKey).Render("★") + " " + u.Name
+		name = lipgloss.NewStyle().Foreground(s.HintKeyColor).Render("★") + " " + u.Name
 	} else {
 		name = "  " + u.Name
 	}
-	workload := color.StatusText(u.WorkloadStatus)
-	agent := color.StatusText(u.AgentStatus)
+	workload := s.StatusText(u.WorkloadStatus)
+	agent := s.StatusText(u.AgentStatus)
 	return table.Row{name, workload, agent, u.WorkloadMessage}
 }
 
 // unitToDetailRow builds the full-column row used by the standalone units view.
-func unitToDetailRow(u model.Unit) table.Row {
+func unitToDetailRow(u model.Unit, s *color.Styles) table.Row {
 	var name string
 	if u.Leader {
-		name = lipgloss.NewStyle().Foreground(color.HintKey).Render("★") + " " + u.Name
+		name = lipgloss.NewStyle().Foreground(s.HintKeyColor).Render("★") + " " + u.Name
 	} else {
 		name = "  " + u.Name
 	}
@@ -66,8 +66,8 @@ func unitToDetailRow(u model.Unit) table.Row {
 	}
 	return table.Row{
 		name,
-		color.StatusText(u.WorkloadStatus),
-		color.StatusText(u.AgentStatus),
+		s.StatusText(u.WorkloadStatus),
+		s.StatusText(u.AgentStatus),
 		u.Machine,
 		u.PublicAddress,
 		ports,
@@ -76,27 +76,27 @@ func unitToDetailRow(u model.Unit) table.Row {
 }
 
 // CompactRowsForApp returns compact unit rows for a specific application (model panel).
-func CompactRowsForApp(app model.Application) []table.Row {
+func CompactRowsForApp(app model.Application, s *color.Styles) []table.Row {
 	var rows []table.Row
 	for _, unit := range app.Units {
-		rows = append(rows, UnitToCompactRow(unit))
+		rows = append(rows, UnitToCompactRow(unit, s))
 		for _, sub := range unit.Subordinates {
-			rows = append(rows, UnitToCompactRow(sub))
+			rows = append(rows, UnitToCompactRow(sub, s))
 		}
 	}
 	return rows
 }
 
 // DetailRows returns full unit rows for all applications (standalone units view).
-func DetailRows(apps map[string]model.Application) []table.Row {
+func DetailRows(apps map[string]model.Application, s *color.Styles) []table.Row {
 	names := ui.SortedKeys(apps)
 	var rows []table.Row
 	for _, name := range names {
 		app := apps[name]
 		for _, unit := range app.Units {
-			rows = append(rows, unitToDetailRow(unit))
+			rows = append(rows, unitToDetailRow(unit, s))
 			for _, sub := range unit.Subordinates {
-				rows = append(rows, unitToDetailRow(sub))
+				rows = append(rows, unitToDetailRow(sub, s))
 			}
 		}
 	}
@@ -104,27 +104,25 @@ func DetailRows(apps map[string]model.Application) []table.Row {
 }
 
 // DetailRowsForApp returns full unit rows for one application (standalone units view).
-func DetailRowsForApp(app model.Application) []table.Row {
+func DetailRowsForApp(app model.Application, s *color.Styles) []table.Row {
 	var rows []table.Row
 	for _, unit := range app.Units {
-		rows = append(rows, unitToDetailRow(unit))
+		rows = append(rows, unitToDetailRow(unit, s))
 		for _, sub := range unit.Subordinates {
-			rows = append(rows, unitToDetailRow(sub))
+			rows = append(rows, unitToDetailRow(sub, s))
 		}
 	}
 	return rows
 }
 
-var pendingStyle = lipgloss.NewStyle().Foreground(color.Muted).Italic(true)
-
 // PendingCompactRows returns compact placeholder rows for the model-overview units pane.
-func PendingCompactRows(appName string, currentUnits []model.Unit, delta int) []table.Row {
+func PendingCompactRows(appName string, currentUnits []model.Unit, delta int, s *color.Styles) []table.Row {
 	var rows []table.Row
 	if delta > 0 {
 		nextIdx := len(currentUnits)
 		for range delta {
-			name := pendingStyle.Render(fmt.Sprintf("  %s/%d", appName, nextIdx))
-			rows = append(rows, table.Row{name, pendingStyle.Render("allocating"), pendingStyle.Render("allocating"), pendingStyle.Render("installing agent")})
+			name := s.Pending.Render(fmt.Sprintf("  %s/%d", appName, nextIdx))
+			rows = append(rows, table.Row{name, s.Pending.Render("allocating"), s.Pending.Render("allocating"), s.Pending.Render("installing agent")})
 			nextIdx++
 		}
 	} else if delta < 0 {
@@ -134,21 +132,21 @@ func PendingCompactRows(appName string, currentUnits []model.Unit, delta int) []
 			start = 0
 		}
 		for _, u := range currentUnits[start:] {
-			name := pendingStyle.Render("  " + u.Name + " (removing)")
-			rows = append(rows, table.Row{name, pendingStyle.Render("terminating"), pendingStyle.Render("terminating"), ""})
+			name := s.Pending.Render("  " + u.Name + " (removing)")
+			rows = append(rows, table.Row{name, s.Pending.Render("terminating"), s.Pending.Render("terminating"), ""})
 		}
 	}
 	return rows
 }
 
 // PendingDetailRows returns full-column placeholder rows for the standalone units view.
-func PendingDetailRows(appName string, currentUnits []model.Unit, delta int) []table.Row {
+func PendingDetailRows(appName string, currentUnits []model.Unit, delta int, s *color.Styles) []table.Row {
 	var rows []table.Row
 	if delta > 0 {
 		nextIdx := len(currentUnits)
 		for range delta {
-			name := pendingStyle.Render(fmt.Sprintf("  %s/%d", appName, nextIdx))
-			rows = append(rows, table.Row{name, pendingStyle.Render("allocating"), pendingStyle.Render("allocating"), "", "", "", pendingStyle.Render("waiting for unit…")})
+			name := s.Pending.Render(fmt.Sprintf("  %s/%d", appName, nextIdx))
+			rows = append(rows, table.Row{name, s.Pending.Render("allocating"), s.Pending.Render("allocating"), "", "", "", s.Pending.Render("waiting for unit…")})
 			nextIdx++
 		}
 	} else if delta < 0 {
@@ -158,8 +156,8 @@ func PendingDetailRows(appName string, currentUnits []model.Unit, delta int) []t
 			start = 0
 		}
 		for _, u := range currentUnits[start:] {
-			name := pendingStyle.Render("  " + u.Name + " (removing)")
-			rows = append(rows, table.Row{name, pendingStyle.Render("terminating"), pendingStyle.Render("terminating"), u.Machine, u.PublicAddress, "", pendingStyle.Render("waiting for removal…")})
+			name := s.Pending.Render("  " + u.Name + " (removing)")
+			rows = append(rows, table.Row{name, s.Pending.Render("terminating"), s.Pending.Render("terminating"), u.Machine, u.PublicAddress, "", s.Pending.Render("waiting for removal…")})
 		}
 	}
 	return rows

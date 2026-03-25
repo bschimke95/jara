@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
@@ -240,6 +241,15 @@ func (c *Config) Load(path string) error {
 	}
 
 	return nil
+}
+
+// RefreshDuration returns the config's refresh rate as a time.Duration.
+func (c *Config) RefreshDuration() time.Duration {
+	rate := c.Jara.RefreshRate
+	if rate <= 0 {
+		rate = DefaultRefreshRate
+	}
+	return time.Duration(rate * float64(time.Second))
 }
 
 // Save writes the current configuration to a YAML file, creating

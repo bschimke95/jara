@@ -52,6 +52,7 @@ type FilterModalClosedMsg struct{}
 // FilterModal is a two-pane vim-navigable overlay for configuring debug-log filters.
 type FilterModal struct {
 	keys   ui.KeyMap
+	styles *color.Styles
 	filter model.DebugLogFilter
 
 	suggestions map[leftPane][]string
@@ -71,7 +72,7 @@ type FilterModal struct {
 const rightPaneVisibleRows = 12
 
 // NewFilterModal creates a modal pre-populated with the given filter defaults.
-func NewFilterModal(initial model.DebugLogFilter, suggestions map[leftPane][]string, keys ui.KeyMap) FilterModal {
+func NewFilterModal(initial model.DebugLogFilter, suggestions map[leftPane][]string, keys ui.KeyMap, styles *color.Styles) FilterModal {
 	ti := textinput.New()
 	ti.CharLimit = 256
 	ti.Placeholder = "key=value, Enter to add"
@@ -82,6 +83,7 @@ func NewFilterModal(initial model.DebugLogFilter, suggestions map[leftPane][]str
 
 	return FilterModal{
 		keys:        keys,
+		styles:      styles,
 		filter:      initial,
 		suggestions: suggestions,
 		textInput:   ti,
@@ -404,13 +406,13 @@ func (m *FilterModal) Render(background string) string {
 	outerW := innerW + 4
 
 	leftContent, rightContent := m.renderPanes(leftW, rightW)
-	leftBox := ui.BorderBox(leftContent, "Filters", leftW+2)
-	rightBox := ui.BorderBox(rightContent, leftPaneNames[m.leftCursor], rightW+2)
+	leftBox := ui.BorderBox(leftContent, "Filters", leftW+2, m.styles)
+	rightBox := ui.BorderBox(rightContent, leftPaneNames[m.leftCursor], rightW+2, m.styles)
 	combined := lipgloss.JoinHorizontal(lipgloss.Top, leftBox, rightBox)
 	combined += "\n" + m.renderFooter()
 
-	titleStyle := lipgloss.NewStyle().Foreground(color.Primary).Bold(true)
-	box := ui.BorderBoxRawTitle(combined, titleStyle.Render(" Debug Log Filter "), outerW)
+	titleStyle := lipgloss.NewStyle().Foreground(m.styles.Primary).Bold(true)
+	box := ui.BorderBoxRawTitle(combined, titleStyle.Render(" Debug Log Filter "), outerW, m.styles)
 
 	modalH := lipgloss.Height(box)
 	x := (m.width - outerW) / 2
@@ -432,16 +434,16 @@ func (m *FilterModal) renderPanes(leftW, rightW int) (string, string) {
 }
 
 func (m *FilterModal) renderLeftPane(w int) string {
-	cursorStyle := lipgloss.NewStyle().Foreground(color.Primary).Bold(true)
+	cursorStyle := lipgloss.NewStyle().Foreground(m.styles.Primary).Bold(true)
 	activeHL := lipgloss.NewStyle().
-		Foreground(color.CrumbFg).
-		Background(color.Highlight).
+		Foreground(m.styles.CrumbFgColor).
+		Background(m.styles.Highlight).
 		Bold(true)
 	cursorHL := lipgloss.NewStyle().
-		Foreground(color.Primary).
-		Background(color.Highlight).
+		Foreground(m.styles.Primary).
+		Background(m.styles.Highlight).
 		Bold(true)
-	normalStyle := lipgloss.NewStyle().Foreground(color.InfoLabel)
+	normalStyle := lipgloss.NewStyle().Foreground(m.styles.InfoLabelColor)
 
 	var b strings.Builder
 	for i := leftPane(0); i < leftPaneCount; i++ {
@@ -473,18 +475,18 @@ func truncateLabel(s string, maxLen int) string {
 }
 
 func (m *FilterModal) renderRightPane(w int) string {
-	checkedStyle := lipgloss.NewStyle().Foreground(color.CheckGreen).Bold(true)
-	uncheckedStyle := lipgloss.NewStyle().Foreground(color.CheckRed)
-	cursorStyle := lipgloss.NewStyle().Foreground(color.Primary).Bold(true)
+	checkedStyle := lipgloss.NewStyle().Foreground(m.styles.CheckGreenColor).Bold(true)
+	uncheckedStyle := lipgloss.NewStyle().Foreground(m.styles.CheckRedColor)
+	cursorStyle := lipgloss.NewStyle().Foreground(m.styles.Primary).Bold(true)
 	activeStyle := lipgloss.NewStyle().
-		Foreground(color.CrumbFg).
-		Background(color.Highlight).
+		Foreground(m.styles.CrumbFgColor).
+		Background(m.styles.Highlight).
 		Bold(true)
-	normalStyle := lipgloss.NewStyle().Foreground(color.InfoValue)
-	suggStyle := lipgloss.NewStyle().Foreground(color.Muted)
-	addStyle := lipgloss.NewStyle().Foreground(color.Muted).Italic(true)
-	inputStyle := lipgloss.NewStyle().Foreground(color.Title)
-	dimStyle := lipgloss.NewStyle().Foreground(color.Muted)
+	normalStyle := lipgloss.NewStyle().Foreground(m.styles.InfoValueColor)
+	suggStyle := lipgloss.NewStyle().Foreground(m.styles.Muted)
+	addStyle := lipgloss.NewStyle().Foreground(m.styles.Muted).Italic(true)
+	inputStyle := lipgloss.NewStyle().Foreground(m.styles.Title)
+	dimStyle := lipgloss.NewStyle().Foreground(m.styles.Muted)
 
 	maxLabel := w - 4
 	if maxLabel < 4 {
@@ -591,8 +593,8 @@ func (m *FilterModal) renderRightPane(w int) string {
 }
 
 func (m *FilterModal) renderFooter() string {
-	keyStyle := lipgloss.NewStyle().Foreground(color.HintKey).Bold(true)
-	descStyle := lipgloss.NewStyle().Foreground(color.HintDesc)
+	keyStyle := lipgloss.NewStyle().Foreground(m.styles.HintKeyColor).Bold(true)
+	descStyle := lipgloss.NewStyle().Foreground(m.styles.HintDescColor)
 	sep := descStyle.Render("  │  ")
 
 	bk := func(b key.Binding) string { return b.Help().Key }

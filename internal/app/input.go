@@ -7,7 +7,6 @@ import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 
-	"github.com/bschimke95/jara/internal/color"
 	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/ui"
 	"github.com/bschimke95/jara/internal/view"
@@ -149,9 +148,9 @@ func (m Model) renderInputBar() string {
 
 // renderCommandBox renders a bordered command input with inline suggestions.
 func (m Model) renderCommandBox() string {
-	promptStyle := lipgloss.NewStyle().Foreground(color.Primary).Bold(true)
-	valStyle := lipgloss.NewStyle().Foreground(color.Title)
-	cursorStyle := lipgloss.NewStyle().Foreground(color.Primary)
+	promptStyle := lipgloss.NewStyle().Foreground(m.styles.Primary).Bold(true)
+	valStyle := lipgloss.NewStyle().Foreground(m.styles.Title)
+	cursorStyle := lipgloss.NewStyle().Foreground(m.styles.Primary)
 
 	inputLine := promptStyle.Render(m.input.Prompt) +
 		valStyle.Render(m.input.Value()) +
@@ -163,11 +162,11 @@ func (m Model) renderCommandBox() string {
 	// Render suggestion rows.
 	if len(m.suggestions) > 0 {
 		selectedStyle := lipgloss.NewStyle().
-			Foreground(color.CrumbFg).
-			Background(color.Highlight).
+			Foreground(m.styles.CrumbFgColor).
+			Background(m.styles.Highlight).
 			Bold(true)
-		normalStyle := lipgloss.NewStyle().Foreground(color.Muted)
-		targetStyle := lipgloss.NewStyle().Foreground(color.Secondary)
+		normalStyle := lipgloss.NewStyle().Foreground(m.styles.Muted)
+		targetStyle := lipgloss.NewStyle().Foreground(m.styles.Secondary)
 
 		for i, s := range m.suggestions {
 			label := s.Command
@@ -187,22 +186,22 @@ func (m Model) renderCommandBox() string {
 	}
 
 	content := strings.Join(lines, "\n")
-	titleStyle := lipgloss.NewStyle().Foreground(color.Primary).Bold(true)
-	return ui.BorderBoxRawTitle(content, titleStyle.Render(" Command "), m.width)
+	titleStyle := lipgloss.NewStyle().Foreground(m.styles.Primary).Bold(true)
+	return ui.BorderBoxRawTitle(content, titleStyle.Render(" Command "), m.width, m.styles)
 }
 
 // renderFilterBar renders the filter input as a bordered box.
 func (m Model) renderFilterBar() string {
-	promptStyle := lipgloss.NewStyle().Foreground(color.Primary).Bold(true)
-	valStyle := lipgloss.NewStyle().Foreground(color.Title)
-	cursorStyle := lipgloss.NewStyle().Foreground(color.Primary)
+	promptStyle := lipgloss.NewStyle().Foreground(m.styles.Primary).Bold(true)
+	valStyle := lipgloss.NewStyle().Foreground(m.styles.Title)
+	cursorStyle := lipgloss.NewStyle().Foreground(m.styles.Primary)
 
 	inputLine := promptStyle.Render(m.input.Prompt) +
 		valStyle.Render(m.input.Value()) +
 		cursorStyle.Render("█")
 
-	titleStyle := lipgloss.NewStyle().Foreground(color.Primary).Bold(true)
-	return ui.BorderBoxRawTitle(inputLine, titleStyle.Render(" Filter "), m.width)
+	titleStyle := lipgloss.NewStyle().Foreground(m.styles.Primary).Bold(true)
+	return ui.BorderBoxRawTitle(inputLine, titleStyle.Render(" Filter "), m.width, m.styles)
 }
 
 // handleGlobalKeys processes key presses that are active in normal mode
