@@ -24,7 +24,12 @@ func (m Model) handleNavigate(msg view.NavigateMsg) (Model, tea.Cmd) {
 	}
 	m.err = nil
 
-	m.stack.Push(nav.StackEntry{View: msg.Target, Context: msg.Context})
+	entry := nav.StackEntry{View: msg.Target, Context: msg.Context}
+	if msg.ResetStack {
+		m.stack.Reset(entry)
+	} else {
+		m.stack.Push(entry)
+	}
 	if cmd != nil {
 		return m, cmd
 	}

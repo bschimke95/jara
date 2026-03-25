@@ -115,7 +115,7 @@ func (m Model) executeCommand(cmd string) (Model, tea.Cmd) {
 		return m, tea.Quit
 	}
 	if viewID, ok := nav.ResolveCommand(cmd); ok {
-		return m.handleNavigate(view.NavigateMsg{Target: viewID})
+		return m.handleNavigate(view.NavigateMsg{Target: viewID, ResetStack: true})
 	}
 	return m, nil
 }
