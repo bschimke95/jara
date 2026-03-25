@@ -75,7 +75,7 @@ var (
 	Subtle = lipgloss.Color("#4b5563")
 
 	// Highlight is the selected-row background.
-	Highlight = lipgloss.Color("#1d4ed8")
+	Highlight = lipgloss.Color("#1e3a5f")
 
 	// Muted is for less-important text.
 	Muted = lipgloss.Color("#6b7280")
