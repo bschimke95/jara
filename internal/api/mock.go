@@ -396,6 +396,9 @@ func (c *MockClient) DebugLog(ctx context.Context, _ model.DebugLogFilter) (<-ch
 		"storage attached",
 	}
 
+	// Fixed base time so VHS golden files remain stable across runs.
+	baseTime := time.Date(2026, 1, 1, 12, 0, 0, 0, time.UTC)
+
 	go func() {
 		defer close(ch)
 		i := 0
@@ -406,7 +409,7 @@ func (c *MockClient) DebugLog(ctx context.Context, _ model.DebugLogFilter) (<-ch
 			case <-time.After(500 * time.Millisecond):
 				entry := model.LogEntry{
 					Entity:    entities[i%len(entities)],
-					Timestamp: time.Now(),
+					Timestamp: baseTime.Add(time.Duration(i) * 500 * time.Millisecond),
 					Severity:  severities[i%len(severities)],
 					Module:    modules[i%len(modules)],
 					Location:  "agent.go:42",
