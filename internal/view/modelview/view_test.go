@@ -5,13 +5,14 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/bschimke95/jara/internal/color"
 	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/ui"
 	"github.com/bschimke95/jara/internal/view"
 )
 
 func TestUpdateDeployStartsInput(t *testing.T) {
-	v := New(ui.DefaultKeyMap(), func(string) error { return nil })
+	v := New(ui.DefaultKeyMap(), color.DefaultStyles(), func(string) error { return nil })
 	v.SetSize(120, 30)
 
 	_, cmd := v.Update(tea.KeyPressMsg{Text: "D", Code: 'D'})
@@ -24,7 +25,7 @@ func TestUpdateDeployStartsInput(t *testing.T) {
 }
 
 func TestUpdateApplicationsNavShortcut(t *testing.T) {
-	v := New(ui.DefaultKeyMap(), func(string) error { return nil })
+	v := New(ui.DefaultKeyMap(), color.DefaultStyles(), func(string) error { return nil })
 	v.SetSize(120, 30)
 
 	_, cmd := v.Update(tea.KeyPressMsg{Text: "A", Code: 'A'})

@@ -6,22 +6,19 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
-func TestResolveThemeDefaults(t *testing.T) {
-	theme := ResolveTheme(SkinConfig{})
-	def := DefaultTheme()
+func TestResolveStylesDefaults(t *testing.T) {
+	s := ResolveStyles(SkinConfig{})
 
-	if theme.Primary != def.Primary {
-		t.Errorf("Primary = %v, want %v", theme.Primary, def.Primary)
+	// Default primary should match the Atom One Dark value.
+	if s.Primary != lipgloss.Color("#61afef") {
+		t.Errorf("Primary = %v, want %v", s.Primary, lipgloss.Color("#61afef"))
 	}
-	if theme.Highlight != def.Highlight {
-		t.Errorf("Highlight = %v, want %v", theme.Highlight, def.Highlight)
-	}
-	if len(theme.StatusColors) != len(def.StatusColors) {
-		t.Errorf("StatusColors length = %d, want %d", len(theme.StatusColors), len(def.StatusColors))
+	if s.Highlight != lipgloss.Color("#3e4451") {
+		t.Errorf("Highlight = %v, want %v", s.Highlight, lipgloss.Color("#3e4451"))
 	}
 }
 
-func TestResolveThemeOverrides(t *testing.T) {
+func TestResolveStylesOverrides(t *testing.T) {
 	skin := SkinConfig{
 		Primary:   "#ff0000",
 		Highlight: "#00ff00",
@@ -31,36 +28,35 @@ func TestResolveThemeOverrides(t *testing.T) {
 		},
 	}
 
-	theme := ResolveTheme(skin)
+	s := ResolveStyles(skin)
 
-	if theme.Primary != lipgloss.Color("#ff0000") {
-		t.Errorf("Primary = %v, want %v", theme.Primary, lipgloss.Color("#ff0000"))
+	if s.Primary != lipgloss.Color("#ff0000") {
+		t.Errorf("Primary = %v, want %v", s.Primary, lipgloss.Color("#ff0000"))
 	}
-	if theme.Highlight != lipgloss.Color("#00ff00") {
-		t.Errorf("Highlight = %v, want %v", theme.Highlight, lipgloss.Color("#00ff00"))
+	if s.Highlight != lipgloss.Color("#00ff00") {
+		t.Errorf("Highlight = %v, want %v", s.Highlight, lipgloss.Color("#00ff00"))
 	}
 
 	// Overridden status color.
-	activeColor := theme.StatusColor("active")
+	activeColor := s.StatusColor("active")
 	if activeColor != lipgloss.Color("#aabbcc") {
 		t.Errorf("StatusColor(active) = %v, want %v", activeColor, lipgloss.Color("#aabbcc"))
 	}
 
 	// Default status color for unknown statuses.
-	defaultColor := theme.StatusColor("some-unknown-status")
+	defaultColor := s.StatusColor("some-unknown-status")
 	if defaultColor != lipgloss.Color("#ddeeff") {
 		t.Errorf("StatusColor(some-unknown-status) = %v, want %v", defaultColor, lipgloss.Color("#ddeeff"))
 	}
 
 	// Non-overridden fields should keep defaults.
-	def := DefaultTheme()
-	if theme.Border != def.Border {
-		t.Errorf("Border = %v, want %v (should keep default)", theme.Border, def.Border)
+	if s.BorderColor != lipgloss.Color("#4b5263") {
+		t.Errorf("BorderColor = %v, want default", s.BorderColor)
 	}
 }
 
-func TestThemeStatusColor(t *testing.T) {
-	theme := DefaultTheme()
+func TestResolveStylesStatusColor(t *testing.T) {
+	s := ResolveStyles(SkinConfig{})
 
 	tests := []struct {
 		status   string
@@ -76,7 +72,7 @@ func TestThemeStatusColor(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.status, func(t *testing.T) {
-			got := theme.StatusColor(tt.status)
+			got := s.StatusColor(tt.status)
 			want := lipgloss.Color(tt.expected)
 			if got != want {
 				t.Errorf("StatusColor(%q) = %v, want %v", tt.status, got, want)
@@ -85,18 +81,18 @@ func TestThemeStatusColor(t *testing.T) {
 	}
 }
 
-func TestThemeStatusColorFallback(t *testing.T) {
-	theme := DefaultTheme()
-	got := theme.StatusColor("unknown-garbage")
+func TestResolveStylesStatusColorFallback(t *testing.T) {
+	s := ResolveStyles(SkinConfig{})
+	got := s.StatusColor("unknown-garbage")
 	want := lipgloss.Color("#c0c0c0")
 	if got != want {
 		t.Errorf("StatusColor(unknown-garbage) = %v, want %v", got, want)
 	}
 }
 
-func TestThemeStatusStyle(t *testing.T) {
-	theme := DefaultTheme()
-	style := theme.StatusStyle("active")
+func TestResolveStylesStatusStyle(t *testing.T) {
+	s := ResolveStyles(SkinConfig{})
+	style := s.StatusStyle("active")
 	if style.GetForeground() != lipgloss.Color("#00ff00") {
 		t.Errorf("StatusStyle(active) foreground = %v, want %v", style.GetForeground(), lipgloss.Color("#00ff00"))
 	}

@@ -5,6 +5,7 @@ import (
 
 	tea "charm.land/bubbletea/v2"
 
+	"github.com/bschimke95/jara/internal/color"
 	"github.com/bschimke95/jara/internal/ui"
 )
 
@@ -29,7 +30,7 @@ func TestParseConfigMapInvalid(t *testing.T) {
 }
 
 func TestOptionsParsesNumericFields(t *testing.T) {
-	m := New("", ui.DefaultKeyMap(), nil, nil)
+	m := New("", ui.DefaultKeyMap(), color.DefaultStyles(), nil, nil)
 	m.charm = "postgresql"
 	m.numUnits = "3"
 	m.revision = "12"
@@ -62,7 +63,7 @@ func TestOptionsParsesNumericFields(t *testing.T) {
 }
 
 func TestRefreshAutocompleteForCharmField(t *testing.T) {
-	m := New("", ui.DefaultKeyMap(), []string{"postgresql", "prometheus", "mysql"}, nil)
+	m := New("", ui.DefaultKeyMap(), color.DefaultStyles(), []string{"postgresql", "prometheus", "mysql"}, nil)
 	m.leftCursor = fieldCharm
 	m.input.SetValue("p")
 	m.refreshAutocomplete()
@@ -76,7 +77,7 @@ func TestRefreshAutocompleteForCharmField(t *testing.T) {
 }
 
 func TestEditingTabAcceptsSuggestion(t *testing.T) {
-	m := New("", ui.DefaultKeyMap(), []string{"postgresql", "prometheus"}, nil)
+	m := New("", ui.DefaultKeyMap(), color.DefaultStyles(), []string{"postgresql", "prometheus"}, nil)
 	m.leftCursor = fieldCharm
 	m.focus = focusRight
 	m.editing = true
@@ -94,7 +95,7 @@ func TestEditingTabAcceptsSuggestion(t *testing.T) {
 }
 
 func TestFilteredSuggestionsPrefixFirst(t *testing.T) {
-	m := New("", ui.DefaultKeyMap(), []string{"x-postgresql", "postgresql", "my-postgresql"}, nil)
+	m := New("", ui.DefaultKeyMap(), color.DefaultStyles(), []string{"x-postgresql", "postgresql", "my-postgresql"}, nil)
 	m.leftCursor = fieldCharm
 	m.input.SetValue("post")
 

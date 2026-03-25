@@ -20,13 +20,14 @@ import (
 )
 
 // New creates a new debug-log view.
-func New(keys ui.KeyMap) *View {
+func New(keys ui.KeyMap, styles *color.Styles) *View {
 	si := textinput.New()
 	si.Prompt = "/"
 	si.CharLimit = 128
 
 	return &View{
 		keys:        keys,
+		styles:      styles,
 		lines:       make([]string, 0, maxLogLines),
 		rawEntries:  make([]model.LogEntry, 0, maxLogLines),
 		searchInput: si,
@@ -147,7 +148,7 @@ func (d *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case Msg:
 		for _, entry := range msg.Entries {
 			d.rawEntries = append(d.rawEntries, entry)
-			d.lines = append(d.lines, formatLogEntry(entry, d.width))
+			d.lines = append(d.lines, formatLogEntry(entry, d.width, d.styles))
 			if entry.Module != "" {
 				if d.seenModules == nil {
 					d.seenModules = make(map[string]struct{})
@@ -175,7 +176,7 @@ func (d *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case ErrMsg:
 		errLine := lipgloss.NewStyle().
-			Foreground(color.Error).
+			Foreground(d.styles.ErrorColor).
 			Render(fmt.Sprintf("  ⚠ stream error: %v", msg.Err))
 		d.lines = append(d.lines, errLine)
 		return d, nil
@@ -267,7 +268,7 @@ func (d *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			d.offset = d.bottomOffset()
 			d.paused = false
 		case key.Matches(kp, d.keys.FilterOpen):
-			d.filterModal = NewFilterModal(d.activeFilter, d.buildSuggestions(), d.keys)
+			d.filterModal = NewFilterModal(d.activeFilter, d.buildSuggestions(), d.keys, d.styles)
 			d.filterModal.SetSize(d.width, d.height)
 			d.mode = debugModeFilter
 		case key.Matches(kp, d.keys.ClearFilter):
@@ -305,7 +306,7 @@ func (d *View) View() tea.View {
 
 func (d *View) renderBackground() string {
 	if len(d.lines) == 0 {
-		waitStyle := lipgloss.NewStyle().Foreground(color.Muted)
+		waitStyle := lipgloss.NewStyle().Foreground(d.styles.Muted)
 		placeholder := waitStyle.Render("  Waiting for log messages...")
 		if d.mode == debugModeSearch {
 			return placeholder + "\n" + d.renderSearchBar()
@@ -328,7 +329,7 @@ func (d *View) renderBackground() string {
 			if containsIgnoreCase(entry.Message, d.searchQuery) ||
 				containsIgnoreCase(entry.Entity, d.searchQuery) ||
 				containsIgnoreCase(entry.Module, d.searchQuery) {
-				line = formatLogEntryHighlighted(entry, d.width, d.searchQuery)
+				line = formatLogEntryHighlighted(entry, d.width, d.searchQuery, d.styles)
 			}
 		}
 		b.WriteString(line)
@@ -340,7 +341,7 @@ func (d *View) renderBackground() string {
 	if d.paused && d.offset < d.bottomOffset() {
 		remaining := len(d.lines) - end
 		indicator := lipgloss.NewStyle().
-			Foreground(color.Primary).
+			Foreground(d.styles.Primary).
 			Bold(true).
 			Render(fmt.Sprintf("  ↓ %d more lines (G to resume)", remaining))
 		b.WriteByte('\n')
@@ -352,7 +353,7 @@ func (d *View) renderBackground() string {
 		b.WriteString(d.renderSearchBar())
 	} else if d.searchQuery != "" && len(d.searchMatches) > 0 {
 		b.WriteByte('\n')
-		matchInfo := lipgloss.NewStyle().Foreground(color.Primary).
+		matchInfo := lipgloss.NewStyle().Foreground(d.styles.Primary).
 			Render(fmt.Sprintf("  match %d/%d  (n/N to navigate)", d.searchIdx+1, len(d.searchMatches)))
 		b.WriteString(matchInfo)
 	}
@@ -366,22 +367,22 @@ func (d *View) RenderSearchBar(width int) string {
 	if innerW < 2 {
 		innerW = 2
 	}
-	keyStyle := lipgloss.NewStyle().Foreground(color.Primary).Bold(true)
-	valStyle := lipgloss.NewStyle().Foreground(color.Title)
-	cursorStyle := lipgloss.NewStyle().Foreground(color.Primary)
+	keyStyle := lipgloss.NewStyle().Foreground(d.styles.Primary).Bold(true)
+	valStyle := lipgloss.NewStyle().Foreground(d.styles.Title)
+	cursorStyle := lipgloss.NewStyle().Foreground(d.styles.Primary)
 	inputLine := keyStyle.Render("/") + valStyle.Render(d.searchInput.Value()) + cursorStyle.Render("█")
 	pad := innerW - lipgloss.Width(inputLine)
 	if pad < 0 {
 		pad = 0
 	}
 	content := inputLine + strings.Repeat(" ", pad)
-	titleStyle := lipgloss.NewStyle().Foreground(color.Primary).Bold(true)
-	return ui.BorderBoxRawTitle(content, titleStyle.Render(" Search "), width)
+	titleStyle := lipgloss.NewStyle().Foreground(d.styles.Primary).Bold(true)
+	return ui.BorderBoxRawTitle(content, titleStyle.Render(" Search "), width, d.styles)
 }
 
 func (d *View) renderSearchBar() string {
-	keyStyle := lipgloss.NewStyle().Foreground(color.Primary).Bold(true)
-	valStyle := lipgloss.NewStyle().Foreground(color.Title)
+	keyStyle := lipgloss.NewStyle().Foreground(d.styles.Primary).Bold(true)
+	valStyle := lipgloss.NewStyle().Foreground(d.styles.Title)
 	return keyStyle.Render("/") + valStyle.Render(d.searchInput.Value()) + keyStyle.Render("█")
 }
 
@@ -419,8 +420,8 @@ func (d *View) FilterTitle() string {
 	if len(parts) == 0 {
 		return ""
 	}
-	chipStyle := lipgloss.NewStyle().Foreground(color.InfoValue)
-	sepStyle := lipgloss.NewStyle().Foreground(color.HintKey).Bold(true)
+	chipStyle := lipgloss.NewStyle().Foreground(d.styles.InfoValueColor)
+	sepStyle := lipgloss.NewStyle().Foreground(d.styles.HintKeyColor).Bold(true)
 	var chips []string
 	for _, p := range parts {
 		chips = append(chips, chipStyle.Render(p))

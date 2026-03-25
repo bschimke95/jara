@@ -21,6 +21,7 @@ type CancelledMsg struct{}
 // Modal is a simple yes/no confirmation overlay.
 type Modal struct {
 	keys   ui.KeyMap
+	styles *color.Styles
 	width  int
 	height int
 
@@ -29,9 +30,10 @@ type Modal struct {
 }
 
 // New creates a new confirmation modal.
-func New(keys ui.KeyMap, title, message string) Modal {
+func New(keys ui.KeyMap, styles *color.Styles, title, message string) Modal {
 	return Modal{
 		keys:    keys,
+		styles:  styles,
 		title:   title,
 		message: message,
 	}
@@ -79,13 +81,13 @@ func (m *Modal) Render(background string) string {
 	content := msgStyle.Render(m.message)
 
 	hintStyle := lipgloss.NewStyle().
-		Foreground(color.Muted).
+		Foreground(m.styles.Muted).
 		Width(contentW).
 		AlignHorizontal(lipgloss.Center)
 	content += "\n\n" + hintStyle.Render("[enter] confirm  [esc] cancel")
 
-	titleStyle := lipgloss.NewStyle().Foreground(color.Error).Bold(true)
-	box := ui.BorderBoxRawTitle(content, titleStyle.Render(" "+m.title+" "), innerW+4)
+	titleStyle := lipgloss.NewStyle().Foreground(m.styles.ErrorColor).Bold(true)
+	box := ui.BorderBoxRawTitle(content, titleStyle.Render(" "+m.title+" "), innerW+4, m.styles)
 
 	modalH := lipgloss.Height(box)
 	x := (m.width - (innerW + 4)) / 2

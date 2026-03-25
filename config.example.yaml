@@ -27,44 +27,44 @@ jara:
   # charmhubURL: https://api.charmhub.io
 
   ui:
-    # Skin / color theme — k9s-inspired dark blue scheme.
-    # All values are hex color strings (e.g. "#00bfff").
+    # Skin / color theme — Atom One Dark scheme.
+    # All values are hex color strings (e.g. "#61afef").
     skin:
-      # logoColor: "#00bfff"
-      # primary: "#00bfff"
-      # secondary: "#6b7280"
-      # title: "#e5e7eb"
-      # subtle: "#4b5563"
-      # highlight: "#1d4ed8"
-      # muted: "#6b7280"
-      # hintKey: "#f0c674"
-      # hintDesc: "#6b7280"
-      # crumbFg: "#ffffff"
-      # crumbBg: "#1d4ed8"
-      # border: "#4b5563"
-      # borderTitle: "#00bfff"
-      # infoLabel: "#6b7280"
-      # infoValue: "#e5e7eb"
+      # logoColor: "#61afef"
+      # primary: "#61afef"
+      # secondary: "#5c6370"
+      # title: "#abb2bf"
+      # subtle: "#4b5263"
+      # highlight: "#3e4451"
+      # muted: "#5c6370"
+      # hintKey: "#e5c07b"
+      # hintDesc: "#5c6370"
+      # crumbFg: "#282c34"
+      # crumbBg: "#61afef"
+      # border: "#4b5263"
+      # borderTitle: "#61afef"
+      # infoLabel: "#5c6370"
+      # infoValue: "#abb2bf"
 
       # Override colors for specific Juju status strings.
       # status:
-      #   active: "#00ff00"
-      #   idle: "#00ff00"
-      #   running: "#00ff00"
-      #   started: "#00ff00"
-      #   blocked: "#ff5555"
-      #   error: "#ff5555"
-      #   lost: "#ff5555"
-      #   down: "#ff5555"
-      #   waiting: "#ffff00"
-      #   allocating: "#ffff00"
-      #   pending: "#ffff00"
-      #   maintenance: "#00bfff"
-      #   executing: "#00bfff"
-      #   terminated: "#808080"
-      #   unknown: "#808080"
-      #   stopped: "#ff4500"
-      #   default: "#c0c0c0"
+      #   active: "#98c379"
+      #   idle: "#98c379"
+      #   running: "#98c379"
+      #   started: "#98c379"
+      #   blocked: "#e06c75"
+      #   error: "#e06c75"
+      #   lost: "#e06c75"
+      #   down: "#e06c75"
+      #   waiting: "#e5c07b"
+      #   allocating: "#e5c07b"
+      #   pending: "#e5c07b"
+      #   maintenance: "#56b6c2"
+      #   executing: "#56b6c2"
+      #   terminated: "#5c6370"
+      #   unknown: "#5c6370"
+      #   stopped: "#d19a66"
+      #   default: "#abb2bf"
 
     # Key binding overrides. Each binding is a list of key strings.
     # See https://pkg.go.dev/charm.land/bubbletea/v2#KeyPressMsg for key names.

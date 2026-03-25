@@ -19,8 +19,8 @@ import (
 )
 
 // New creates a new overview view.
-func New(keys ui.KeyMap) *View {
-	return &View{keys: keys}
+func New(keys ui.KeyMap, styles *color.Styles) *View {
+	return &View{keys: keys, styles: styles}
 }
 
 func (o *View) SetSize(width, height int) {
@@ -63,7 +63,7 @@ func (o *View) View() tea.View {
 	b.WriteString(o.renderTree())
 	b.WriteString("\n\n")
 
-	summaryStyle := lipgloss.NewStyle().Foreground(color.Muted)
+	summaryStyle := lipgloss.NewStyle().Foreground(o.styles.Muted)
 	b.WriteString(summaryStyle.Render(fmt.Sprintf(
 		"  %d applications  |  %d machines  |  %d relations",
 		len(o.status.Applications),
@@ -79,8 +79,8 @@ func (o *View) renderTree() string {
 	modelLabel := fmt.Sprintf("%s [%s/%s] (%s)",
 		s.Model.Name, s.Model.Cloud, s.Model.Region, s.Model.Version)
 
-	appStyle := lipgloss.NewStyle().Foreground(color.Title)
-	unitStyle := lipgloss.NewStyle().Foreground(color.Muted)
+	appStyle := lipgloss.NewStyle().Foreground(o.styles.Title)
+	unitStyle := lipgloss.NewStyle().Foreground(o.styles.Muted)
 
 	appNames := make([]string, 0, len(s.Applications))
 	for name := range s.Applications {
@@ -91,13 +91,13 @@ func (o *View) renderTree() string {
 	var appTrees []any
 	for _, name := range appNames {
 		app := s.Applications[name]
-		statusColor := color.StatusColor(app.Status)
+		statusColor := o.styles.StatusColor(app.Status)
 		statusStr := lipgloss.NewStyle().Foreground(statusColor).Render(app.Status)
 		appLabel := appStyle.Render(name) + " " + statusStr
 
 		unitNodes := make([]any, 0, len(app.Units))
 		for _, u := range app.Units {
-			uColor := color.StatusColor(u.WorkloadStatus)
+			uColor := o.styles.StatusColor(u.WorkloadStatus)
 			leader := ""
 			if u.Leader {
 				leader = " *"
@@ -114,8 +114,8 @@ func (o *View) renderTree() string {
 	t := tree.Root(modelLabel).
 		Child(appTrees...).
 		Enumerator(tree.RoundedEnumerator).
-		EnumeratorStyle(lipgloss.NewStyle().Foreground(color.Subtle)).
-		ItemStyle(lipgloss.NewStyle().Foreground(color.Title))
+		EnumeratorStyle(lipgloss.NewStyle().Foreground(o.styles.Subtle)).
+		ItemStyle(lipgloss.NewStyle().Foreground(o.styles.Title))
 
 	return t.String()
 }

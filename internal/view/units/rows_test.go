@@ -3,6 +3,7 @@ package units
 import (
 	"testing"
 
+	"github.com/bschimke95/jara/internal/color"
 	"github.com/bschimke95/jara/internal/model"
 )
 
@@ -56,7 +57,7 @@ func TestCompactRowsForApp(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := CompactRowsForApp(tt.app)
+			got := CompactRowsForApp(tt.app, color.DefaultStyles())
 			if len(got) != tt.wantRows {
 				t.Fatalf("CompactRowsForApp() len = %d, want %d", len(got), tt.wantRows)
 			}
@@ -71,7 +72,7 @@ func TestDetailRowsForApp(t *testing.T) {
 			{Name: "pg/1", WorkloadStatus: "active", AgentStatus: "idle", Machine: "1"},
 		},
 	}
-	got := DetailRowsForApp(app)
+	got := DetailRowsForApp(app, color.DefaultStyles())
 	if len(got) != 2 {
 		t.Fatalf("DetailRowsForApp() len = %d, want 2", len(got))
 	}
@@ -82,7 +83,7 @@ func TestDetailRows(t *testing.T) {
 		"b-app": {Units: []model.Unit{{Name: "b-app/0", WorkloadStatus: "active", AgentStatus: "idle"}}},
 		"a-app": {Units: []model.Unit{{Name: "a-app/0", WorkloadStatus: "active", AgentStatus: "idle"}}},
 	}
-	got := DetailRows(apps)
+	got := DetailRows(apps, color.DefaultStyles())
 	if len(got) != 2 {
 		t.Fatalf("DetailRows() len = %d, want 2", len(got))
 	}
@@ -101,7 +102,7 @@ func TestPendingCompactRows(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := PendingCompactRows("app", tt.units, tt.delta)
+			got := PendingCompactRows("app", tt.units, tt.delta, color.DefaultStyles())
 			if len(got) != tt.wantRows {
 				t.Fatalf("PendingCompactRows() len = %d, want %d", len(got), tt.wantRows)
 			}
@@ -122,7 +123,7 @@ func TestPendingDetailRows(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := PendingDetailRows("app", tt.units, tt.delta)
+			got := PendingDetailRows("app", tt.units, tt.delta, color.DefaultStyles())
 			if len(got) != tt.wantRows {
 				t.Fatalf("PendingDetailRows() len = %d, want %d", len(got), tt.wantRows)
 			}

@@ -3,6 +3,7 @@ package modelview
 import (
 	"charm.land/bubbles/v2/table"
 
+	"github.com/bschimke95/jara/internal/color"
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/ui"
 	"github.com/bschimke95/jara/internal/view/deploymodal"
@@ -16,6 +17,7 @@ type View struct {
 	relationTable table.Model
 
 	keys   ui.KeyMap
+	styles *color.Styles
 	status *model.FullStatus
 
 	width        int

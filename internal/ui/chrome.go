@@ -25,9 +25,9 @@ var borderChars = lipgloss.RoundedBorder()
 
 // BorderBox wraps content in a rounded border with an optional title in the top border.
 // The title is embedded inline and centered: ╭────── Title ──────╮
-func BorderBox(content, title string, width int) string {
-	borderStyle := lipgloss.NewStyle().Foreground(color.Border)
-	titleStyle := lipgloss.NewStyle().Foreground(color.BorderTitle).Bold(true)
+func BorderBox(content, title string, width int, s *color.Styles) string {
+	borderStyle := s.BorderStyle
+	titleStyle := s.BorderTitleStyle
 
 	innerWidth := width - 2 // left + right border chars
 	if innerWidth < 0 {
@@ -76,8 +76,8 @@ func BorderBox(content, title string, width int) string {
 
 // BorderBoxRawTitle is like BorderBox but accepts a pre-rendered title string.
 // The caller is responsible for styling; lipgloss.Width is used for measurement.
-func BorderBoxRawTitle(content, renderedTitle string, width int) string {
-	borderStyle := lipgloss.NewStyle().Foreground(color.Border)
+func BorderBoxRawTitle(content, renderedTitle string, width int, s *color.Styles) string {
+	borderStyle := s.BorderStyle
 
 	innerWidth := width - 2
 	if innerWidth < 0 {
@@ -128,20 +128,17 @@ func LogoHeight() int {
 // HeaderContent renders the inner content for the header box:
 // status info on the left (bottom-aligned), key hints in the center (bottom-aligned, 2-column),
 // logo on the right (top-aligned).
-func HeaderContent(controller, modelName, cloud, region, jaraVersion, jujuVersion string, hints []KeyHint, innerWidth int) string {
+func HeaderContent(controller, modelName, cloud, region, jaraVersion, jujuVersion string, hints []KeyHint, innerWidth int, s *color.Styles) string {
 	// Logo height determines header height.
 	logoHeight := LogoHeight()
 
 	// Right block: logo (top-aligned, no padding needed).
-	logoStyle := lipgloss.NewStyle().
-		Foreground(color.LogoColor).
-		Bold(true)
-	logoRendered := logoStyle.Render(logo)
+	logoRendered := s.Logo.Render(logo)
 	logoWidth := lipgloss.Width(logoRendered)
 
 	// Left block: status info (bottom-aligned).
-	labelStyle := lipgloss.NewStyle().Foreground(color.InfoLabel)
-	valueStyle := lipgloss.NewStyle().Foreground(color.InfoValue)
+	labelStyle := s.InfoLabel
+	valueStyle := s.InfoValue
 
 	infoLines := []string{
 		labelStyle.Render("Controller: ") + valueStyle.Render(controller),
@@ -159,8 +156,8 @@ func HeaderContent(controller, modelName, cloud, region, jaraVersion, jujuVersio
 	infoWidth := lipgloss.Width(infoBlock)
 
 	// Center block: key hints in 2-column layout (bottom-aligned).
-	keyStyle := lipgloss.NewStyle().Foreground(color.HintKey).Bold(true)
-	descStyle := lipgloss.NewStyle().Foreground(color.HintDesc)
+	keyStyle := s.HintKey
+	descStyle := s.HintDesc
 
 	// Arrange hints in 2 columns with fixed column width.
 	var hintLines []string
@@ -225,21 +222,14 @@ func HeaderContent(controller, modelName, cloud, region, jaraVersion, jujuVersio
 // Each entry in crumbs is rendered as a pill; the last (current) entry is
 // highlighted with CrumbBg; ancestors use CrumbBgAlt. Entries are joined
 // by a › separator.
-func CrumbBar(crumbs []string, width int) string {
+func CrumbBar(crumbs []string, width int, s *color.Styles) string {
 	if len(crumbs) == 0 {
 		return lipgloss.NewStyle().Width(width).Render("")
 	}
 
-	activeStyle := lipgloss.NewStyle().
-		Foreground(color.CrumbFg).
-		Background(color.CrumbBg).
-		Bold(true).
-		Padding(0, 1)
-	ancestorStyle := lipgloss.NewStyle().
-		Foreground(color.CrumbFg).
-		Background(color.CrumbBgAlt).
-		Padding(0, 1)
-	sepStyle := lipgloss.NewStyle().Foreground(color.Subtle)
+	activeStyle := s.CrumbActive
+	ancestorStyle := s.CrumbAncestor
+	sepStyle := s.CrumbSep
 
 	var parts []string
 	for i, crumb := range crumbs {
@@ -257,12 +247,12 @@ func CrumbBar(crumbs []string, width int) string {
 }
 
 // Footer renders the k9s-style bottom hint bar showing key bindings.
-func Footer(hints []KeyHint, filterText string, width int) string {
+func Footer(hints []KeyHint, filterText string, width int, s *color.Styles) string {
 	var parts []string
 
-	keyStyle := lipgloss.NewStyle().Foreground(color.HintKey).Bold(true)
-	descStyle := lipgloss.NewStyle().Foreground(color.HintDesc)
-	sepStyle := lipgloss.NewStyle().Foreground(color.Subtle)
+	keyStyle := s.HintKey
+	descStyle := s.HintDesc
+	sepStyle := s.HintSep
 
 	for i, h := range hints {
 		part := keyStyle.Render("<"+h.Key+">") + descStyle.Render(" "+h.Desc)
@@ -276,7 +266,7 @@ func Footer(hints []KeyHint, filterText string, width int) string {
 
 	if filterText != "" {
 		filterLabel := keyStyle.Render(" Filter:") +
-			lipgloss.NewStyle().Foreground(color.Title).Render(" "+filterText)
+			s.TitleText.Render(" "+filterText)
 		line += "    " + filterLabel
 	}
 
@@ -367,8 +357,6 @@ func HintsForView(viewName string, keys KeyMap) []KeyHint {
 }
 
 // StatusBar renders the bottom status/info line (item count + resource type).
-func StatusBar(resourceCount int, resourceType string, width int) string {
-	style := lipgloss.NewStyle().
-		Foreground(color.Muted)
-	return style.Render(fmt.Sprintf(" %d %s", resourceCount, resourceType))
+func StatusBar(resourceCount int, resourceType string, width int, s *color.Styles) string {
+	return s.MutedText.Render(fmt.Sprintf(" %d %s", resourceCount, resourceType))
 }
