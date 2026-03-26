@@ -24,6 +24,8 @@ import (
 	"github.com/bschimke95/jara/internal/view/models"
 	"github.com/bschimke95/jara/internal/view/modelview"
 	"github.com/bschimke95/jara/internal/view/relations"
+	"github.com/bschimke95/jara/internal/view/secretdetail"
+	"github.com/bschimke95/jara/internal/view/secrets"
 	"github.com/bschimke95/jara/internal/view/units"
 )
 
@@ -122,6 +124,8 @@ func New(client api.Client, opts ...Option) Model {
 	m.views[nav.UnitsView] = units.New("", keys, s)
 	m.views[nav.MachinesView] = machines.New(keys, s)
 	m.views[nav.RelationsView] = relations.New(keys, s)
+	m.views[nav.SecretsView] = secrets.New(keys, s)
+	m.views[nav.SecretDetailView] = secretdetail.New(keys, s)
 	m.views[nav.DebugLogView] = debuglog.New(keys, s)
 	m.views[nav.ControllerView] = controllers.New(keys, s, func() tea.Cmd { return m.pollControllers() })
 	m.views[nav.ModelsView] = models.New(keys, s,
@@ -176,6 +180,11 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.ctx.Err() != nil {
 			return m, nil
 		}
+		// Carry forward secrets from the previous status; they are fetched
+		// via a separate API call and not included in the status stream.
+		if m.status != nil && len(m.status.Secrets) > 0 && len(msg.status.Secrets) == 0 {
+			msg.status.Secrets = m.status.Secrets
+		}
 		m.status = msg.status
 		m.err = nil
 		for _, v := range m.views {
@@ -190,6 +199,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if cmd := m.pollCharmEndpoints(); cmd != nil {
 				cmds = append(cmds, cmd)
 			}
+			cmds = append(cmds, m.pollSecrets())
 		}
 		return m, tea.Batch(cmds...)
 
@@ -215,6 +225,17 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		for _, v := range m.views {
 			if sr, ok := v.(view.CharmEndpointReceiver); ok {
 				sr.SetCharmEndpoints(msg.Endpoints)
+			}
+		}
+		return m, nil
+
+	case secretsMsg:
+		if m.status != nil {
+			m.status.Secrets = msg.Secrets
+			for _, v := range m.views {
+				if sr, ok := v.(view.StatusReceiver); ok {
+					sr.SetStatus(m.status)
+				}
 			}
 		}
 		return m, nil
@@ -292,6 +313,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case view.DestroyRelationRequestMsg:
 		return m, m.destroyRelation(msg.EndpointA, msg.EndpointB)
 
+	case view.RevealSecretRequestMsg:
+		return m, m.revealSecret(msg.URI, msg.Revision)
+
 	case debuglog.FilterChangedMsg:
 		return m, m.startDebugLogStream(msg.Filter)
 	}
@@ -346,6 +370,10 @@ func (m Model) viewName() string {
 		return "Machines"
 	case nav.RelationsView:
 		return "Relations"
+	case nav.SecretsView:
+		return "Secrets"
+	case nav.SecretDetailView:
+		return "Secret"
 	case nav.DebugLogView:
 		return "Debug Log"
 	default:
