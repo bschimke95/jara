@@ -321,3 +321,27 @@ func containsIgnoreCase(s, q string) bool {
 	}
 	return strings.Contains(strings.ToLower(s), strings.ToLower(q))
 }
+
+func TestMockClient_RevealSecret(t *testing.T) {
+	client := NewMockClient()
+
+	t.Run("known secret returns key-value pairs", func(t *testing.T) {
+		vals, err := client.RevealSecret(context.Background(), "secret:9m4e2mr0ui3e8a215n4g", 0)
+		if err != nil {
+			t.Fatalf("RevealSecret() error = %v", err)
+		}
+		if vals["username"] != "postgres" {
+			t.Errorf("username = %q, want %q", vals["username"], "postgres")
+		}
+		if vals["password"] == "" {
+			t.Error("expected non-empty password")
+		}
+	})
+
+	t.Run("unknown secret returns error", func(t *testing.T) {
+		_, err := client.RevealSecret(context.Background(), "secret:nonexistent", 0)
+		if err == nil {
+			t.Fatal("expected error for unknown secret")
+		}
+	})
+}

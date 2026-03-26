@@ -142,12 +142,46 @@ type DebugLogFilter struct {
 	Backlog int
 }
 
+// Secret represents a Juju secret and its metadata.
+type Secret struct {
+	URI            string
+	Label          string
+	Description    string
+	Owner          string // e.g. "application-postgresql", "unit-mysql-0", "model"
+	RotatePolicy   string // "never", "hourly", "daily", "weekly", "monthly", "quarterly", "yearly"
+	Revision       int
+	Backend        string
+	AutoPrune      bool
+	CreateTime     time.Time
+	UpdateTime     time.Time
+	ExpireTime     *time.Time
+	NextRotateTime *time.Time
+	Revisions      []SecretRevision
+	Access         []SecretAccessInfo
+}
+
+// SecretRevision represents a single revision of a secret.
+type SecretRevision struct {
+	Revision  int
+	CreatedAt time.Time
+	ExpiredAt *time.Time
+	Backend   string
+}
+
+// SecretAccessInfo describes who has access to a secret.
+type SecretAccessInfo struct {
+	Target string // e.g. "application-grafana"
+	Scope  string // e.g. "relation-42"
+	Role   string // e.g. "consume"
+}
+
 // FullStatus is the aggregate snapshot of a Juju model.
 type FullStatus struct {
 	Model        ModelInfo
 	Applications map[string]Application
 	Machines     map[string]Machine
 	Relations    []Relation
+	Secrets      []Secret
 	FetchedAt    time.Time
 }
 

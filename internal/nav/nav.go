@@ -17,6 +17,8 @@ const (
 	RelationsView
 	DebugLogView
 	ModelsView
+	SecretsView
+	SecretDetailView
 )
 
 // String returns the human-readable name of the view.
@@ -38,6 +40,10 @@ func (v ViewID) String() string {
 		return "Debug Log"
 	case ModelsView:
 		return "Models"
+	case SecretsView:
+		return "Secrets"
+	case SecretDetailView:
+		return "Secret"
 	default:
 		return "Unknown"
 	}
@@ -67,6 +73,9 @@ var CommandAliases = map[string]ViewID{
 	"logs":         DebugLogView,
 	"models":       ModelsView,
 	"model-list":   ModelsView,
+	"secrets":      SecretsView,
+	"secret":       SecretsView,
+	"sec":          SecretsView,
 }
 
 // ResolveCommand looks up a command string and returns the matching ViewID.
