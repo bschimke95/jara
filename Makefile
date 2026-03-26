@@ -60,8 +60,6 @@ ensure-vhs:
 	}
 
 # VHS integration tests — compare generated ASCII output against golden files.
-# Only the last frame of each .ascii file is compared; intermediate frames are
-# timing-dependent and differ between machines/shells.
 test-vhs: build-vhs ensure-vhs
 	@fail=0; tmpdir=$$(mktemp -d); \
 	for tape in tests/vhs/*.tape; do \
@@ -71,10 +69,10 @@ test-vhs: build-vhs ensure-vhs
 	done; \
 	for golden in tests/vhs/golden/*.ascii; do \
 		name=$$(basename "$$golden"); \
-		awk 'BEGIN{prev=""} /^─/{prev=buf; buf=""} {buf=buf$$0"\n"} END{printf "%s", prev}' "$$golden" > "$$tmpdir/new"; \
-		git show HEAD:"tests/vhs/golden/$$name" 2>/dev/null | awk 'BEGIN{prev=""} /^─/{prev=buf; buf=""} {buf=buf$$0"\n"} END{printf "%s", prev}' > "$$tmpdir/old"; \
+		cp "$$golden" "$$tmpdir/new"; \
+		git show HEAD:"tests/vhs/golden/$$name" 2>/dev/null > "$$tmpdir/old"; \
 		if ! diff -q "$$tmpdir/old" "$$tmpdir/new" > /dev/null 2>&1; then \
-			echo "✗ $$name: last frame differs"; \
+			echo "✗ $$name: golden file differs"; \
 			diff "$$tmpdir/old" "$$tmpdir/new" || true; \
 			fail=1; \
 		fi; \

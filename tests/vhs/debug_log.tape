@@ -4,6 +4,7 @@ Source tests/vhs/_setup.tape
 
 Output tests/vhs/golden/debug_log.ascii
 
+Hide
 Type "./jara --demo"
 Enter
 
@@ -93,7 +94,10 @@ Sleep 1s
 
 Escape
 Wait+Screen /Applications/
+Show
+
 Sleep 500ms
 
+Hide
 Type "q"
 Sleep 500ms
