@@ -35,6 +35,11 @@ type Client interface {
 	CharmhubSuggestions(ctx context.Context, query string, limit int) ([]string, error)
 	// CharmRelationInfo returns endpoint metadata for a charm from Charmhub.
 	CharmRelationInfo(ctx context.Context, charmName string) (map[string]model.CharmEndpoint, error)
+	// ListSecrets returns the secrets for the current model.
+	ListSecrets(ctx context.Context) ([]model.Secret, error)
+	// RevealSecret returns the decoded key-value content of a secret.
+	// When revision is 0 the latest revision is revealed.
+	RevealSecret(ctx context.Context, uri string, revision int) (map[string]string, error)
 	// SelectController switches the client to target a different controller.
 	SelectController(name string) error
 	// SelectModel switches the client to target the given model within the

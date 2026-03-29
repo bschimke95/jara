@@ -132,6 +132,44 @@ func (c *MockClient) Status(_ context.Context) (*model.FullStatus, error) {
 	return c.cloneStatus(), nil
 }
 
+// ListSecrets returns the secrets from the current status.
+func (c *MockClient) ListSecrets(_ context.Context) ([]model.Secret, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	s := c.cloneStatus()
+	return s.Secrets, nil
+}
+
+// RevealSecret returns synthetic decoded content for a mock secret.
+func (c *MockClient) RevealSecret(_ context.Context, uri string, _ int) (map[string]string, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	for _, sec := range c.status.Secrets {
+		if sec.URI == uri {
+			switch sec.Label {
+			case "db-password":
+				return map[string]string{
+					"username": "postgres",
+					"password": "super-secret-pg-pass-42",
+				}, nil
+			case "api-key":
+				return map[string]string{
+					"api-key": "gf_sa_1a2b3c4d5e6f7g8h9i0j",
+				}, nil
+			case "tls-cert":
+				return map[string]string{
+					"certificate": "-----BEGIN CERTIFICATE-----\nMIIBkTCB+wIJAL...",
+					"private-key": "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBg...",
+				}, nil
+			default:
+				return map[string]string{"value": "mock-secret-value"}, nil
+			}
+		}
+	}
+	return nil, fmt.Errorf("secret %q not found", uri)
+}
+
 // ScaleApplication adjusts the unit count for an application by delta.
 // Positive delta adds new units; negative delta removes from the tail.
 func (c *MockClient) ScaleApplication(_ context.Context, appName string, delta int) error {
@@ -453,9 +491,13 @@ func (c *MockClient) WatchStatus(ctx context.Context, interval time.Duration) (<
 	return ch, nil
 }
 
+// mockEpoch is the fixed reference time used for all mock status timestamps so
+// that VHS golden files are deterministic across runs.
+var mockEpoch = time.Date(2026, 3, 26, 20, 0, 0, 0, time.UTC)
+
 // buildInitialStatus creates the initial synthetic status data.
 func (c *MockClient) buildInitialStatus() *model.FullStatus {
-	now := time.Now()
+	now := mockEpoch
 	fiveMinAgo := now.Add(-5 * time.Minute)
 	tenMinAgo := now.Add(-10 * time.Minute)
 	oneHourAgo := now.Add(-1 * time.Hour)
@@ -538,6 +580,45 @@ func (c *MockClient) buildInitialStatus() *model.FullStatus {
 			{ID: 2, Key: "prometheus:grafana-source grafana:grafana-source", Interface: "grafana-datasource", Status: "joined", Scope: "global", Endpoints: []model.Endpoint{{ApplicationName: "prometheus", Name: "grafana-source", Role: "provider"}, {ApplicationName: "grafana", Name: "grafana-source", Role: "requirer"}}},
 			{ID: 3, Key: "nginx-ingress:ingress ubuntu-app:ingress", Interface: "ingress", Status: "joined", Scope: "global", Endpoints: []model.Endpoint{{ApplicationName: "nginx-ingress", Name: "ingress", Role: "provider"}, {ApplicationName: "ubuntu-app", Name: "ingress", Role: "requirer"}}},
 		},
+		Secrets: []model.Secret{
+			{
+				URI: "secret:9m4e2mr0ui3e8a215n4g", Label: "db-password", Description: "PostgreSQL superuser password",
+				Owner: "application-postgresql", RotatePolicy: "monthly", Revision: 3,
+				Backend: "internal", AutoPrune: true, CreateTime: oneHourAgo, UpdateTime: fiveMinAgo,
+				Revisions: []model.SecretRevision{
+					{Revision: 1, CreatedAt: oneHourAgo, ExpiredAt: &tenMinAgo, Backend: "internal"},
+					{Revision: 2, CreatedAt: tenMinAgo, ExpiredAt: &fiveMinAgo, Backend: "internal"},
+					{Revision: 3, CreatedAt: fiveMinAgo, Backend: "internal"},
+				},
+				Access: []model.SecretAccessInfo{
+					{Target: "application-ubuntu-app", Scope: "relation-1", Role: "consume"},
+				},
+			},
+			{
+				URI: "secret:7h3k5p9q2w1x8z6y4v0t", Label: "api-key", Description: "Grafana admin API key",
+				Owner: "application-grafana", RotatePolicy: "never", Revision: 1,
+				Backend: "internal", AutoPrune: false, CreateTime: oneHourAgo, UpdateTime: oneHourAgo,
+				Revisions: []model.SecretRevision{
+					{Revision: 1, CreatedAt: oneHourAgo, Backend: "internal"},
+				},
+				Access: []model.SecretAccessInfo{
+					{Target: "application-prometheus", Scope: "relation-2", Role: "consume"},
+				},
+			},
+			{
+				URI: "secret:2b4n6m8k0j3h5f7d9s1a", Label: "tls-cert", Description: "TLS certificate for ingress",
+				Owner: "application-nginx-ingress", RotatePolicy: "quarterly", Revision: 2,
+				Backend: "internal", AutoPrune: true, CreateTime: oneHourAgo, UpdateTime: tenMinAgo,
+				Revisions: []model.SecretRevision{
+					{Revision: 1, CreatedAt: oneHourAgo, ExpiredAt: &tenMinAgo, Backend: "internal"},
+					{Revision: 2, CreatedAt: tenMinAgo, Backend: "internal"},
+				},
+				Access: []model.SecretAccessInfo{
+					{Target: "application-ubuntu-app", Scope: "relation-3", Role: "consume"},
+					{Target: "application-grafana", Scope: "relation-2", Role: "consume"},
+				},
+			},
+		},
 		FetchedAt: now,
 	}
 }
@@ -571,11 +652,23 @@ func (c *MockClient) cloneStatus() *model.FullStatus {
 		relations[i] = r
 	}
 
+	secrets := make([]model.Secret, len(s.Secrets))
+	for i, sec := range s.Secrets {
+		revs := make([]model.SecretRevision, len(sec.Revisions))
+		copy(revs, sec.Revisions)
+		sec.Revisions = revs
+		access := make([]model.SecretAccessInfo, len(sec.Access))
+		copy(access, sec.Access)
+		sec.Access = access
+		secrets[i] = sec
+	}
+
 	return &model.FullStatus{
 		Model:        s.Model,
 		Applications: apps,
 		Machines:     machines,
 		Relations:    relations,
+		Secrets:      secrets,
 		FetchedAt:    time.Now(),
 	}
 }

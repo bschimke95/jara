@@ -11,6 +11,7 @@ import (
 	"github.com/bschimke95/jara/internal/api"
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/nav"
+	"github.com/bschimke95/jara/internal/view"
 	"github.com/bschimke95/jara/internal/view/controllers"
 	"github.com/bschimke95/jara/internal/view/models"
 	"github.com/bschimke95/jara/internal/view/modelview"
@@ -46,6 +47,10 @@ type charmhubSuggestionsMsg struct {
 type charmEndpointsMsg struct {
 	// Endpoints maps charm name → endpoint name → CharmEndpoint.
 	Endpoints map[string]map[string]model.CharmEndpoint
+}
+
+type secretsMsg struct {
+	Secrets []model.Secret
 }
 
 // startStatusStream begins streaming status updates from the API.
@@ -174,6 +179,34 @@ func (m Model) pollCharmEndpoints() tea.Cmd {
 			return nil
 		}
 		return charmEndpointsMsg{Endpoints: result}
+	}
+}
+
+// pollSecrets fetches the secrets for the current model from the API.
+func (m Model) pollSecrets() tea.Cmd {
+	client := m.client
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		secs, err := client.ListSecrets(ctx)
+		if err != nil {
+			return errMsg{fmt.Errorf("listing secrets: %w", err)}
+		}
+		return secretsMsg{Secrets: secs}
+	}
+}
+
+// revealSecret returns a Cmd that fetches the decoded content of a secret.
+func (m Model) revealSecret(uri string, revision int) tea.Cmd {
+	client := m.client
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		values, err := client.RevealSecret(ctx, uri, revision)
+		if err != nil {
+			return errMsg{fmt.Errorf("revealing secret: %w", err)}
+		}
+		return view.RevealSecretResponseMsg{URI: uri, Values: values}
 	}
 }
 

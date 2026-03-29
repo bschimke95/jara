@@ -53,6 +53,19 @@ type DestroyRelationRequestMsg struct {
 	EndpointB string
 }
 
+// RevealSecretRequestMsg requests decoding a secret's content via the API.
+// When Revision is 0 the latest revision is revealed.
+type RevealSecretRequestMsg struct {
+	URI      string
+	Revision int
+}
+
+// RevealSecretResponseMsg carries the decoded key-value content of a secret.
+type RevealSecretResponseMsg struct {
+	URI    string
+	Values map[string]string
+}
+
 // KeyHint represents a single key-description pair for the header hint bar.
 type KeyHint = ui.KeyHint
 

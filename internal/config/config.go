@@ -198,6 +198,8 @@ type KeysConfig struct {
 	UnitsNav        *KeyBindingConfig `yaml:"unitsNav,omitempty"`
 	ApplicationsNav *KeyBindingConfig `yaml:"applicationsNav,omitempty"`
 	RelationsNav    *KeyBindingConfig `yaml:"relationsNav,omitempty"`
+	SecretsNav      *KeyBindingConfig `yaml:"secretsNav,omitempty"`
+	Decode          *KeyBindingConfig `yaml:"decode,omitempty"`
 	ApplyFilter     *KeyBindingConfig `yaml:"applyFilter,omitempty"`
 	Right           *KeyBindingConfig `yaml:"right,omitempty"`
 	Left            *KeyBindingConfig `yaml:"left,omitempty"`
