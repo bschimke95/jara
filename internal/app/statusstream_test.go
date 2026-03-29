@@ -4,9 +4,12 @@ import (
 	"context"
 	"testing"
 
+	"charm.land/bubbles/v2/key"
+
 	"github.com/bschimke95/jara/internal/api"
 	"github.com/bschimke95/jara/internal/config"
 	"github.com/bschimke95/jara/internal/model"
+	"github.com/bschimke95/jara/internal/ui"
 )
 
 func TestDeployApplicationReadOnly(t *testing.T) {
@@ -66,5 +69,74 @@ func TestDeployApplicationTargetsModel(t *testing.T) {
 	}
 	if _, exists := status.Applications["redis"]; !exists {
 		t.Fatal("expected redis application after deploy")
+	}
+}
+
+// TestBuildHeaderHints verifies the 12-hint cap (2 columns), view-specific priority, and
+// that the help hint is always the last element.
+func TestBuildHeaderHints(t *testing.T) {
+	m := Model{keys: ui.DefaultKeyMap()}
+
+	bk := func(b key.Binding) string { return b.Help().Key }
+	helpHintKey := bk(m.keys.Help)
+
+	tests := []struct {
+		name      string
+		viewHints []ui.KeyHint
+		wantLen   int
+	}{
+		{
+			name:      "no view hints",
+			viewHints: nil,
+			wantLen:   3, // cmd + quit + help
+		},
+		{
+			name:      "one view hint",
+			viewHints: []ui.KeyHint{{Key: "enter", Desc: "select"}},
+			wantLen:   4, // view + cmd + quit + help
+		},
+		{
+			name: "five view hints still includes general hints",
+			viewHints: []ui.KeyHint{
+				{Key: "a", Desc: "1"},
+				{Key: "b", Desc: "2"},
+				{Key: "c", Desc: "3"},
+				{Key: "d", Desc: "4"},
+				{Key: "e", Desc: "5"},
+			},
+			wantLen: 8, // 5 view + cmd + quit + help
+		},
+		{
+			name: "more than eleven view hints truncated to 11 + help",
+			viewHints: []ui.KeyHint{
+				{Key: "a", Desc: "1"},
+				{Key: "b", Desc: "2"},
+				{Key: "c", Desc: "3"},
+				{Key: "d", Desc: "4"},
+				{Key: "e", Desc: "5"},
+				{Key: "f", Desc: "6"},
+				{Key: "g", Desc: "7"},
+				{Key: "h", Desc: "8"},
+				{Key: "i", Desc: "9"},
+				{Key: "j", Desc: "10"},
+				{Key: "k", Desc: "11"},
+				{Key: "l", Desc: "12"},
+			},
+			wantLen: 12, // capped at 11 view + help
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			hints := m.buildHeaderHints(tt.viewHints)
+			if len(hints) != tt.wantLen {
+				t.Errorf("buildHeaderHints() len = %d, want %d; hints = %v", len(hints), tt.wantLen, hints)
+			}
+			// Help must always be the last element.
+			last := hints[len(hints)-1]
+			if last.Key != helpHintKey {
+				t.Errorf("last hint key = %q, want help key %q", last.Key, helpHintKey)
+			}
+		})
 	}
 }

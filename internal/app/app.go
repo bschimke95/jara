@@ -20,6 +20,7 @@ import (
 	"github.com/bschimke95/jara/internal/view/applications"
 	"github.com/bschimke95/jara/internal/view/controllers"
 	"github.com/bschimke95/jara/internal/view/debuglog"
+	"github.com/bschimke95/jara/internal/view/helpmodal"
 	"github.com/bschimke95/jara/internal/view/machines"
 	"github.com/bschimke95/jara/internal/view/models"
 	"github.com/bschimke95/jara/internal/view/modelview"
@@ -47,9 +48,11 @@ type Model struct {
 	suggestions        []nav.CommandMatch
 	selectedSuggestion int
 
-	keys   ui.KeyMap
-	width  int
-	height int
+	keys          ui.KeyMap
+	width         int
+	height        int
+	helpModalOpen bool
+	helpModal     helpmodal.Modal
 
 	statusCancel context.CancelFunc      // cancels the status stream
 	statusCh     <-chan api.StatusUpdate // receives status snapshots
@@ -120,6 +123,9 @@ func New(client api.Client, opts ...Option) Model {
 
 	s := m.styles
 
+	// Initialize helpModal with the final resolved keys and styles.
+	m.helpModal = helpmodal.New(m.keys, s)
+
 	m.views[nav.ApplicationsView] = applications.New(keys, s)
 	m.views[nav.UnitsView] = units.New("", keys, s)
 	m.views[nav.MachinesView] = machines.New(keys, s)
@@ -166,6 +172,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		for _, v := range m.views {
 			v.SetSize(m.width, ch)
 		}
+		m.helpModal.SetSize(m.width, m.height)
 		return m, nil
 
 	case statusStreamConnectedMsg:
@@ -273,6 +280,22 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// ── Input mode: command/filter bar owns all keys ──
 	if m.mode != modeNormal {
 		return m.updateInput(msg)
+	}
+
+	// ── Help modal: owns all keys when open ──
+	if m.helpModalOpen {
+		if _, ok := msg.(helpmodal.ClosedMsg); ok {
+			m.helpModalOpen = false
+			return m, nil
+		}
+		if _, ok := msg.(tea.KeyPressMsg); ok {
+			updated, cmd := m.helpModal.Update(msg)
+			if hm, ok := updated.(*helpmodal.Modal); ok {
+				m.helpModal = *hm
+			}
+			return m, cmd
+		}
+		return m, nil
 	}
 
 	// ── Delegate to the active view ──
@@ -399,13 +422,7 @@ func (m Model) View() tea.View {
 			cloud = m.status.Model.Cloud
 			region = m.status.Model.Region
 		}
-		bk := func(b key.Binding) string { return b.Help().Key }
-		commonHints := []ui.KeyHint{
-			{Key: bk(m.keys.Command), Desc: "cmd"},
-			{Key: bk(m.keys.Help), Desc: "help"},
-			{Key: bk(m.keys.Quit), Desc: "quit"},
-		}
-		hints := append(currentView.KeyHints(), commonHints...)
+		hints := m.buildHeaderHints(currentView.KeyHints())
 		jujuVersion := ""
 		if m.status != nil {
 			jujuVersion = m.status.Model.Version
@@ -483,5 +500,46 @@ func (m Model) View() tea.View {
 	}
 
 	body := lipgloss.JoinVertical(lipgloss.Left, sections...)
+
+	// ── Help modal overlay ──
+	if m.helpModalOpen {
+		return tea.NewView(m.helpModal.Render(body))
+	}
+
 	return tea.NewView(body)
+}
+
+// buildHeaderHints composes the header hint list: view-specific hints first,
+// then general fill hints if there is space. Help is always included.
+// The total is capped at 2×ui.MaxHintsPerColumn (both columns).
+func (m Model) buildHeaderHints(viewHints []ui.KeyHint) []ui.KeyHint {
+	bk := func(b key.Binding) string { return b.Help().Key }
+	helpHint := ui.KeyHint{Key: bk(m.keys.Help), Desc: "help"}
+
+	// General fill hints (in priority order, excluding help which is always appended).
+	generalFill := []ui.KeyHint{
+		{Key: bk(m.keys.Command), Desc: "cmd"},
+		{Key: bk(m.keys.Quit), Desc: "quit"},
+	}
+
+	// Reserve one slot for the help hint; fill the rest across both columns.
+	limit := ui.MaxHintsPerColumn*2 - 1
+
+	var hints []ui.KeyHint
+	for _, h := range viewHints {
+		if len(hints) >= limit {
+			break
+		}
+		hints = append(hints, h)
+	}
+	for _, h := range generalFill {
+		if len(hints) >= limit {
+			break
+		}
+		hints = append(hints, h)
+	}
+
+	// Always append help as the last hint.
+	hints = append(hints, helpHint)
+	return hints
 }
