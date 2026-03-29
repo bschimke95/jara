@@ -72,7 +72,7 @@ func TestDeployApplicationTargetsModel(t *testing.T) {
 	}
 }
 
-// TestBuildHeaderHints verifies the 6-hint cap, view-specific priority, and
+// TestBuildHeaderHints verifies the 12-hint cap (2 columns), view-specific priority, and
 // that the help hint is always the last element.
 func TestBuildHeaderHints(t *testing.T) {
 	m := Model{keys: ui.DefaultKeyMap()}
@@ -96,7 +96,7 @@ func TestBuildHeaderHints(t *testing.T) {
 			wantLen:   4, // view + cmd + quit + help
 		},
 		{
-			name: "five view hints leaves only help as general",
+			name: "five view hints still includes general hints",
 			viewHints: []ui.KeyHint{
 				{Key: "a", Desc: "1"},
 				{Key: "b", Desc: "2"},
@@ -104,10 +104,10 @@ func TestBuildHeaderHints(t *testing.T) {
 				{Key: "d", Desc: "4"},
 				{Key: "e", Desc: "5"},
 			},
-			wantLen: 6, // 5 view + help
+			wantLen: 8, // 5 view + cmd + quit + help
 		},
 		{
-			name: "more than five view hints truncated to 5 + help",
+			name: "more than eleven view hints truncated to 11 + help",
 			viewHints: []ui.KeyHint{
 				{Key: "a", Desc: "1"},
 				{Key: "b", Desc: "2"},
@@ -116,8 +116,13 @@ func TestBuildHeaderHints(t *testing.T) {
 				{Key: "e", Desc: "5"},
 				{Key: "f", Desc: "6"},
 				{Key: "g", Desc: "7"},
+				{Key: "h", Desc: "8"},
+				{Key: "i", Desc: "9"},
+				{Key: "j", Desc: "10"},
+				{Key: "k", Desc: "11"},
+				{Key: "l", Desc: "12"},
 			},
-			wantLen: 6, // capped at 6
+			wantLen: 12, // capped at 11 view + help
 		},
 	}
 

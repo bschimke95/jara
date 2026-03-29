@@ -513,7 +513,6 @@ func (m Model) View() tea.View {
 // then general fill hints if there is space. Help is always included.
 // The total is capped at 2×ui.MaxHintsPerColumn (both columns).
 func (m Model) buildHeaderHints(viewHints []ui.KeyHint) []ui.KeyHint {
-
 	bk := func(b key.Binding) string { return b.Help().Key }
 	helpHint := ui.KeyHint{Key: bk(m.keys.Help), Desc: "help"}
 
