@@ -159,17 +159,33 @@ func HeaderContent(controller, modelName, cloud, region, jaraVersion, jujuVersio
 	keyStyle := s.HintKey
 	descStyle := s.HintDesc
 
-	// Arrange hints in 2 columns with fixed column width.
+	// Arrange hints in 2 columns with keys and descriptions aligned vertically.
 	var hintLines []string
 	hintCount := len(hints)
 	mid := (hintCount + 1) / 2 // ceiling division for uneven splits
 
-	// Calculate max width of left column for alignment.
+	// Find the max rendered key width across all hints so descriptions line up.
+	var maxKeyWidth int
+	for i := 0; i < hintCount; i++ {
+		if w := lipgloss.Width(keyStyle.Render("<" + hints[i].Key + ">")); w > maxKeyWidth {
+			maxKeyWidth = w
+		}
+	}
+
+	// renderHint returns "<key><pad> desc" with key padded to maxKeyWidth.
+	renderHint := func(h KeyHint) string {
+		k := keyStyle.Render("<" + h.Key + ">")
+		pad := maxKeyWidth - lipgloss.Width(k)
+		if pad < 0 {
+			pad = 0
+		}
+		return k + strings.Repeat(" ", pad) + descStyle.Render(" "+h.Desc)
+	}
+
+	// Calculate max width of left column for inter-column gap.
 	var maxLeftWidth int
 	for i := 0; i < mid && i < hintCount; i++ {
-		h1 := keyStyle.Render("<"+hints[i].Key+">") + descStyle.Render(" "+hints[i].Desc)
-		w := lipgloss.Width(h1)
-		if w > maxLeftWidth {
+		if w := lipgloss.Width(renderHint(hints[i])); w > maxLeftWidth {
 			maxLeftWidth = w
 		}
 	}
@@ -179,9 +195,8 @@ func HeaderContent(controller, modelName, cloud, region, jaraVersion, jujuVersio
 		var line string
 		// Left column
 		if i < hintCount {
-			h1 := keyStyle.Render("<"+hints[i].Key+">") + descStyle.Render(" "+hints[i].Desc)
-			w := lipgloss.Width(h1)
-			pad := maxLeftWidth - w
+			h1 := renderHint(hints[i])
+			pad := maxLeftWidth - lipgloss.Width(h1)
 			if pad < 0 {
 				pad = 0
 			}
@@ -191,8 +206,7 @@ func HeaderContent(controller, modelName, cloud, region, jaraVersion, jujuVersio
 		}
 		// Right column with gap.
 		if i+mid < hintCount {
-			h2 := keyStyle.Render("<"+hints[i+mid].Key+">") + descStyle.Render(" "+hints[i+mid].Desc)
-			line += "  " + h2
+			line += "  " + renderHint(hints[i+mid])
 		}
 		hintLines = append(hintLines, line)
 	}

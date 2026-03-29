@@ -72,7 +72,7 @@ func (m *Modal) generalHints() []ui.KeyHint {
 		{Key: bk(m.keys.Top) + "/" + bk(m.keys.Bottom), Desc: "top/bottom"},
 		{Key: bk(m.keys.Back), Desc: "back"},
 		{Key: bk(m.keys.Filter), Desc: "filter"},
-		{Key: bk(m.keys.Command), Desc: "command"},
+		{Key: bk(m.keys.Command), Desc: "cmd"},
 		{Key: bk(m.keys.Help), Desc: "help"},
 		{Key: bk(m.keys.Quit), Desc: "quit"},
 	}
@@ -93,35 +93,75 @@ func renderSection(title string, hints []ui.KeyHint, contentW int, styles *color
 		return strings.Join(lines, "\n")
 	}
 
-	// Render hints in a 2-column grid.
-	colW := contentW / 2
-	mid := (len(hints) + 1) / 2
+	// Render hints in a 2-column grid, with keys and descriptions aligned
+	// per column so descriptions line up vertically within each column.
+	// Cap the left column at 6 rows; any overflow spills into the right column.
+	const maxPerCol = 6
+	mid := min(len(hints), maxPerCol)
 
-	// Determine the max width of left-column entries for alignment.
-	var maxCol1W int
+	// Compute max key width separately for left and right columns.
+	var maxKeyWLeft, maxKeyWRight int
 	for i := 0; i < mid; i++ {
-		h := hints[i]
-		rendered := keyStyle.Render("<"+h.Key+">") + descStyle.Render(" "+h.Desc)
-		if w := lipgloss.Width(rendered); w > maxCol1W {
-			maxCol1W = w
+		if w := lipgloss.Width(keyStyle.Render("<" + hints[i].Key + ">")); w > maxKeyWLeft {
+			maxKeyWLeft = w
 		}
 	}
-	if maxCol1W > colW {
-		maxCol1W = colW
+	for i := mid; i < len(hints); i++ {
+		if w := lipgloss.Width(keyStyle.Render("<" + hints[i].Key + ">")); w > maxKeyWRight {
+			maxKeyWRight = w
+		}
 	}
 
-	for i := 0; i < mid; i++ {
-		h1 := hints[i]
-		col1 := keyStyle.Render("<"+h1.Key+">") + descStyle.Render(" "+h1.Desc)
-		pad := maxCol1W - lipgloss.Width(col1)
+	// renderHintCol returns "<key><pad> desc" with the key padded to maxKeyW.
+	renderHintCol := func(h ui.KeyHint, maxKeyW int) string {
+		k := keyStyle.Render("<" + h.Key + ">")
+		pad := maxKeyW - lipgloss.Width(k)
 		if pad < 0 {
 			pad = 0
 		}
-		line := "  " + col1 + strings.Repeat(" ", pad+2)
-		if i+mid < len(hints) {
-			h2 := hints[i+mid]
-			line += keyStyle.Render("<"+h2.Key+">") + descStyle.Render(" "+h2.Desc)
+		return k + strings.Repeat(" ", pad) + descStyle.Render(" "+h.Desc)
+	}
+
+	// Determine the max rendered width of left-column entries for inter-column gap.
+	var maxCol1W int
+	for i := 0; i < mid; i++ {
+		if w := lipgloss.Width(renderHintCol(hints[i], maxKeyWLeft)); w > maxCol1W {
+			maxCol1W = w
 		}
+	}
+
+	// Build each row and measure the total grid width for centering.
+	type row struct{ left, right string }
+	rows := make([]row, mid)
+	for i := 0; i < mid; i++ {
+		left := renderHintCol(hints[i], maxKeyWLeft)
+		pad := maxCol1W - lipgloss.Width(left)
+		if pad < 0 {
+			pad = 0
+		}
+		left += strings.Repeat(" ", pad)
+		var right string
+		if i+mid < len(hints) {
+			right = renderHintCol(hints[i+mid], maxKeyWRight)
+		}
+		rows[i] = row{left, right}
+	}
+
+	// Compute grid width for centering within contentW.
+	gridW := maxCol1W + 2 // left col + gap
+	for i := mid; i < len(hints); i++ {
+		if w := lipgloss.Width(renderHintCol(hints[i], maxKeyWRight)); w > gridW-maxCol1W-2 {
+			gridW = maxCol1W + 2 + lipgloss.Width(renderHintCol(hints[i], maxKeyWRight))
+		}
+	}
+	leftPad := (contentW - gridW) / 2
+	if leftPad < 0 {
+		leftPad = 0
+	}
+	indent := strings.Repeat(" ", leftPad)
+
+	for _, r := range rows {
+		line := indent + r.left + "  " + r.right
 		lines = append(lines, line)
 	}
 
