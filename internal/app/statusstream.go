@@ -15,6 +15,7 @@ import (
 	"github.com/bschimke95/jara/internal/view/controllers"
 	"github.com/bschimke95/jara/internal/view/models"
 	"github.com/bschimke95/jara/internal/view/modelview"
+	"github.com/bschimke95/jara/internal/view/relations"
 )
 
 // statusStreamConnectedMsg is sent when the status stream is established.
@@ -288,5 +289,19 @@ func (m Model) destroyRelation(endpointA, endpointB string) tea.Cmd {
 			return errMsg{err}
 		}
 		return nil
+	}
+}
+
+// fetchRelationData returns a Cmd that fetches the databag contents for a relation.
+func (m Model) fetchRelationData(relationID int) tea.Cmd {
+	client := m.client
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+		data, err := client.RelationData(ctx, relationID)
+		if err != nil {
+			return errMsg{err}
+		}
+		return relations.RelationDataMsg{RelationID: relationID, Data: data}
 	}
 }

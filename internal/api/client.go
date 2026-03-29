@@ -31,6 +31,9 @@ type Client interface {
 	RelateApplications(ctx context.Context, endpointA, endpointB string) error
 	// DestroyRelation removes a relation between two endpoints.
 	DestroyRelation(ctx context.Context, endpointA, endpointB string) error
+	// RelationData fetches the application and unit databag contents for the
+	// given relation ID.
+	RelationData(ctx context.Context, relationID int) (*model.RelationData, error)
 	// CharmhubSuggestions returns charm names from Charmhub for autocomplete.
 	CharmhubSuggestions(ctx context.Context, query string, limit int) ([]string, error)
 	// CharmRelationInfo returns endpoint metadata for a charm from Charmhub.

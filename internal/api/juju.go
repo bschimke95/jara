@@ -25,6 +25,7 @@ import (
 	coreSecrets "github.com/juju/juju/core/secrets"
 	"github.com/juju/juju/rpc/params"
 	"github.com/juju/loggo/v2"
+	"github.com/juju/names/v6"
 
 	"github.com/bschimke95/jara/internal/model"
 )
@@ -606,6 +607,109 @@ func (c *JujuClient) DestroyRelation(ctx context.Context, endpointA, endpointB s
 		return fmt.Errorf("removing relation %q <-> %q: %w", endpointA, endpointB, err)
 	}
 	return nil
+}
+
+// RelationData fetches application and unit databag contents for a relation.
+// It works by finding units involved in the relation (from the current status)
+// and calling UnitsInfo to retrieve their relation settings.
+func (c *JujuClient) RelationData(ctx context.Context, relationID int) (*model.RelationData, error) {
+	// First get status to discover which units are involved in this relation.
+	status, err := c.Status(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("fetching status for relation data: %w", err)
+	}
+
+	// Find the relation and its endpoint applications.
+	var rel *model.Relation
+	for i := range status.Relations {
+		if status.Relations[i].ID == relationID {
+			rel = &status.Relations[i]
+			break
+		}
+	}
+	if rel == nil {
+		return nil, fmt.Errorf("relation %d not found", relationID)
+	}
+
+	// Collect all unit tags for the endpoint applications.
+	var unitTags []names.UnitTag
+	for _, ep := range rel.Endpoints {
+		if app, ok := status.Applications[ep.ApplicationName]; ok {
+			for _, u := range app.Units {
+				unitTags = append(unitTags, names.NewUnitTag(u.Name))
+			}
+		}
+	}
+	if len(unitTags) == 0 {
+		return &model.RelationData{
+			ApplicationData: make(map[string]map[string]string),
+			UnitData:        make(map[string]map[string]string),
+		}, nil
+	}
+
+	conn, err := c.connect(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = conn.Close() }()
+
+	appClient := application.NewClient(conn)
+	infos, err := appClient.UnitsInfo(ctx, unitTags)
+	if err != nil {
+		return nil, fmt.Errorf("fetching unit info for relation data: %w", err)
+	}
+
+	result := &model.RelationData{
+		ApplicationData: make(map[string]map[string]string),
+		UnitData:        make(map[string]map[string]string),
+	}
+
+	for _, info := range infos {
+		if info.Error != nil {
+			continue
+		}
+		for _, erd := range info.RelationData {
+			if erd.RelationId != relationID {
+				continue
+			}
+			// Application data — keyed by the endpoint name's application.
+			appName := strings.SplitN(info.Tag, "/", 2)[0]
+			if strings.HasPrefix(appName, "unit-") {
+				// Tag is "unit-<app>-<num>"; extract app name.
+				appName = strings.TrimPrefix(info.Tag, "unit-")
+				if idx := strings.LastIndex(appName, "-"); idx >= 0 {
+					appName = appName[:idx]
+				}
+			}
+
+			if len(erd.ApplicationData) > 0 {
+				if _, ok := result.ApplicationData[appName]; !ok {
+					ad := make(map[string]string, len(erd.ApplicationData))
+					for k, v := range erd.ApplicationData {
+						ad[k] = fmt.Sprintf("%v", v)
+					}
+					result.ApplicationData[appName] = ad
+				}
+			}
+
+			// Unit data — keyed by unit name from the UnitRelationData map.
+			for uName, urd := range erd.UnitRelationData {
+				if !urd.InScope {
+					continue
+				}
+				if _, exists := result.UnitData[uName]; exists {
+					continue
+				}
+				ud := make(map[string]string, len(urd.UnitData))
+				for k, v := range urd.UnitData {
+					ud[k] = fmt.Sprintf("%v", v)
+				}
+				result.UnitData[uName] = ud
+			}
+		}
+	}
+
+	return result, nil
 }
 
 // ListSecrets returns the secrets for the current model using the Secrets facade.
