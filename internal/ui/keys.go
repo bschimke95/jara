@@ -35,6 +35,8 @@ type KeyMap struct {
 	UnitsNav        key.Binding // Shift+U: navigate to units view
 	ApplicationsNav key.Binding // Shift+A: navigate to applications view
 	RelationsNav    key.Binding // Shift+R: navigate to relations view
+	SecretsNav      key.Binding // Shift+S: navigate to secrets view
+	Decode          key.Binding // d: decode/reveal secret content
 	ApplyFilter     key.Binding // Shift+F: apply filter in modal
 	Right           key.Binding // l/right: move right in modal
 	Left            key.Binding // h/left: move left in modal
@@ -158,6 +160,14 @@ func DefaultKeyMap() KeyMap {
 		RelationsNav: key.NewBinding(
 			key.WithKeys("R"),
 			key.WithHelp("R", "relations"),
+		),
+		SecretsNav: key.NewBinding(
+			key.WithKeys("S"),
+			key.WithHelp("S", "secrets"),
+		),
+		Decode: key.NewBinding(
+			key.WithKeys("d"),
+			key.WithHelp("d", "decode"),
 		),
 		ApplyFilter: key.NewBinding(
 			key.WithKeys("F"),

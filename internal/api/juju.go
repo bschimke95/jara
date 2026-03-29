@@ -15,12 +15,14 @@ import (
 	"github.com/juju/juju/api"
 	"github.com/juju/juju/api/client/application"
 	"github.com/juju/juju/api/client/client"
+	jujuSecrets "github.com/juju/juju/api/client/secrets"
 	"github.com/juju/juju/api/common"
 	"github.com/juju/juju/api/connector"
 	"github.com/juju/juju/api/jujuclient"
 	"github.com/juju/juju/core/base"
 	"github.com/juju/juju/core/constraints"
 	corelogger "github.com/juju/juju/core/logger"
+	coreSecrets "github.com/juju/juju/core/secrets"
 	"github.com/juju/juju/rpc/params"
 	"github.com/juju/loggo/v2"
 
@@ -604,6 +606,98 @@ func (c *JujuClient) DestroyRelation(ctx context.Context, endpointA, endpointB s
 		return fmt.Errorf("removing relation %q <-> %q: %w", endpointA, endpointB, err)
 	}
 	return nil
+}
+
+// ListSecrets returns the secrets for the current model using the Secrets facade.
+func (c *JujuClient) ListSecrets(ctx context.Context) ([]model.Secret, error) {
+	conn, err := c.connect(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = conn.Close() }()
+
+	secClient := jujuSecrets.NewClient(conn)
+	details, err := secClient.ListSecrets(ctx, false, coreSecrets.Filter{})
+	if err != nil {
+		return nil, fmt.Errorf("listing secrets: %w", err)
+	}
+
+	result := make([]model.Secret, 0, len(details))
+	for _, d := range details {
+		if d.Error != "" {
+			continue
+		}
+		m := d.Metadata
+		sec := model.Secret{
+			URI:            m.URI.String(),
+			Label:          m.Label,
+			Description:    m.Description,
+			Owner:          m.Owner.String(),
+			RotatePolicy:   string(m.RotatePolicy),
+			Revision:       m.LatestRevision,
+			AutoPrune:      m.AutoPrune,
+			CreateTime:     m.CreateTime,
+			UpdateTime:     m.UpdateTime,
+			ExpireTime:     m.LatestExpireTime,
+			NextRotateTime: m.NextRotateTime,
+		}
+		for _, rev := range d.Revisions {
+			backend := ""
+			if rev.BackendName != nil {
+				backend = *rev.BackendName
+			}
+			sec.Revisions = append(sec.Revisions, model.SecretRevision{
+				Revision:  rev.Revision,
+				CreatedAt: rev.CreateTime,
+				ExpiredAt: rev.ExpireTime,
+				Backend:   backend,
+			})
+		}
+		for _, a := range d.Access {
+			sec.Access = append(sec.Access, model.SecretAccessInfo{
+				Target: a.Target,
+				Scope:  a.Scope,
+				Role:   string(a.Role),
+			})
+		}
+		result = append(result, sec)
+	}
+	return result, nil
+}
+
+// RevealSecret returns the decoded key-value content of a single secret.
+func (c *JujuClient) RevealSecret(ctx context.Context, uri string, revision int) (map[string]string, error) {
+	conn, err := c.connect(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = conn.Close() }()
+
+	parsed, err := coreSecrets.ParseURI(uri)
+	if err != nil {
+		return nil, fmt.Errorf("parsing secret URI: %w", err)
+	}
+
+	filter := coreSecrets.Filter{URI: parsed}
+	if revision > 0 {
+		filter.Revision = &revision
+	}
+
+	secClient := jujuSecrets.NewClient(conn)
+	details, err := secClient.ListSecrets(ctx, true, filter)
+	if err != nil {
+		return nil, fmt.Errorf("revealing secret: %w", err)
+	}
+	if len(details) == 0 {
+		return nil, fmt.Errorf("secret %q not found", uri)
+	}
+	if details[0].Error != "" {
+		return nil, fmt.Errorf("revealing secret: %s", details[0].Error)
+	}
+	if details[0].Value == nil {
+		return nil, fmt.Errorf("secret %q has no value", uri)
+	}
+	return details[0].Value.Values()
 }
 
 // currentModelType returns the model type ("iaas" or "caas") for the
