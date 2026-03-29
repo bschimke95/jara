@@ -12,6 +12,10 @@ import (
 	"github.com/bschimke95/jara/internal/color"
 )
 
+// MaxHintsPerColumn is the maximum number of key hints rendered per column
+// in both the header hint block and the help modal sections.
+const MaxHintsPerColumn = 6
+
 const logo = `
       ██╗ █████╗ ██████╗  █████╗
       ██║██╔══██╗██╔══██╗██╔══██╗
@@ -160,9 +164,10 @@ func HeaderContent(controller, modelName, cloud, region, jaraVersion, jujuVersio
 	descStyle := s.HintDesc
 
 	// Arrange hints in 2 columns with keys and descriptions aligned vertically.
+	// Cap the left column at MaxHintsPerColumn rows; overflow spills right.
 	var hintLines []string
 	hintCount := len(hints)
-	mid := (hintCount + 1) / 2 // ceiling division for uneven splits
+	mid := min(hintCount, MaxHintsPerColumn)
 
 	// Find the max rendered key width across all hints so descriptions line up.
 	var maxKeyWidth int

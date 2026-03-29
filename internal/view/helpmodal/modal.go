@@ -95,9 +95,8 @@ func renderSection(title string, hints []ui.KeyHint, contentW int, styles *color
 
 	// Render hints in a 2-column grid, with keys and descriptions aligned
 	// per column so descriptions line up vertically within each column.
-	// Cap the left column at 6 rows; any overflow spills into the right column.
-	const maxPerCol = 6
-	mid := min(len(hints), maxPerCol)
+	// Cap the left column at ui.MaxHintsPerColumn rows; overflow spills right.
+	mid := min(len(hints), ui.MaxHintsPerColumn)
 
 	// Compute max key width separately for left and right columns.
 	var maxKeyWLeft, maxKeyWRight int

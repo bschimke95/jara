@@ -511,9 +511,8 @@ func (m Model) View() tea.View {
 
 // buildHeaderHints composes the header hint list: view-specific hints first,
 // then general fill hints if there is space. Help is always included.
-// The total is capped at maxHeaderHints.
+// The total is capped at 2×ui.MaxHintsPerColumn (both columns).
 func (m Model) buildHeaderHints(viewHints []ui.KeyHint) []ui.KeyHint {
-	const maxHeaderHints = 6
 
 	bk := func(b key.Binding) string { return b.Help().Key }
 	helpHint := ui.KeyHint{Key: bk(m.keys.Help), Desc: "help"}
@@ -524,8 +523,8 @@ func (m Model) buildHeaderHints(viewHints []ui.KeyHint) []ui.KeyHint {
 		{Key: bk(m.keys.Quit), Desc: "quit"},
 	}
 
-	// Reserve one slot for the help hint.
-	limit := maxHeaderHints - 1
+	// Reserve one slot for the help hint; fill the rest across both columns.
+	limit := ui.MaxHintsPerColumn*2 - 1
 
 	var hints []ui.KeyHint
 	for _, h := range viewHints {
