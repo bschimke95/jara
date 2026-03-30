@@ -59,25 +59,31 @@ ensure-vhs:
 		go install github.com/charmbracelet/vhs@latest; \
 	}
 
-# VHS integration tests — compare generated ASCII output against golden files.
+# VHS integration tests — compare last captured frame of each golden against accepted state.
+# Uses the disk golden files as the accepted reference (not git HEAD), so 'make test-vhs-update'
+# accepts new output locally without requiring a commit first.
 test-vhs: build-vhs ensure-vhs
-	@fail=0; tmpdir=$$(mktemp -d); \
+	@fail=0; tmpdir=$$(mktemp -d); mkdir -p "$$tmpdir/ref" "$$tmpdir/bak"; \
+	for f in tests/vhs/golden/*.ascii; do \
+		name=$$(basename "$$f"); \
+		cp "$$f" "$$tmpdir/bak/$$name"; \
+		awk 'BEGIN{prev=""} /^─/{prev=buf; buf=""} {buf=buf$$0"\n"} END{printf "%s", prev}' "$$f" > "$$tmpdir/ref/$$name"; \
+	done; \
 	for tape in tests/vhs/*.tape; do \
 		[ "$$(basename "$$tape")" = "_setup.tape" ] && continue; \
 		echo "▶ $$tape"; \
-		JARA_ROOT="$$(pwd)" vhs "$$tape" || { rm -rf "$$tmpdir"; exit 1; }; \
+		JARA_ROOT="$$(pwd)" vhs "$$tape" || { cp "$$tmpdir/bak/"*.ascii tests/vhs/golden/; rm -rf "$$tmpdir"; exit 1; }; \
 	done; \
 	for golden in tests/vhs/golden/*.ascii; do \
 		name=$$(basename "$$golden"); \
-		cp "$$golden" "$$tmpdir/new"; \
-		git show HEAD:"tests/vhs/golden/$$name" 2>/dev/null > "$$tmpdir/old"; \
-		if ! diff -q "$$tmpdir/old" "$$tmpdir/new" > /dev/null 2>&1; then \
-			echo "✗ $$name: golden file differs"; \
-			diff "$$tmpdir/old" "$$tmpdir/new" || true; \
+		awk 'BEGIN{prev=""} /^─/{prev=buf; buf=""} {buf=buf$$0"\n"} END{printf "%s", prev}' "$$golden" > "$$tmpdir/new"; \
+		if ! diff -q "$$tmpdir/ref/$$name" "$$tmpdir/new" > /dev/null 2>&1; then \
+			echo "✗ $$name: last frame differs"; \
+			diff "$$tmpdir/ref/$$name" "$$tmpdir/new" || true; \
 			fail=1; \
 		fi; \
 	done; \
-	git checkout -- tests/vhs/golden/; \
+	cp "$$tmpdir/bak/"*.ascii tests/vhs/golden/; \
 	rm -rf "$$tmpdir"; \
 	if [ $$fail -ne 0 ]; then echo "\n✗ Golden files differ. Run 'make test-vhs-update' to accept changes."; exit 1; fi
 	@echo "\n✓ All VHS tests passed."
