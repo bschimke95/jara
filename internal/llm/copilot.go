@@ -154,33 +154,47 @@ func (c *CopilotClient) ChatStream(ctx context.Context, messages []Message) (<-c
 
 	ch := make(chan StreamEvent, 64)
 	var once sync.Once
+	sessionDone := make(chan struct{})
 
-	cleanup := func() {
-		_ = session.Disconnect()
+	endSession := func(ev StreamEvent) {
+		once.Do(func() {
+			close(sessionDone)
+			select {
+			case ch <- ev:
+			default:
+			}
+			close(ch)
+			go func() { _ = session.Disconnect() }()
+		})
 	}
+
+	// Disconnect on context cancellation so the caller is never blocked.
+	go func() {
+		select {
+		case <-ctx.Done():
+			endSession(StreamEvent{})
+		case <-sessionDone:
+			// Session ended normally; this goroutine exits cleanly.
+		}
+	}()
 
 	session.On(func(event copilot.SessionEvent) {
 		switch event.Type {
 		case "assistant.message_delta":
 			if event.Data.DeltaContent != nil {
-				ch <- StreamEvent{Delta: *event.Data.DeltaContent}
+				select {
+				case ch <- StreamEvent{Delta: *event.Data.DeltaContent}:
+				case <-ctx.Done():
+				}
 			}
 		case "session.idle":
-			once.Do(func() {
-				ch <- StreamEvent{Done: true}
-				close(ch)
-				go cleanup()
-			})
+			endSession(StreamEvent{Done: true})
 		case "session.error":
-			once.Do(func() {
-				errMsg := "copilot session error"
-				if event.Data.Content != nil {
-					errMsg = *event.Data.Content
-				}
-				ch <- StreamEvent{Err: fmt.Errorf("%s", errMsg)}
-				close(ch)
-				go cleanup()
-			})
+			errMsg := "copilot session error"
+			if event.Data.Content != nil {
+				errMsg = *event.Data.Content
+			}
+			endSession(StreamEvent{Err: fmt.Errorf("%s", errMsg)})
 		}
 	})
 
@@ -188,11 +202,7 @@ func (c *CopilotClient) ChatStream(ctx context.Context, messages []Message) (<-c
 		Prompt: lastUserMsg,
 	})
 	if err != nil {
-		once.Do(func() {
-			ch <- StreamEvent{Err: fmt.Errorf("sending message: %w", err)}
-			close(ch)
-			go cleanup()
-		})
+		endSession(StreamEvent{Err: fmt.Errorf("sending message: %w", err)})
 	}
 
 	return ch, nil

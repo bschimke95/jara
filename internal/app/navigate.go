@@ -10,6 +10,9 @@ import (
 func (m Model) handleNavigate(msg view.NavigateMsg) (Model, tea.Cmd) {
 	target := m.views[msg.Target]
 
+	// Snapshot the stack before mutating so we can roll back if Enter fails.
+	snap := m.stack.Snapshot()
+
 	// Push first so contentHeight() uses the new view's chrome.
 	entry := nav.StackEntry{View: msg.Target, Context: msg.Context}
 	if msg.ResetStack {
@@ -28,6 +31,8 @@ func (m Model) handleNavigate(msg view.NavigateMsg) (Model, tea.Cmd) {
 	navCtx := view.NavigateContext{Context: msg.Context, Filter: msg.Filter}
 	cmd, err := target.Enter(navCtx)
 	if err != nil {
+		// Roll back the stack mutation so the UI stays on the previous view.
+		m.stack.Restore(snap)
 		m.err = err
 		return m, nil
 	}

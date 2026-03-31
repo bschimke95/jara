@@ -35,10 +35,11 @@ import (
 
 // Model is the root Bubble Tea model.
 type Model struct {
-	client api.Client
-	cfg    *config.Config
-	status *model.FullStatus
-	styles *color.Styles
+	client    api.Client
+	cfg       *config.Config
+	status    *model.FullStatus
+	styles    *color.Styles
+	llmClient llm.Client
 
 	jaraVersion string
 	demo        bool
@@ -161,6 +162,7 @@ func New(client api.Client, opts ...Option) Model {
 	} else {
 		llmClient = initLLMClient(m.cfg)
 	}
+	m.llmClient = llmClient
 	systemPrompt := m.cfg.Jara.AI.SystemPrompt
 	if systemPrompt == "" {
 		systemPrompt = llm.DefaultSystemPrompt
@@ -168,6 +170,14 @@ func New(client api.Client, opts ...Option) Model {
 	m.views[nav.ChatView] = chat.New(keys, s, llmClient, systemPrompt)
 
 	return m
+}
+
+// quit closes any open resources and returns tea.Quit.
+func (m Model) quit() (Model, tea.Cmd) {
+	if m.llmClient != nil {
+		_ = m.llmClient.Close()
+	}
+	return m, tea.Quit
 }
 
 // startupMsg is sent once by Init to trigger stream setup inside Update,
@@ -580,7 +590,7 @@ func (m Model) buildHeaderHints(viewHints []ui.KeyHint) []ui.KeyHint {
 // initLLMClient creates an LLM client based on the current configuration.
 // Returns nil if no credentials are available (graceful degradation).
 func initLLMClient(cfg *config.Config) llm.Client {
-	provider := cfg.Jara.AI.Provider
+	provider := strings.ToLower(strings.TrimSpace(cfg.Jara.AI.Provider))
 	if provider == "" {
 		provider = "copilot"
 	}

@@ -121,7 +121,7 @@ func (v *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if v.mode == modeScroll {
 			v.mode = modeInput
 			v.scrollOffset = 0
-			return v, nil
+			return v, noopCmd
 		}
 		// In input mode with empty buffer, navigate back.
 		if v.inputBuf == "" {
@@ -129,7 +129,7 @@ func (v *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		// Clear input buffer.
 		v.inputBuf = ""
-		return v, nil
+		return v, noopCmd
 
 	case kp.String() == "enter":
 		return v.handleSend()
@@ -154,11 +154,13 @@ func (v *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case key.Matches(kp, v.keys.Top):
 		v.scrollOffset = v.maxScroll()
-		return v, nil
+		v.mode = modeScroll
+		return v, noopCmd
 
 	case key.Matches(kp, v.keys.Bottom):
 		v.scrollOffset = 0
-		return v, nil
+		v.mode = modeInput
+		return v, noopCmd
 
 	default:
 		// Append printable characters to input buffer.
@@ -247,7 +249,10 @@ func (v *View) handleScroll(delta int) (*View, tea.Cmd) {
 	if v.scrollOffset < 0 {
 		v.scrollOffset = 0
 	}
-	return v, nil
+	if v.scrollOffset > 0 {
+		v.mode = modeScroll
+	}
+	return v, noopCmd
 }
 
 func (v *View) maxScroll() int {

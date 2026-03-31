@@ -42,7 +42,7 @@ const mockResponse = `[INFO] Cluster analysis complete.
 // ChatStream implements Client. It ignores the conversation and returns
 // a canned analysis response, streamed in small chunks to simulate real
 // token-by-token delivery.
-func (m *MockClient) ChatStream(_ context.Context, _ []Message) (<-chan StreamEvent, error) {
+func (m *MockClient) ChatStream(ctx context.Context, _ []Message) (<-chan StreamEvent, error) {
 	ch := make(chan StreamEvent, 16)
 
 	go func() {
@@ -54,12 +54,23 @@ func (m *MockClient) ChatStream(_ context.Context, _ []Message) (<-chan StreamEv
 			if end > len(mockResponse) {
 				end = len(mockResponse)
 			}
-			ch <- StreamEvent{Delta: mockResponse[i:end]}
+			select {
+			case ch <- StreamEvent{Delta: mockResponse[i:end]}:
+			case <-ctx.Done():
+				return
+			}
 			if m.delay > 0 {
-				time.Sleep(m.delay)
+				select {
+				case <-time.After(m.delay):
+				case <-ctx.Done():
+					return
+				}
 			}
 		}
-		ch <- StreamEvent{Done: true}
+		select {
+		case ch <- StreamEvent{Done: true}:
+		case <-ctx.Done():
+		}
 	}()
 
 	return ch, nil
