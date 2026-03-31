@@ -56,8 +56,32 @@ type JaraConfig struct {
 	// CharmhubURL is the base URL for Charmhub API requests.
 	CharmhubURL string `yaml:"charmhubURL,omitempty"`
 
+	// AI holds the LLM provider configuration for the AI chat view.
+	AI AIConfig `yaml:"ai,omitempty"`
+
 	// UI holds the theme and key binding configuration.
 	UI UIConfig `yaml:"ui,omitempty"`
+}
+
+// AIConfig holds configuration for the LLM-powered analysis chat.
+type AIConfig struct {
+	// Provider selects the LLM backend: "copilot" or "gemini".
+	Provider string `yaml:"provider,omitempty"`
+
+	// Model overrides the default model for the chosen provider.
+	Model string `yaml:"model,omitempty"`
+
+	// BaseURL overrides the API endpoint (useful for proxies).
+	BaseURL string `yaml:"baseURL,omitempty"`
+
+	// SystemPrompt replaces the built-in system prompt.
+	SystemPrompt string `yaml:"systemPrompt,omitempty"`
+
+	// Temperature controls sampling randomness (0.0–2.0).
+	Temperature *float64 `yaml:"temperature,omitempty"`
+
+	// MaxTokens limits the maximum response length.
+	MaxTokens *int `yaml:"maxTokens,omitempty"`
 }
 
 // UIConfig groups all user-interface related configuration.
@@ -203,6 +227,7 @@ type KeysConfig struct {
 	ApplyFilter     *KeyBindingConfig `yaml:"applyFilter,omitempty"`
 	Right           *KeyBindingConfig `yaml:"right,omitempty"`
 	Left            *KeyBindingConfig `yaml:"left,omitempty"`
+	ChatNav         *KeyBindingConfig `yaml:"chatNav,omitempty"`
 }
 
 // NewDefault returns a Config with all compiled defaults.

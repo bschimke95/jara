@@ -237,6 +237,9 @@ func (m Model) handleGlobalKeys(msg tea.KeyPressMsg) (Model, tea.Cmd, bool) {
 	case key.Matches(msg, m.keys.SecretsNav):
 		m2, cmd := m.handleNavigate(view.NavigateMsg{Target: nav.SecretsView})
 		return m2, cmd, true
+	case key.Matches(msg, m.keys.ChatNav):
+		m2, cmd := m.handleNavigate(view.NavigateMsg{Target: nav.ChatView})
+		return m2, cmd, true
 	case key.Matches(msg, m.keys.Help):
 		currentView := m.views[m.stack.Current().View]
 		m.helpModal.SetViewHints(currentView.KeyHints())

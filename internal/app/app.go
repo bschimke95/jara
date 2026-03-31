@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/textinput"
@@ -13,11 +14,13 @@ import (
 	"github.com/bschimke95/jara/internal/api"
 	"github.com/bschimke95/jara/internal/color"
 	"github.com/bschimke95/jara/internal/config"
+	"github.com/bschimke95/jara/internal/llm"
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/ui"
 	"github.com/bschimke95/jara/internal/view"
 	"github.com/bschimke95/jara/internal/view/applications"
+	"github.com/bschimke95/jara/internal/view/chat"
 	"github.com/bschimke95/jara/internal/view/controllers"
 	"github.com/bschimke95/jara/internal/view/debuglog"
 	"github.com/bschimke95/jara/internal/view/helpmodal"
@@ -38,6 +41,7 @@ type Model struct {
 	styles *color.Styles
 
 	jaraVersion string
+	demo        bool
 
 	stack *nav.Stack
 	views map[nav.ViewID]view.View
@@ -98,6 +102,13 @@ func WithVersion(v string) Option {
 	}
 }
 
+// WithDemo enables demo mode (uses mock LLM client).
+func WithDemo(d bool) Option {
+	return func(m *Model) {
+		m.demo = d
+	}
+}
+
 // New creates the root model.
 func New(client api.Client, opts ...Option) Model {
 	ti := textinput.New()
@@ -142,6 +153,19 @@ func New(client api.Client, opts ...Option) Model {
 	m.views[nav.ModelView] = modelview.New(keys, s,
 		func(name string) error { return m.client.SelectModel(name) },
 	)
+
+	// Initialize LLM client for the AI chat view.
+	var llmClient llm.Client
+	if m.demo {
+		llmClient = llm.NewMockClient(20 * time.Millisecond)
+	} else {
+		llmClient = initLLMClient(m.cfg)
+	}
+	systemPrompt := m.cfg.Jara.AI.SystemPrompt
+	if systemPrompt == "" {
+		systemPrompt = llm.DefaultSystemPrompt
+	}
+	m.views[nav.ChatView] = chat.New(keys, s, llmClient, systemPrompt)
 
 	return m
 }
@@ -406,6 +430,8 @@ func (m Model) viewName() string {
 		return "Secret"
 	case nav.DebugLogView:
 		return "Debug Log"
+	case nav.ChatView:
+		return "Chat"
 	default:
 		return "jara"
 	}
@@ -549,4 +575,55 @@ func (m Model) buildHeaderHints(viewHints []ui.KeyHint) []ui.KeyHint {
 	// Always append help as the last hint.
 	hints = append(hints, helpHint)
 	return hints
+}
+
+// initLLMClient creates an LLM client based on the current configuration.
+// Returns nil if no credentials are available (graceful degradation).
+func initLLMClient(cfg *config.Config) llm.Client {
+	provider := cfg.Jara.AI.Provider
+	if provider == "" {
+		provider = "copilot"
+	}
+
+	cred := config.LoadAICredential(provider)
+	aiCfg := cfg.Jara.AI
+
+	switch provider {
+	case "copilot":
+		opts := []llm.CopilotOption{
+			llm.WithCopilotModel(aiCfg.Model),
+		}
+		if cred != "" {
+			opts = append(opts, llm.WithCopilotGitHubToken(cred))
+		}
+		c, err := llm.NewCopilotClient(opts...)
+		if err != nil {
+			return nil
+		}
+		return c
+
+	case "gemini":
+		if cred == "" {
+			return nil
+		}
+		temp := 0.7
+		if aiCfg.Temperature != nil {
+			temp = *aiCfg.Temperature
+		}
+		maxTokens := 4096
+		if aiCfg.MaxTokens != nil {
+			maxTokens = *aiCfg.MaxTokens
+		}
+		c, err := llm.NewGeminiClient(context.Background(), cred,
+			llm.WithGeminiModel(aiCfg.Model),
+			llm.WithGeminiTemperature(temp),
+			llm.WithGeminiMaxTokens(maxTokens),
+		)
+		if err != nil {
+			return nil
+		}
+		return c
+	}
+
+	return nil
 }
