@@ -114,7 +114,7 @@ func (m Model) updateInput(msg tea.Msg) (Model, tea.Cmd) {
 func (m Model) executeCommand(cmd string) (Model, tea.Cmd) {
 	cmd = strings.TrimSpace(strings.ToLower(cmd))
 	if cmd == "q" || cmd == "quit" {
-		return m, tea.Quit
+		return m.quit()
 	}
 	if viewID, ok := nav.ResolveCommand(cmd); ok {
 		return m.handleNavigate(view.NavigateMsg{Target: viewID, ResetStack: true})
@@ -222,9 +222,11 @@ func (m *Model) applyFilterToActiveView() {
 func (m Model) handleGlobalKeys(msg tea.KeyPressMsg) (Model, tea.Cmd, bool) {
 	switch {
 	case msg.String() == "ctrl+c":
-		return m, tea.Quit, true
+		m2, cmd := m.quit()
+		return m2, cmd, true
 	case key.Matches(msg, m.keys.Quit):
-		return m, tea.Quit, true
+		m2, cmd := m.quit()
+		return m2, cmd, true
 	case key.Matches(msg, m.keys.Back):
 		m2, cmd := m.handleBack()
 		return m2, cmd, true
@@ -236,6 +238,9 @@ func (m Model) handleGlobalKeys(msg tea.KeyPressMsg) (Model, tea.Cmd, bool) {
 		return m2, cmd, true
 	case key.Matches(msg, m.keys.SecretsNav):
 		m2, cmd := m.handleNavigate(view.NavigateMsg{Target: nav.SecretsView})
+		return m2, cmd, true
+	case key.Matches(msg, m.keys.ChatNav):
+		m2, cmd := m.handleNavigate(view.NavigateMsg{Target: nav.ChatView})
 		return m2, cmd, true
 	case key.Matches(msg, m.keys.Help):
 		currentView := m.views[m.stack.Current().View]

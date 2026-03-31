@@ -26,6 +26,27 @@ jara:
   # Charmhub API base URL for deploy modal charm suggestions.
   # charmhubURL: https://api.charmhub.io
 
+  # AI chat configuration for LLM-powered cluster analysis.
+  # ai:
+  #   # Provider: "copilot" (GitHub Copilot) or "gemini" (Google Gemini).
+  #   provider: copilot
+  #
+  #   # Model override (default depends on provider).
+  #   # model: gpt-4o
+  #
+  #   # Override the built-in system prompt.
+  #   # systemPrompt: "You are a Juju expert..."
+  #
+  #   # Sampling temperature (0.0–2.0).
+  #   # temperature: 0.7
+  #
+  #   # Maximum response tokens.
+  #   # maxTokens: 4096
+  #
+  # Credentials are loaded from environment variables:
+  #   copilot: GITHUB_TOKEN (or gh CLI config)
+  #   gemini:  GOOGLE_AI_API_KEY or GEMINI_API_KEY
+
   ui:
     # Skin / color theme — Atom One Dark scheme.
     # All values are hex color strings (e.g. "#61afef").

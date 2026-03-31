@@ -19,6 +19,7 @@ const (
 	ModelsView
 	SecretsView
 	SecretDetailView
+	ChatView
 )
 
 // String returns the human-readable name of the view.
@@ -44,6 +45,8 @@ func (v ViewID) String() string {
 		return "Secrets"
 	case SecretDetailView:
 		return "Secret"
+	case ChatView:
+		return "Chat"
 	default:
 		return "Unknown"
 	}
@@ -76,6 +79,9 @@ var CommandAliases = map[string]ViewID{
 	"secrets":      SecretsView,
 	"secret":       SecretsView,
 	"sec":          SecretsView,
+	"chat":         ChatView,
+	"ai":           ChatView,
+	"analyze":      ChatView,
 }
 
 // ResolveCommand looks up a command string and returns the matching ViewID.
@@ -180,4 +186,18 @@ func (s *Stack) Reset(entry StackEntry) {
 // Depth returns the current stack depth.
 func (s *Stack) Depth() int {
 	return len(s.entries)
+}
+
+// Snapshot returns a shallow copy of the current stack entries.
+// Use Restore to roll back to this state if a subsequent mutation fails.
+func (s *Stack) Snapshot() []StackEntry {
+	snap := make([]StackEntry, len(s.entries))
+	copy(snap, s.entries)
+	return snap
+}
+
+// Restore replaces the stack entries with a previously-taken snapshot.
+func (s *Stack) Restore(snap []StackEntry) {
+	s.entries = make([]StackEntry, len(snap))
+	copy(s.entries, snap)
 }

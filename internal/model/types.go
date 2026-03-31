@@ -140,6 +140,10 @@ type DebugLogFilter struct {
 	// Backlog is the number of historical lines to replay on connect.
 	// Zero uses the implementation default (100).
 	Backlog int
+	// NoTail instructs the server to return only existing log entries
+	// (the backlog) and then close the stream, rather than continuing
+	// to tail new log lines. Use this when you want a bounded fetch.
+	NoTail bool
 }
 
 // Secret represents a Juju secret and its metadata.

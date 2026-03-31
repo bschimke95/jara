@@ -38,7 +38,12 @@ plugs:
       - $HOME/.local/share/juju
 
 parts:
+  copilot-cli:
+    plugin: nil
+    stage-snaps:
+      - copilot-cli
   jara:
+    after: [copilot-cli]
     plugin: go
     source: .
     build-snaps:

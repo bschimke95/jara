@@ -40,6 +40,7 @@ type KeyMap struct {
 	ApplyFilter     key.Binding // Shift+F: apply filter in modal
 	Right           key.Binding // l/right: move right in modal
 	Left            key.Binding // h/left: move left in modal
+	ChatNav         key.Binding // c: navigate to AI chat view
 }
 
 // DefaultKeyMap returns the default vim-style keybindings.
@@ -180,6 +181,10 @@ func DefaultKeyMap() KeyMap {
 		Left: key.NewBinding(
 			key.WithKeys("h", "left"),
 			key.WithHelp("h/←", "left"),
+		),
+		ChatNav: key.NewBinding(
+			key.WithKeys("c"),
+			key.WithHelp("c", "chat"),
 		),
 	}
 }
