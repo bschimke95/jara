@@ -57,8 +57,8 @@ func NewCopilotClient(opts ...CopilotOption) (*CopilotClient, error) {
 	cliPath, err := exec.LookPath("copilot")
 	if err != nil {
 		return nil, fmt.Errorf(
-			"GitHub Copilot CLI not found in PATH\n" +
-				"Install it and ensure the 'copilot' binary is accessible before using the Copilot provider.",
+			"GitHub Copilot CLI not found in PATH; " +
+				"install it and ensure the 'copilot' binary is accessible before using the Copilot provider",
 		)
 	}
 
