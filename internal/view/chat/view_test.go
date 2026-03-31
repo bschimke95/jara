@@ -19,7 +19,7 @@ func newTestView() *View {
 	keys := ui.DefaultKeyMap()
 	styles := color.DefaultStyles()
 	client := llm.NewMockClient(0)
-	v := New(keys, styles, client, llm.DefaultSystemPrompt)
+	v := New(keys, styles, client, llm.DefaultSystemPrompt, "")
 	v.SetSize(80, 24)
 	return v
 }
@@ -195,7 +195,7 @@ func TestView_StreamError(t *testing.T) {
 func TestView_NoClient(t *testing.T) {
 	keys := ui.DefaultKeyMap()
 	styles := color.DefaultStyles()
-	v := New(keys, styles, nil, llm.DefaultSystemPrompt)
+	v := New(keys, styles, nil, llm.DefaultSystemPrompt, "")
 	v.SetSize(80, 24)
 
 	output := v.View()

@@ -157,17 +157,22 @@ func New(client api.Client, opts ...Option) Model {
 
 	// Initialize LLM client for the AI chat view.
 	var llmClient llm.Client
+	var llmInitErr string
 	if m.demo {
 		llmClient = llm.NewMockClient(20 * time.Millisecond)
 	} else {
-		llmClient = initLLMClient(m.cfg)
+		var err error
+		llmClient, err = initLLMClient(m.cfg)
+		if err != nil {
+			llmInitErr = err.Error()
+		}
 	}
 	m.llmClient = llmClient
 	systemPrompt := m.cfg.Jara.AI.SystemPrompt
 	if systemPrompt == "" {
 		systemPrompt = llm.DefaultSystemPrompt
 	}
-	m.views[nav.ChatView] = chat.New(keys, s, llmClient, systemPrompt)
+	m.views[nav.ChatView] = chat.New(keys, s, llmClient, systemPrompt, llmInitErr)
 
 	return m
 }
@@ -588,8 +593,10 @@ func (m Model) buildHeaderHints(viewHints []ui.KeyHint) []ui.KeyHint {
 }
 
 // initLLMClient creates an LLM client based on the current configuration.
-// Returns nil if no credentials are available (graceful degradation).
-func initLLMClient(cfg *config.Config) llm.Client {
+// Returns (nil, nil) when no credentials are available (graceful degradation).
+// Returns (nil, err) when credentials exist but the client cannot be created
+// (e.g. the Copilot CLI binary is missing).
+func initLLMClient(cfg *config.Config) (llm.Client, error) {
 	provider := strings.ToLower(strings.TrimSpace(cfg.Jara.AI.Provider))
 	if provider == "" {
 		provider = "copilot"
@@ -608,13 +615,18 @@ func initLLMClient(cfg *config.Config) llm.Client {
 		}
 		c, err := llm.NewCopilotClient(opts...)
 		if err != nil {
-			return nil
+			// Only surface the error when credentials were found — if there are
+			// no credentials this is the expected "not configured" path.
+			if cred != "" {
+				return nil, err
+			}
+			return nil, nil
 		}
-		return c
+		return c, nil
 
 	case "gemini":
 		if cred == "" {
-			return nil
+			return nil, nil
 		}
 		temp := 0.7
 		if aiCfg.Temperature != nil {
@@ -630,10 +642,10 @@ func initLLMClient(cfg *config.Config) llm.Client {
 			llm.WithGeminiMaxTokens(maxTokens),
 		)
 		if err != nil {
-			return nil
+			return nil, err
 		}
-		return c
+		return c, nil
 	}
 
-	return nil
+	return nil, nil
 }
