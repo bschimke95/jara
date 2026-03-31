@@ -339,6 +339,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case view.RevealSecretRequestMsg:
 		return m, m.revealSecret(msg.URI, msg.Revision)
 
+	case relations.FetchRelationDataMsg:
+		return m, m.fetchRelationData(msg.RelationID)
+
 	case debuglog.FilterChangedMsg:
 		return m, m.startDebugLogStream(msg.Filter)
 	}
@@ -354,16 +357,20 @@ func (m Model) updateActiveView(msg tea.Msg) (Model, tea.Cmd) {
 }
 
 func (m Model) contentHeight() int {
-	// Layout: body box borders (2) + optional input bar (variable height) + breadcrumb bar (1).
-	chrome := 2 // body box borders
-	chrome += 2 // breadcrumb bar + bottom padding
+	currentViewID := m.stack.Current().View
+	// Layout: body box borders (2) + breadcrumb bar + bottom padding (2).
+	chrome := 4
 	if !m.cfg.Jara.Headless {
 		// Header box: logo height + 2 borders.
 		chrome += ui.LogoHeight() + 2
 	}
+	// Views that render their own borders don't need the outer body border.
+	if currentViewID == nav.ModelView || currentViewID == nav.RelationsView {
+		chrome -= 2
+	}
 	chrome += m.inputBarHeight()
 	// When the debug-log search bar is visible it occupies 3 rows (bordered box).
-	if m.stack.Current().View == nav.DebugLogView {
+	if currentViewID == nav.DebugLogView {
 		if dl, ok := m.views[nav.DebugLogView].(*debuglog.View); ok && dl.IsSearchActive() {
 			chrome += 3
 		}
@@ -446,8 +453,8 @@ func (m Model) View() tea.View {
 	// ── Body: view content ──
 	viewOutput := currentView.View()
 
-	// The ModelView renders its own bordered panes, so skip the outer border.
-	if m.stack.Current().View == nav.ModelView {
+	// The ModelView and RelationsView render their own bordered panes, so skip the outer border.
+	if m.stack.Current().View == nav.ModelView || m.stack.Current().View == nav.RelationsView {
 		contentLines := strings.Split(viewOutput.Content, "\n")
 		targetH := m.contentHeight() + 2 // no outer border, reclaim those 2 lines
 		for len(contentLines) < targetH {

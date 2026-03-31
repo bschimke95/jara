@@ -10,6 +10,7 @@ import (
 	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/ui"
 	"github.com/bschimke95/jara/internal/view"
+	"github.com/bschimke95/jara/internal/view/relations"
 )
 
 type inputMode int
@@ -59,11 +60,13 @@ func (m Model) updateInput(msg tea.Msg) (Model, tea.Cmd) {
 			m.suggestions = nil
 			m.selectedSuggestion = 0
 			m.input.Blur()
+			m.applyFilterToActiveView()
 			return m, nil
 
 		case key.Matches(msg, m.keys.CancelInput):
 			if m.mode == modeFilter {
 				m.filterStr = ""
+				m.applyFilterToActiveView()
 			}
 			m.mode = modeNormal
 			m.suggestions = nil
@@ -202,6 +205,14 @@ func (m Model) renderFilterBar() string {
 
 	titleStyle := lipgloss.NewStyle().Foreground(m.styles.Primary).Bold(true)
 	return ui.BorderBoxRawTitle(inputLine, titleStyle.Render(" Filter "), m.width, m.styles)
+}
+
+// applyFilterToActiveView passes the current filter string to views that
+// support view-level filtering (e.g. the relations view).
+func (m *Model) applyFilterToActiveView() {
+	if rv, ok := m.views[m.stack.Current().View].(*relations.View); ok {
+		rv.SetFilter(m.filterStr)
+	}
 }
 
 // handleGlobalKeys processes key presses that are active in normal mode

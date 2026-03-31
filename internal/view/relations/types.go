@@ -9,7 +9,17 @@ import (
 	"github.com/bschimke95/jara/internal/view/confirmodal"
 )
 
-// View is the Bubble Tea model for the relations table view.
+// databagFocus tracks which sub-box of the right pane has focus.
+type databagFocus int
+
+const (
+	focusTable    databagFocus = iota // left pane (relation list)
+	focusAppData                      // right pane, Application Data box
+	focusUnitData                     // right pane, Unit Data box
+)
+
+// View is the Bubble Tea model for the split-pane relations view.
+// Left pane: searchable relation list. Right pane: application + unit databags.
 type View struct {
 	table  table.Model
 	keys   ui.KeyMap
@@ -18,8 +28,20 @@ type View struct {
 	height int
 	status *model.FullStatus
 
+	// Search/filter state.
+	filterStr    string
+	filteredRels []model.Relation
+
+	// Databag state for the selected relation.
+	relationData *model.RelationData
+
+	// Per-box scroll offsets for the right pane.
+	focus      databagFocus
+	appScroll  int
+	unitScroll int
+
 	confirmOpen  bool
 	confirmModal confirmodal.Modal
-	deletingA    string // endpoint A of the relation being deleted
-	deletingB    string // endpoint B of the relation being deleted
+	deletingA    string
+	deletingB    string
 }

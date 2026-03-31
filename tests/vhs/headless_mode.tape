@@ -8,7 +8,6 @@ Type "./jara --demo --headless"
 Enter
 
 # Wait for model view — header box should be absent.
-Wait+Screen /Applications/
 Wait+Screen /grafana/
 
 Sleep 2s

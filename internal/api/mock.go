@@ -412,6 +412,57 @@ func (c *MockClient) DestroyRelation(_ context.Context, endpointA, endpointB str
 	return fmt.Errorf("relation %q <-> %q not found", endpointA, endpointB)
 }
 
+// RelationData returns synthetic databag contents for a relation.
+func (c *MockClient) RelationData(_ context.Context, relationID int) (*model.RelationData, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	var rel *model.Relation
+	for i := range c.status.Relations {
+		if c.status.Relations[i].ID == relationID {
+			rel = &c.status.Relations[i]
+			break
+		}
+	}
+	if rel == nil {
+		return nil, fmt.Errorf("relation %d not found", relationID)
+	}
+
+	result := &model.RelationData{
+		ApplicationData: make(map[string]map[string]string),
+		UnitData:        make(map[string]map[string]string),
+	}
+
+	for _, ep := range rel.Endpoints {
+		// Synthetic application databag.
+		appData := map[string]string{
+			"interface": rel.Interface,
+			"endpoint":  ep.Name,
+		}
+		if ep.Role == "provider" {
+			appData["version"] = "1"
+			appData["host"] = "10.0.1.10"
+		}
+		result.ApplicationData[ep.ApplicationName] = appData
+
+		// Synthetic unit databags.
+		if app, ok := c.status.Applications[ep.ApplicationName]; ok {
+			for _, u := range app.Units {
+				ud := map[string]string{
+					"ingress-address": u.PublicAddress,
+					"egress-subnets":  u.PublicAddress + "/32",
+				}
+				if u.Leader {
+					ud["leader"] = "true"
+				}
+				result.UnitData[u.Name] = ud
+			}
+		}
+	}
+
+	return result, nil
+}
+
 // DebugLog returns a channel of synthetic log entries.
 func (c *MockClient) DebugLog(ctx context.Context, _ model.DebugLogFilter) (<-chan model.LogEntry, error) {
 	ch := make(chan model.LogEntry)
