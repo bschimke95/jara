@@ -20,12 +20,13 @@ import (
 )
 
 // New creates a new chat view.
-func New(keys ui.KeyMap, styles *color.Styles, client llm.Client, systemPrompt string) *View {
+func New(keys ui.KeyMap, styles *color.Styles, client llm.Client, systemPrompt, initErr string) *View {
 	return &View{
 		keys:         keys,
 		styles:       styles,
 		llmClient:    client,
 		systemPrompt: systemPrompt,
+		initErr:      initErr,
 		messages:     make([]chatMessage, 0),
 		mode:         modeInput,
 	}
@@ -328,10 +329,19 @@ func (v *View) View() tea.View {
 func (v *View) renderNoClient() string {
 	noClient := lipgloss.NewStyle().Foreground(v.styles.Muted)
 	title := lipgloss.NewStyle().Foreground(v.styles.Primary).Bold(true)
+	errStyle := lipgloss.NewStyle().Foreground(v.styles.ErrorColor)
 
 	var b strings.Builder
 	b.WriteString(title.Render("AI Chat"))
 	b.WriteString("\n\n")
+
+	// When initialisation failed (e.g. Copilot CLI not found), show the
+	// specific error so the user has an actionable message.
+	if v.initErr != "" {
+		b.WriteString(errStyle.Render("AI provider error: " + v.initErr))
+		return b.String()
+	}
+
 	b.WriteString(noClient.Render("No AI provider configured."))
 	b.WriteString("\n\n")
 	b.WriteString(noClient.Render("To enable AI analysis, set one of the following:"))

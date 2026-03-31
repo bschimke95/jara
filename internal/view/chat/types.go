@@ -50,6 +50,11 @@ type View struct {
 	status    *model.FullStatus
 	llmClient llm.Client
 
+	// initErr holds an error that occurred during LLM client initialisation
+	// (e.g. Copilot CLI binary not found). Shown in place of the setup guide
+	// when non-empty, so the user gets an actionable message.
+	initErr string
+
 	systemPrompt string
 	messages     []chatMessage
 	mode         chatMode
