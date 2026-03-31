@@ -37,7 +37,7 @@ func renderDatabagPane(rd *model.RelationData, rel *model.Relation, width, heigh
 	topH := contentHeight / 2
 	botH := contentHeight - topH
 
-	appBox := renderAppDataBox(rd, rel, innerWidth, topH, appScroll, focus == focusAppData, s)
+	appBox := renderAppDataBox(rd, rel, innerWidth, topH, appScroll, s)
 	unitBox := renderUnitDataBox(rd, rel, innerWidth, botH, unitScroll, focus == focusUnitData, s)
 
 	combined := strings.Split(appBox+"\n"+unitBox, "\n")
@@ -55,7 +55,7 @@ func renderDatabagPane(rd *model.RelationData, rel *model.Relation, width, heigh
 
 // renderAppDataBox renders the "Application Data" box with one coloured
 // sub-box per endpoint application. Supports per-box scrolling.
-func renderAppDataBox(rd *model.RelationData, rel *model.Relation, width, height, scroll int, focused bool, s *color.Styles) string {
+func renderAppDataBox(rd *model.RelationData, rel *model.Relation, width, height, scroll int, s *color.Styles) string {
 	boxInner := width - 2
 	keyStyle := lipgloss.NewStyle().Foreground(s.InfoLabelColor)
 	valStyle := lipgloss.NewStyle().Foreground(s.InfoValueColor)

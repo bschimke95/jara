@@ -4,11 +4,12 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/bschimke95/jara/internal/color"
 	"github.com/bschimke95/jara/internal/model"
 )
 
 func TestRenderDatabagPane_NilData(t *testing.T) {
-	result := renderDatabagPane(nil, nil, 60, 20, focusTable, 0, 0)
+	result := renderDatabagPane(nil, nil, 60, 20, focusTable, 0, 0, color.DefaultStyles())
 	if !strings.Contains(result, "Select a relation") {
 		t.Error("expected placeholder text for nil data")
 	}
@@ -35,7 +36,7 @@ func TestRenderDatabagPane_WithData(t *testing.T) {
 		},
 	}
 
-	result := renderDatabagPane(rd, rel, 80, 40, focusAppData, 0, 0)
+	result := renderDatabagPane(rd, rel, 80, 40, focusAppData, 0, 0, color.DefaultStyles())
 	if !strings.Contains(result, "Databags") {
 		t.Error("expected 'Databags' outer title")
 	}
@@ -81,7 +82,7 @@ func TestRenderDatabagPane_PerUnitBoxes(t *testing.T) {
 		},
 	}
 
-	result := renderDatabagPane(rd, rel, 80, 40, focusUnitData, 0, 0)
+	result := renderDatabagPane(rd, rel, 80, 40, focusUnitData, 0, 0, color.DefaultStyles())
 	// Each unit should appear in its own box.
 	if strings.Count(result, "web/0") < 1 {
 		t.Error("expected web/0 in its own unit box")

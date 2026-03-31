@@ -270,8 +270,13 @@ func (r *View) FilterStr() string {
 }
 
 // SetFilter applies a new filter string and refreshes the table.
+// It also clears any cached relation data and resets scroll positions so the
+// right pane does not show stale content after the selection changes.
 func (r *View) SetFilter(s string) {
 	r.filterStr = s
+	r.relationData = nil
+	r.appScroll = 0
+	r.unitScroll = 0
 	r.applyFilter()
 }
 
