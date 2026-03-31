@@ -83,8 +83,6 @@
 
 ────────────────────────────────────────────────────────────────────────────────
 > ./jara --demo --headless
-╭─────────────────────────── Applications ───────────────────────────╮╭────────────── Units(grafana) ───────────────╮
-│ NAME      STATUS  CHARM      CHANN…  R…  S…  EX…  MESSAGE          ││ UNIT         WORK…  AGENT  MESSAGE          │
 │ grafana   block…  grafana-…  lates…  1…  1   no   Missing relatio… ││ ★ grafana/0  bloc…  idle   Missing relatio… │
 │ nginx-i…  active  nginx-in…  lates…  95  1   yes  Ingress ready    ││                                             │
 │ postgre…  active  postgres…  14/st…  4…  3   no   Live master (14… ││                                             │
@@ -100,10 +98,12 @@
 │                                                                    ││                                             │
 │                                                                    ││                                             │
 │                                                                    ││                                             │
+│                                                                    ││                                             │
 │                                                                    │╰─────────────────────────────────────────────╯
 │                                                                    │╭──────────── Relations(grafana) ─────────────╮
 │                                                                    ││ RELATION                                    │
 │                                                                    ││ grafana:grafana-source -> prometheus:grafa… │
+│                                                                    ││                                             │
 │                                                                    ││                                             │
 │                                                                    ││                                             │
 │                                                                    ││                                             │
@@ -125,8 +125,6 @@
   Model
 ────────────────────────────────────────────────────────────────────────────────
 > ./jara --demo --headless
-╭─────────────────────────── Applications ───────────────────────────╮╭────────────── Units(grafana) ───────────────╮
-│ NAME      STATUS  CHARM      CHANN…  R…  S…  EX…  MESSAGE          ││ UNIT         WORK…  AGENT  MESSAGE          │
 │ grafana   block…  grafana-…  lates…  1…  1   no   Missing relatio… ││ ★ grafana/0  bloc…  idle   Missing relatio… │
 │ nginx-i…  active  nginx-in…  lates…  95  1   yes  Ingress ready    ││                                             │
 │ postgre…  active  postgres…  14/st…  4…  3   no   Live master (14… ││                                             │
@@ -142,10 +140,12 @@
 │                                                                    ││                                             │
 │                                                                    ││                                             │
 │                                                                    ││                                             │
+│                                                                    ││                                             │
 │                                                                    │╰─────────────────────────────────────────────╯
 │                                                                    │╭──────────── Relations(grafana) ─────────────╮
 │                                                                    ││ RELATION                                    │
 │                                                                    ││ grafana:grafana-source -> prometheus:grafa… │
+│                                                                    ││                                             │
 │                                                                    ││                                             │
 │                                                                    ││                                             │
 │                                                                    ││                                             │
@@ -167,8 +167,6 @@
   Model
 ────────────────────────────────────────────────────────────────────────────────
 > ./jara --demo --headless
-╭─────────────────────────── Applications ───────────────────────────╮╭────────────── Units(grafana) ───────────────╮
-│ NAME      STATUS  CHARM      CHANN…  R…  S…  EX…  MESSAGE          ││ UNIT         WORK…  AGENT  MESSAGE          │
 │ grafana   block…  grafana-…  lates…  1…  1   no   Missing relatio… ││ ★ grafana/0  bloc…  idle   Missing relatio… │
 │ nginx-i…  active  nginx-in…  lates…  95  1   yes  Ingress ready    ││                                             │
 │ postgre…  active  postgres…  14/st…  4…  3   no   Live master (14… ││                                             │
@@ -184,10 +182,12 @@
 │                                                                    ││                                             │
 │                                                                    ││                                             │
 │                                                                    ││                                             │
+│                                                                    ││                                             │
 │                                                                    │╰─────────────────────────────────────────────╯
 │                                                                    │╭──────────── Relations(grafana) ─────────────╮
 │                                                                    ││ RELATION                                    │
 │                                                                    ││ grafana:grafana-source -> prometheus:grafa… │
+│                                                                    ││                                             │
 │                                                                    ││                                             │
 │                                                                    ││                                             │
 │                                                                    ││                                             │
@@ -209,8 +209,6 @@
   Model
 ────────────────────────────────────────────────────────────────────────────────
 > ./jara --demo --headless
-╭─────────────────────────── Applications ───────────────────────────╮╭────────────── Units(grafana) ───────────────╮
-│ NAME      STATUS  CHARM      CHANN…  R…  S…  EX…  MESSAGE          ││ UNIT         WORK…  AGENT  MESSAGE          │
 │ grafana   block…  grafana-…  lates…  1…  1   no   Missing relatio… ││ ★ grafana/0  bloc…  idle   Missing relatio… │
 │ nginx-i…  active  nginx-in…  lates…  95  1   yes  Ingress ready    ││                                             │
 │ postgre…  active  postgres…  14/st…  4…  3   no   Live master (14… ││                                             │
@@ -226,10 +224,12 @@
 │                                                                    ││                                             │
 │                                                                    ││                                             │
 │                                                                    ││                                             │
+│                                                                    ││                                             │
 │                                                                    │╰─────────────────────────────────────────────╯
 │                                                                    │╭──────────── Relations(grafana) ─────────────╮
 │                                                                    ││ RELATION                                    │
 │                                                                    ││ grafana:grafana-source -> prometheus:grafa… │
+│                                                                    ││                                             │
 │                                                                    ││                                             │
 │                                                                    ││                                             │
 │                                                                    ││                                             │
@@ -251,8 +251,6 @@
   Model
 ────────────────────────────────────────────────────────────────────────────────
 > ./jara --demo --headless
-╭─────────────────────────── Applications ───────────────────────────╮╭────────────── Units(grafana) ───────────────╮
-│ NAME      STATUS  CHARM      CHANN…  R…  S…  EX…  MESSAGE          ││ UNIT         WORK…  AGENT  MESSAGE          │
 │ grafana   block…  grafana-…  lates…  1…  1   no   Missing relatio… ││ ★ grafana/0  bloc…  idle   Missing relatio… │
 │ nginx-i…  active  nginx-in…  lates…  95  1   yes  Ingress ready    ││                                             │
 │ postgre…  active  postgres…  14/st…  4…  3   no   Live master (14… ││                                             │
@@ -268,52 +266,12 @@
 │                                                                    ││                                             │
 │                                                                    ││                                             │
 │                                                                    ││                                             │
-│                                                                    │╰─────────────────────────────────────────────╯
-│                                                                    │╭──────────── Relations(grafana) ─────────────╮
-│                                                                    ││ RELATION                                    │
-│                                                                    ││ grafana:grafana-source -> prometheus:grafa… │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    │╰─────────────────────────────────────────────╯
-╰────────────────────────────────────────────────────────────────────╯
-
-
-  Model
-────────────────────────────────────────────────────────────────────────────────
-> ./jara --demo --headless
-╭─────────────────────────── Applications ───────────────────────────╮╭────────────── Units(grafana) ───────────────╮
-│ NAME      STATUS  CHARM      CHANN…  R…  S…  EX…  MESSAGE          ││ UNIT         WORK…  AGENT  MESSAGE          │
-│ grafana   block…  grafana-…  lates…  1…  1   no   Missing relatio… ││ ★ grafana/0  bloc…  idle   Missing relatio… │
-│ nginx-i…  active  nginx-in…  lates…  95  1   yes  Ingress ready    ││                                             │
-│ postgre…  active  postgres…  14/st…  4…  3   no   Live master (14… ││                                             │
-│ prometh…  waiti…  promethe…  lates…  1…  1   no   Waiting for rel… ││                                             │
-│ ubuntu-…  active  ubuntu     stable  24  2   yes  Ready            ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
-│                                                                    ││                                             │
 │                                                                    ││                                             │
 │                                                                    │╰─────────────────────────────────────────────╯
 │                                                                    │╭──────────── Relations(grafana) ─────────────╮
 │                                                                    ││ RELATION                                    │
 │                                                                    ││ grafana:grafana-source -> prometheus:grafa… │
+│                                                                    ││                                             │
 │                                                                    ││                                             │
 │                                                                    ││                                             │
 │                                                                    ││                                             │

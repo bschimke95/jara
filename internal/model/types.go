@@ -198,6 +198,16 @@ type DeployOptions struct {
 	Trust           bool
 }
 
+// RelationData holds the application and unit databag contents for a single
+// relation. Each key in the maps is an application or unit name; values are
+// key-value settings from the respective databag.
+type RelationData struct {
+	// ApplicationData maps application name → databag key/value pairs.
+	ApplicationData map[string]map[string]string
+	// UnitData maps unit name → databag key/value pairs.
+	UnitData map[string]map[string]string
+}
+
 // CharmEndpoint describes a single endpoint from a charm's metadata.
 type CharmEndpoint struct {
 	Interface   string

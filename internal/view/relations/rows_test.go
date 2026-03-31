@@ -125,3 +125,37 @@ func TestExtractModelPrefix(t *testing.T) {
 		})
 	}
 }
+
+func TestMatchesFilter(t *testing.T) {
+	rel := model.Relation{
+		ID:        1,
+		Interface: "pgsql",
+		Scope:     "global",
+		Status:    "joined",
+		Endpoints: []model.Endpoint{
+			{ApplicationName: "postgresql", Name: "db"},
+			{ApplicationName: "ubuntu-app", Name: "db"},
+		},
+	}
+
+	tests := []struct {
+		filter string
+		want   bool
+	}{
+		{filter: "post", want: true},
+		{filter: "ubuntu", want: true},
+		{filter: "pgsql", want: true},
+		{filter: "global", want: true},
+		{filter: "joined", want: true},
+		{filter: "redis", want: false},
+		{filter: "db", want: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.filter, func(t *testing.T) {
+			got := matchesFilter(rel, tt.filter)
+			if got != tt.want {
+				t.Errorf("matchesFilter(%q) = %v, want %v", tt.filter, got, tt.want)
+			}
+		})
+	}
+}

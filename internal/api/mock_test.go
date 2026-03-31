@@ -345,3 +345,45 @@ func TestMockClient_RevealSecret(t *testing.T) {
 		}
 	})
 }
+
+func TestMockClient_RelationData(t *testing.T) {
+	client := NewMockClient()
+
+	// Relation 1 is "postgresql:db ubuntu-app:db".
+	data, err := client.RelationData(context.Background(), 1)
+	if err != nil {
+		t.Fatalf("RelationData(1) failed: %v", err)
+	}
+	if data == nil {
+		t.Fatal("RelationData(1) returned nil")
+	}
+	if _, ok := data.ApplicationData["postgresql"]; !ok {
+		t.Error("missing application data for postgresql")
+	}
+	if _, ok := data.ApplicationData["ubuntu-app"]; !ok {
+		t.Error("missing application data for ubuntu-app")
+	}
+	if len(data.UnitData) == 0 {
+		t.Error("expected unit data entries")
+	}
+	// Verify a unit databag key.
+	if ud, ok := data.UnitData["postgresql/0"]; ok {
+		if _, hasAddr := ud["ingress-address"]; !hasAddr {
+			t.Error("expected ingress-address in postgresql/0 unit data")
+		}
+	} else {
+		t.Error("missing unit data for postgresql/0")
+	}
+}
+
+func TestMockClient_RelationData_NotFound(t *testing.T) {
+	client := NewMockClient()
+
+	_, err := client.RelationData(context.Background(), 999)
+	if err == nil {
+		t.Fatal("RelationData(999) should fail for nonexistent relation")
+	}
+	if !strings.Contains(err.Error(), "not found") {
+		t.Errorf("error = %q, want it to contain 'not found'", err.Error())
+	}
+}
