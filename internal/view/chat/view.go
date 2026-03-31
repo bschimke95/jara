@@ -338,7 +338,12 @@ func (v *View) renderNoClient() string {
 	// When initialisation failed (e.g. Copilot CLI not found), show the
 	// specific error so the user has an actionable message.
 	if v.initErr != "" {
-		b.WriteString(errStyle.Render("AI provider error: " + v.initErr))
+		b.WriteString(errStyle.Render("AI provider error:"))
+		b.WriteString("\n")
+		for _, line := range strings.Split(v.initErr, "\n") {
+			b.WriteString(errStyle.Render("  " + line))
+			b.WriteString("\n")
+		}
 		return b.String()
 	}
 
