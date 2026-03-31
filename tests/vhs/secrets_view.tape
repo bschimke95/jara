@@ -4,6 +4,7 @@ Source tests/vhs/_setup.tape
 
 Output tests/vhs/golden/secrets_view.ascii
 
+Hide
 Type "./jara --demo"
 Enter
 
@@ -22,8 +23,12 @@ Sleep 1s
 # Drill down into the first secret.
 Enter
 
-Wait+Screen /Revisions/
+# Wait for content unique to the secret detail view.
+Wait+Screen /Revision: 3/
+Show
 
 Sleep 2s
 
+Hide
 Type "q"
+Sleep 500ms

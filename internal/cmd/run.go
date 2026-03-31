@@ -58,7 +58,8 @@ func run(_ *cobra.Command, _ []string) error {
 	}
 
 	// 6. Build and run the TUI.
-	m := app.New(client, app.WithStyles(styles), app.WithKeyMap(keys), app.WithConfig(cfg), app.WithVersion(version))
+	demo := jaraFlags.Demo != nil && *jaraFlags.Demo
+	m := app.New(client, app.WithStyles(styles), app.WithKeyMap(keys), app.WithConfig(cfg), app.WithVersion(version), app.WithDemo(demo))
 	p := tea.NewProgram(m)
 
 	if _, err := p.Run(); err != nil {
