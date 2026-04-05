@@ -67,8 +67,7 @@ func (m *Model) startStatusStream() tea.Cmd {
 	return func() tea.Msg {
 		ch, err := client.WatchStatus(ctx, refreshDuration)
 		if err != nil {
-			if strings.Contains(err.Error(), "No selected model") ||
-				strings.Contains(err.Error(), "resolving current model") {
+			if isNoModelError(err) {
 				return modelview.NoModelMsg{}
 			}
 			return errMsg{err}
@@ -98,7 +97,7 @@ func readNextStatus(ctx context.Context, ch <-chan api.StatusUpdate) tea.Cmd {
 				return errMsg{err: fmt.Errorf("status stream closed")}
 			}
 			if update.Err != nil {
-				if strings.Contains(update.Err.Error(), "No selected model") {
+				if isNoModelError(update.Err) {
 					return modelview.NoModelMsg{}
 				}
 				return statusStreamErrMsg{err: update.Err, ctx: ctx, ch: ch}
@@ -304,4 +303,16 @@ func (m Model) fetchRelationData(relationID int) tea.Cmd {
 		}
 		return relations.RelationDataMsg{RelationID: relationID, Data: data}
 	}
+}
+
+// isNoModelError checks whether the error indicates that no Juju model is
+// currently selected. This centralises the (fragile) string-based detection
+// so it can be tested and updated in a single place.
+func isNoModelError(err error) bool {
+	if err == nil {
+		return false
+	}
+	msg := err.Error()
+	return strings.Contains(msg, "No selected model") ||
+		strings.Contains(msg, "resolving current model")
 }

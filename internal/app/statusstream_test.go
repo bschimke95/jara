@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"testing"
 
 	"charm.land/bubbles/v2/key"
@@ -72,8 +73,27 @@ func TestDeployApplicationTargetsModel(t *testing.T) {
 	}
 }
 
-// TestBuildHeaderHints verifies the 12-hint cap (2 columns), view-specific priority, and
-// that the help hint is always the last element.
+func TestIsNoModelError(t *testing.T) {
+	tests := []struct {
+		name string
+		err  error
+		want bool
+	}{
+		{"nil error", nil, false},
+		{"unrelated error", fmt.Errorf("connection refused"), false},
+		{"no selected model", fmt.Errorf("No selected model"), true},
+		{"resolving current model", fmt.Errorf("error resolving current model"), true},
+		{"wrapped no selected model", fmt.Errorf("status: %w", fmt.Errorf("No selected model")), true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if got := isNoModelError(tt.err); got != tt.want {
+				t.Errorf("isNoModelError(%v) = %v, want %v", tt.err, got, tt.want)
+			}
+		})
+	}
+}
+
 func TestBuildHeaderHints(t *testing.T) {
 	m := Model{keys: ui.DefaultKeyMap()}
 

@@ -391,7 +391,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m Model) updateActiveView(msg tea.Msg) (Model, tea.Cmd) {
 	currentView := m.views[m.stack.Current().View]
 	updated, cmd := currentView.Update(msg)
-	m.views[m.stack.Current().View] = updated.(view.View)
+	if v, ok := updated.(view.View); ok {
+		m.views[m.stack.Current().View] = v
+	}
 	return m, cmd
 }
 
@@ -645,7 +647,8 @@ func initLLMClient(cfg *config.Config) (llm.Client, error) {
 			return nil, err
 		}
 		return c, nil
-	}
 
-	return nil, nil
+	default:
+		return nil, fmt.Errorf("unknown AI provider: %q (supported: copilot, gemini)", provider)
+	}
 }

@@ -13,13 +13,15 @@ import (
 //
 // Lookup order:
 //
-//	copilot: GITHUB_TOKEN env → gh CLI hosts.yml (github.com oauth_token)
+//	copilot: GITHUB_TOKEN → GH_TOKEN → COPILOT_GITHUB_TOKEN → gh CLI hosts.yml
 //	gemini:  GOOGLE_AI_API_KEY env → GEMINI_API_KEY env
 func LoadAICredential(provider string) string {
 	switch strings.ToLower(provider) {
 	case "copilot", "":
-		if tok := os.Getenv("GITHUB_TOKEN"); tok != "" {
-			return tok
+		for _, env := range []string{"GITHUB_TOKEN", "GH_TOKEN", "COPILOT_GITHUB_TOKEN"} {
+			if tok := os.Getenv(env); tok != "" {
+				return tok
+			}
 		}
 		return ghCLIToken()
 	case "gemini":
