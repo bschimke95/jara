@@ -24,7 +24,8 @@ Sleep 1s
 Escape
 
 # The model view should still be visible (not the models list).
-Wait+Screen /Applications/
+# Wait for the Relations panel to confirm the full view rendered after modal close.
+Wait+Screen /grafana-source/
 Show
 
 Sleep 1s
