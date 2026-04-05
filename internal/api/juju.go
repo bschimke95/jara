@@ -18,6 +18,7 @@ import (
 	"github.com/juju/juju/api/client/applicationoffers"
 	"github.com/juju/juju/api/client/client"
 	jujuSecrets "github.com/juju/juju/api/client/secrets"
+	jujuStorage "github.com/juju/juju/api/client/storage"
 	"github.com/juju/juju/api/common"
 	"github.com/juju/juju/api/connector"
 	"github.com/juju/juju/api/jujuclient"
@@ -972,6 +973,52 @@ func (c *JujuClient) RunAction(ctx context.Context, unitName, actionName string,
 			return ar, nil
 		}
 	}
+}
+
+// ListStorage returns all storage instances in the current model.
+func (c *JujuClient) ListStorage(ctx context.Context) ([]model.StorageInstance, error) {
+	conn, err := c.connect(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = conn.Close() }()
+
+	storageClient := jujuStorage.NewClient(conn)
+	details, err := storageClient.ListStorageDetails(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("listing storage: %w", err)
+	}
+
+	result := make([]model.StorageInstance, 0, len(details))
+	for _, d := range details {
+		kind := "unknown"
+		switch d.Kind {
+		case 1:
+			kind = "block"
+		case 2:
+			kind = "filesystem"
+		}
+		si := model.StorageInstance{
+			ID:         strings.TrimPrefix(d.StorageTag, "storage-"),
+			Kind:       kind,
+			Status:     d.Status.Status.String(),
+			Persistent: d.Persistent,
+			Life:       string(d.Life),
+		}
+		if d.OwnerTag != "" {
+			si.Owner = strings.TrimPrefix(strings.TrimPrefix(d.OwnerTag, "unit-"), "application-")
+		}
+		// Derive pool from first attachment if available.
+		for _, att := range d.Attachments {
+			if att.Location != "" {
+				si.Pool = att.Location
+				break
+			}
+		}
+		result = append(result, si)
+	}
+	sort.Slice(result, func(i, j int) bool { return result[i].ID < result[j].ID })
+	return result, nil
 }
 
 // currentModelType returns the model type ("iaas" or "caas") for the

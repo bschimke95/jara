@@ -419,6 +419,19 @@ func (c *MockClient) RunAction(_ context.Context, unitName, actionName string, _
 	}, nil
 }
 
+// ListStorage returns synthetic storage instances for the mock model.
+func (c *MockClient) ListStorage(_ context.Context) ([]model.StorageInstance, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	return []model.StorageInstance{
+		{ID: "data/0", Kind: "filesystem", Owner: "postgresql/0", Status: "attached", Persistent: true, Life: "alive", Pool: "/var/lib/juju/storage/data/0"},
+		{ID: "data/1", Kind: "filesystem", Owner: "postgresql/1", Status: "attached", Persistent: true, Life: "alive", Pool: "/var/lib/juju/storage/data/1"},
+		{ID: "logs/0", Kind: "filesystem", Owner: "grafana/0", Status: "attached", Persistent: false, Life: "alive", Pool: "/var/lib/juju/storage/logs/0"},
+		{ID: "cache/0", Kind: "block", Owner: "redis/0", Status: "attached", Persistent: false, Life: "alive"},
+	}, nil
+}
+
 // RelateApplications adds a synthetic relation between two endpoints.
 func (c *MockClient) RelateApplications(_ context.Context, endpointA, endpointB string) error {
 	c.mu.Lock()
