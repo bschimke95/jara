@@ -290,7 +290,7 @@ func (c *JujuClient) connect(ctx context.Context) (api.Connection, error) {
 		// Resolve the current model for this controller from the client store.
 		modelName, err := c.store.CurrentModel(c.controllerName)
 		if err != nil {
-			return nil, fmt.Errorf("resolving current model for controller %q: %w", c.controllerName, err)
+			return nil, fmt.Errorf("resolving current model for controller %q: %w", c.controllerName, fmt.Errorf("%s: %w", err.Error(), ErrNoSelectedModel))
 		}
 		modelDetails, err := c.store.ModelByName(c.controllerName, modelName)
 		if err != nil {
@@ -847,7 +847,7 @@ func (c *JujuClient) ListOffers(ctx context.Context) ([]model.Offer, error) {
 func (c *JujuClient) currentModelType() (string, error) {
 	modelName, err := c.store.CurrentModel(c.controllerName)
 	if err != nil {
-		return "", fmt.Errorf("resolving current model: %w", err)
+		return "", fmt.Errorf("resolving current model: %w", fmt.Errorf("%s: %w", err.Error(), ErrNoSelectedModel))
 	}
 	details, err := c.store.ModelByName(c.controllerName, modelName)
 	if err != nil {

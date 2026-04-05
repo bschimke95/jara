@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -321,13 +322,12 @@ func (m Model) fetchOffers() tea.Cmd {
 }
 
 // isNoModelError checks whether the error indicates that no Juju model is
-// currently selected. This centralises the (fragile) string-based detection
-// so it can be tested and updated in a single place.
+// currently selected. It uses errors.Is to check for the sentinel
+// api.ErrNoSelectedModel, which is wrapped by the API layer when the
+// client store reports a missing model selection.
 func isNoModelError(err error) bool {
 	if err == nil {
 		return false
 	}
-	msg := err.Error()
-	return strings.Contains(msg, "No selected model") ||
-		strings.Contains(msg, "resolving current model")
+	return errors.Is(err, api.ErrNoSelectedModel)
 }
