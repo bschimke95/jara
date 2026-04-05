@@ -193,6 +193,10 @@ func (m *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, func() tea.Msg {
 				return view.NavigateMsg{Target: nav.RelationsView}
 			}
+		case key.Matches(msg, m.keys.MachinesNav):
+			return m, func() tea.Msg {
+				return view.NavigateMsg{Target: nav.MachinesView}
+			}
 		case key.Matches(msg, m.keys.LogsJump):
 			var filter *model.DebugLogFilter
 			if m.selectedApp != "" {
