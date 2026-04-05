@@ -386,6 +386,39 @@ func (c *MockClient) AppConfig(_ context.Context, appName string) ([]model.Confi
 	}, nil
 }
 
+// ApplicationActions returns mock action specs for an application.
+func (c *MockClient) ApplicationActions(_ context.Context, appName string) ([]model.ActionSpec, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if _, ok := c.status.Applications[appName]; !ok {
+		return nil, fmt.Errorf("application %q not found", appName)
+	}
+
+	return []model.ActionSpec{
+		{Name: "backup", Description: "Create a backup of the application data"},
+		{Name: "restart", Description: "Restart the application services"},
+		{Name: "get-password", Description: "Retrieve the admin password"},
+	}, nil
+}
+
+// RunAction simulates running an action on a unit.
+func (c *MockClient) RunAction(_ context.Context, unitName, actionName string, _ map[string]string) (*model.ActionResult, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	now := time.Now()
+	return &model.ActionResult{
+		ID:        "mock-action-1",
+		Status:    "completed",
+		Message:   fmt.Sprintf("Action %q on %s completed successfully", actionName, unitName),
+		Output:    map[string]interface{}{"result": "ok"},
+		Enqueued:  now.Add(-2 * time.Second),
+		Started:   now.Add(-1 * time.Second),
+		Completed: now,
+	}, nil
+}
+
 // RelateApplications adds a synthetic relation between two endpoints.
 func (c *MockClient) RelateApplications(_ context.Context, endpointA, endpointB string) error {
 	c.mu.Lock()

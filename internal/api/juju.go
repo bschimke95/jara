@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/juju/juju/api"
+	"github.com/juju/juju/api/client/action"
 	"github.com/juju/juju/api/client/application"
 	"github.com/juju/juju/api/client/applicationoffers"
 	"github.com/juju/juju/api/client/client"
@@ -881,6 +882,96 @@ func (c *JujuClient) AppConfig(ctx context.Context, appName string) ([]model.Con
 		entries = append(entries, e)
 	}
 	return entries, nil
+}
+
+// ApplicationActions returns the available charm actions for an application.
+func (c *JujuClient) ApplicationActions(ctx context.Context, appName string) ([]model.ActionSpec, error) {
+	conn, err := c.connect(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = conn.Close() }()
+
+	actionClient := action.NewClient(conn)
+	specs, err := actionClient.ApplicationCharmActions(ctx, appName)
+	if err != nil {
+		return nil, fmt.Errorf("fetching charm actions: %w", err)
+	}
+
+	result := make([]model.ActionSpec, 0, len(specs))
+	for name, spec := range specs {
+		result = append(result, model.ActionSpec{
+			Name:        name,
+			Description: spec.Description,
+			Params:      spec.Params,
+		})
+	}
+	sort.Slice(result, func(i, j int) bool { return result[i].Name < result[j].Name })
+	return result, nil
+}
+
+// RunAction executes a named action on a unit and waits for the result.
+func (c *JujuClient) RunAction(ctx context.Context, unitName, actionName string, params map[string]string) (*model.ActionResult, error) {
+	conn, err := c.connect(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = conn.Close() }()
+
+	actionParams := make(map[string]interface{}, len(params))
+	for k, v := range params {
+		actionParams[k] = v
+	}
+
+	actionClient := action.NewClient(conn)
+	enqueued, err := actionClient.EnqueueOperation(ctx, []action.Action{{
+		Receiver:   names.NewUnitTag(unitName).String(),
+		Name:       actionName,
+		Parameters: actionParams,
+	}})
+	if err != nil {
+		return nil, fmt.Errorf("enqueuing action: %w", err)
+	}
+	if len(enqueued.Actions) == 0 {
+		return nil, fmt.Errorf("no actions enqueued")
+	}
+
+	actionID := enqueued.Actions[0].Action.ID
+
+	// Poll for completion.
+	ticker := time.NewTicker(500 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return nil, ctx.Err()
+		case <-ticker.C:
+			results, err := actionClient.Actions(ctx, []string{actionID})
+			if err != nil {
+				return nil, fmt.Errorf("fetching action result: %w", err)
+			}
+			if len(results) == 0 {
+				continue
+			}
+			r := results[0]
+			if r.Status == "pending" || r.Status == "running" {
+				continue
+			}
+			ar := &model.ActionResult{
+				ID:        r.Action.ID,
+				Status:    r.Status,
+				Message:   r.Message,
+				Output:    r.Output,
+				Enqueued:  r.Enqueued,
+				Started:   r.Started,
+				Completed: r.Completed,
+			}
+			if r.Error != nil {
+				ar.Message = r.Error.Error()
+			}
+			return ar, nil
+		}
+	}
 }
 
 // currentModelType returns the model type ("iaas" or "caas") for the
