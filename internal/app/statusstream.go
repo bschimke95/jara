@@ -15,6 +15,7 @@ import (
 	"github.com/bschimke95/jara/internal/view/controllers"
 	"github.com/bschimke95/jara/internal/view/models"
 	"github.com/bschimke95/jara/internal/view/modelview"
+	"github.com/bschimke95/jara/internal/view/offers"
 	"github.com/bschimke95/jara/internal/view/relations"
 )
 
@@ -302,6 +303,20 @@ func (m Model) fetchRelationData(relationID int) tea.Cmd {
 			return errMsg{err}
 		}
 		return relations.RelationDataMsg{RelationID: relationID, Data: data}
+	}
+}
+
+// fetchOffers returns a Cmd that fetches application offers from the API.
+func (m Model) fetchOffers() tea.Cmd {
+	client := m.client
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		offerList, err := client.ListOffers(ctx)
+		if err != nil {
+			return errMsg{fmt.Errorf("fetching offers: %w", err)}
+		}
+		return offers.OffersDataMsg{Offers: offerList}
 	}
 }
 

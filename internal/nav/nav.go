@@ -19,6 +19,7 @@ const (
 	ModelsView
 	SecretsView
 	SecretDetailView
+	OffersView
 	ChatView
 )
 
@@ -45,6 +46,8 @@ func (v ViewID) String() string {
 		return "Secrets"
 	case SecretDetailView:
 		return "Secret"
+	case OffersView:
+		return "Offers"
 	case ChatView:
 		return "Chat"
 	default:
@@ -79,6 +82,9 @@ var CommandAliases = map[string]ViewID{
 	"secrets":      SecretsView,
 	"secret":       SecretsView,
 	"sec":          SecretsView,
+	"offers":       OffersView,
+	"offer":        OffersView,
+	"off":          OffersView,
 	"chat":         ChatView,
 	"ai":           ChatView,
 	"analyze":      ChatView,
