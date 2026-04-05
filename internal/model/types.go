@@ -223,6 +223,16 @@ type Offer struct {
 	TotalConnCount  int
 }
 
+// ConfigEntry represents a single application configuration entry.
+type ConfigEntry struct {
+	Key         string
+	Value       string
+	Default     string
+	Source      string // "default", "user", "model"
+	Type        string // "string", "int", "bool", "float"
+	Description string
+}
+
 // CharmEndpoint describes a single endpoint from a charm's metadata.
 type CharmEndpoint struct {
 	Interface   string
