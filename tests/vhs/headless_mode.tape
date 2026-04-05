@@ -4,14 +4,16 @@ Source tests/vhs/_setup.tape
 
 Output tests/vhs/golden/headless_mode.ascii
 
+Hide
 Type "./jara --demo --headless"
 Enter
 
 # Wait for model view — header box should be absent.
 Wait+Screen /grafana/
+Show
 
 Sleep 2s
 
+Hide
 Type "q"
-
 Sleep 500ms
