@@ -6,6 +6,7 @@ Source tests/vhs/_setup.tape
 
 Output tests/vhs/golden/tab_switching.ascii
 
+Hide
 Type "./jara --demo"
 Enter
 
@@ -36,8 +37,10 @@ Sleep 1s
 # Switch to standalone applications view (Shift+A).
 Type "A"
 Wait+Screen /SCALE/
+Show
+
 Sleep 2s
 
+Hide
 Type "q"
-
 Sleep 500ms

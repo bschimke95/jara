@@ -4,16 +4,18 @@ Source tests/vhs/_setup.tape
 
 Output tests/vhs/golden/startup.ascii
 
+Hide
 Type "./jara --demo"
 Enter
 
 # Wait for the model detail view — applications pane with mock data.
 Wait+Screen /Applications/
 Wait+Screen /grafana/
+Show
 
 Sleep 2s
 
+Hide
 # Quit cleanly.
 Type "q"
-
 Sleep 500ms
