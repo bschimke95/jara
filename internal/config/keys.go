@@ -41,6 +41,7 @@ func ResolveKeyMap(keys KeysConfig) ui.KeyMap {
 	overrideBinding(&km.ApplicationsNav, keys.ApplicationsNav, "applications")
 	overrideBinding(&km.RelationsNav, keys.RelationsNav, "relations")
 	overrideBinding(&km.SecretsNav, keys.SecretsNav, "secrets")
+	overrideBinding(&km.MachinesNav, keys.MachinesNav, "machines")
 	overrideBinding(&km.Decode, keys.Decode, "decode")
 	overrideBinding(&km.ApplyFilter, keys.ApplyFilter, "apply")
 	overrideBinding(&km.Right, keys.Right, "right")
