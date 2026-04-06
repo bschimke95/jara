@@ -75,7 +75,10 @@ func (v *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			v.revealOpen = false
 			return v, nil
 		}
-		_, cmd := v.revealModal.Update(msg)
+		updated, cmd := v.revealModal.Update(msg)
+		if m, ok := updated.(*revealmodal.Modal); ok {
+			v.revealModal = *m
+		}
 		return v, cmd
 	}
 
