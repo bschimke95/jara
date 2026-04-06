@@ -1,10 +1,11 @@
 // Package actionmodal implements an action selection and execution modal.
 // It lists available charm actions for a unit, lets the user select one,
-// and displays the result after execution.
+// optionally collects parameters, and displays the result after execution.
 package actionmodal
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"charm.land/bubbles/v2/key"
@@ -23,12 +24,20 @@ type phase int
 const (
 	phaseLoading phase = iota
 	phaseSelect
+	phaseParams
 	phaseRunning
 	phaseResult
 )
 
 // CloseMsg is emitted when the modal should be closed.
 type CloseMsg struct{}
+
+// paramField represents a single parameter input field.
+type paramField struct {
+	Name        string
+	Description string
+	Value       string
+}
 
 // Modal is the action selection and execution overlay.
 type Modal struct {
@@ -43,6 +52,11 @@ type Modal struct {
 	cursor   int
 	result   *model.ActionResult
 	err      error
+
+	// Parameter entry state.
+	paramFields []paramField
+	paramCursor int
+	paramEdit   bool // true when editing a parameter value
 }
 
 // New creates a new action modal for the given unit.
@@ -106,6 +120,15 @@ func (m *Modal) handleKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.Enter):
 			if len(m.actions) > 0 {
 				selected := m.actions[m.cursor]
+				// If the action has parameters, show the params phase.
+				if len(selected.Params) > 0 {
+					m.paramFields = buildParamFields(selected.Params)
+					m.paramCursor = 0
+					m.paramEdit = false
+					m.phase = phaseParams
+					return m, nil
+				}
+				// No parameters — run immediately.
 				m.phase = phaseRunning
 				return m, func() tea.Msg {
 					return view.RunActionRequestMsg{
@@ -114,15 +137,19 @@ func (m *Modal) handleKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 					}
 				}
 			}
-		case msg.Key().Code == 'j' || msg.Key().Code == tea.KeyDown:
+		case key.Matches(msg, m.keys.Down):
 			if m.cursor < len(m.actions)-1 {
 				m.cursor++
 			}
-		case msg.Key().Code == 'k' || msg.Key().Code == tea.KeyUp:
+		case key.Matches(msg, m.keys.Up):
 			if m.cursor > 0 {
 				m.cursor--
 			}
 		}
+
+	case phaseParams:
+		return m.handleParamsKey(msg)
+
 	case phaseResult:
 		if key.Matches(msg, m.keys.Back) || key.Matches(msg, m.keys.Enter) {
 			return m, func() tea.Msg { return CloseMsg{} }
@@ -130,6 +157,69 @@ func (m *Modal) handleKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	case phaseLoading, phaseRunning:
 		if key.Matches(msg, m.keys.Back) {
 			return m, func() tea.Msg { return CloseMsg{} }
+		}
+	}
+	return m, nil
+}
+
+func (m *Modal) handleParamsKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
+	if m.paramEdit {
+		// Editing a parameter value inline.
+		switch {
+		case key.Matches(msg, m.keys.CancelInput):
+			m.paramEdit = false
+		case key.Matches(msg, m.keys.Enter):
+			m.paramEdit = false
+		case msg.Key().Code == tea.KeyBackspace:
+			v := m.paramFields[m.paramCursor].Value
+			if len(v) > 0 {
+				m.paramFields[m.paramCursor].Value = v[:len(v)-1]
+			}
+		default:
+			r := msg.Key().Text
+			if r != "" {
+				m.paramFields[m.paramCursor].Value += r
+			}
+		}
+		return m, nil
+	}
+
+	switch {
+	case key.Matches(msg, m.keys.Back):
+		// Go back to action selection.
+		m.phase = phaseSelect
+		m.paramFields = nil
+	case key.Matches(msg, m.keys.Enter):
+		if m.paramCursor >= len(m.paramFields) {
+			// Cursor is on the "Run" button — execute.
+			selected := m.actions[m.cursor]
+			params := make(map[string]string, len(m.paramFields))
+			for _, f := range m.paramFields {
+				if f.Value != "" {
+					params[f.Name] = f.Value
+				}
+			}
+			m.phase = phaseRunning
+			return m, func() tea.Msg {
+				return view.RunActionRequestMsg{
+					UnitName:   m.unitName,
+					ActionName: selected.Name,
+					Params:     params,
+				}
+			}
+		}
+		// Start editing the current field.
+		m.paramEdit = true
+	case key.Matches(msg, m.keys.Down):
+		if m.paramCursor <= len(m.paramFields) {
+			m.paramCursor++
+			if m.paramCursor > len(m.paramFields) {
+				m.paramCursor = len(m.paramFields)
+			}
+		}
+	case key.Matches(msg, m.keys.Up):
+		if m.paramCursor > 0 {
+			m.paramCursor--
 		}
 	}
 	return m, nil
@@ -188,6 +278,11 @@ func (m *Modal) Render(background string) string {
 			AlignHorizontal(lipgloss.Center).Render("[enter] run  [↑/↓] select  [esc] close")
 		content += "\n" + hint
 
+	case phaseParams:
+		selected := m.actions[m.cursor]
+		title = fmt.Sprintf(" %s · Parameters ", selected.Name)
+		content = m.renderParams(contentW)
+
 	case phaseRunning:
 		title = fmt.Sprintf(" Running · %s ", m.actions[m.cursor].Name)
 		content = lipgloss.NewStyle().Width(contentW).AlignHorizontal(lipgloss.Center).
@@ -238,6 +333,74 @@ func (m *Modal) Render(background string) string {
 	bgLayer := lipgloss.NewLayer(bg)
 	overlayLayer := lipgloss.NewLayer(box).X(x).Y(y).Z(1)
 	return lipgloss.NewCompositor(bgLayer, overlayLayer).Render()
+}
+
+func (m *Modal) renderParams(contentW int) string {
+	var sb strings.Builder
+	mutedStyle := lipgloss.NewStyle().Foreground(m.styles.Muted)
+	boldStyle := lipgloss.NewStyle().Bold(true)
+
+	for i, f := range m.paramFields {
+		prefix := "  "
+		if i == m.paramCursor {
+			prefix = color.ForegroundText(m.styles.HintKeyColor, "▸ ")
+		}
+		label := f.Name
+		if i == m.paramCursor {
+			label = boldStyle.Render(label)
+		}
+		sb.WriteString(prefix + label)
+		if f.Description != "" {
+			sb.WriteString(mutedStyle.Render(" — " + truncate(f.Description, contentW-len(f.Name)-6)))
+		}
+		sb.WriteString("\n")
+
+		// Show current value or input prompt.
+		val := f.Value
+		if i == m.paramCursor && m.paramEdit {
+			val += "█"
+		}
+		if val == "" && (i != m.paramCursor || !m.paramEdit) {
+			sb.WriteString("    " + mutedStyle.Render("(empty)") + "\n")
+		} else {
+			sb.WriteString("    " + val + "\n")
+		}
+	}
+
+	// "Run" button.
+	sb.WriteString("\n")
+	runLabel := "  [Run Action]"
+	if m.paramCursor >= len(m.paramFields) {
+		runLabel = color.ForegroundText(m.styles.HintKeyColor, "▸ ") + boldStyle.Render("[Run Action]")
+	}
+	sb.WriteString(runLabel + "\n")
+
+	hint := lipgloss.NewStyle().Foreground(m.styles.Muted).Width(contentW).
+		AlignHorizontal(lipgloss.Center).Render("[enter] edit/run  [↑/↓] navigate  [esc] back")
+	sb.WriteString("\n" + hint)
+
+	return sb.String()
+}
+
+// buildParamFields extracts parameter names from a JSON-Schema style params map.
+func buildParamFields(params map[string]interface{}) []paramField {
+	fields := make([]paramField, 0, len(params))
+	for name, spec := range params {
+		desc := ""
+		if m, ok := spec.(map[string]interface{}); ok {
+			if d, ok := m["description"].(string); ok {
+				desc = d
+			}
+		}
+		fields = append(fields, paramField{
+			Name:        name,
+			Description: desc,
+		})
+	}
+	sort.Slice(fields, func(i, j int) bool {
+		return fields[i].Name < fields[j].Name
+	})
+	return fields
 }
 
 func truncate(s string, max int) string {
