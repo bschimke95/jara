@@ -62,6 +62,9 @@ type Styles struct {
 	// CheckRedColor is the raw color for negative check marks.
 	CheckRedColor color.Color
 
+	// AssistantLabelColor is the raw color for the "Assistant:" label in chat.
+	AssistantLabelColor color.Color
+
 	// InfoLabelColor is the raw color for info labels.
 	InfoLabelColor color.Color
 
@@ -163,6 +166,9 @@ type Styles struct {
 	// CheckRed is the style for negative/unchecked marks.
 	CheckRed lipgloss.Style
 
+	// AssistantLabel is the bold style for the "Assistant:" label in chat.
+	AssistantLabel lipgloss.Style
+
 	// Pending is italic muted text for placeholder/pending rows.
 	Pending lipgloss.Style
 }
@@ -217,6 +223,7 @@ type palette struct {
 	crumbBgAlt        color.Color
 	checkGreen        color.Color
 	checkRed          color.Color
+	assistantLabel    color.Color
 	statusColors      map[string]color.Color
 }
 
@@ -244,6 +251,7 @@ func defaultPalette() palette {
 		crumbBgAlt:        lipgloss.Color("#3e4451"),
 		checkGreen:        lipgloss.Color("#98c379"),
 		checkRed:          lipgloss.Color("#e06c75"),
+		assistantLabel:    lipgloss.Color("#98c379"),
 		statusColors: map[string]color.Color{
 			"active":      lipgloss.Color("#00ff00"),
 			"idle":        lipgloss.Color("#00ff00"),
@@ -286,6 +294,7 @@ func newStyles(p palette) *Styles {
 		ErrorColor:             p.errorColor,
 		CheckGreenColor:        p.checkGreen,
 		CheckRedColor:          p.checkRed,
+		AssistantLabelColor:    p.assistantLabel,
 		InfoLabelColor:         p.infoLabel,
 		InfoValueColor:         p.infoValue,
 		BorderColor:            p.border,
@@ -359,6 +368,8 @@ func (s *Styles) RebuildStyles() {
 
 	s.CheckGreen = lipgloss.NewStyle().Foreground(s.CheckGreenColor).Bold(true)
 	s.CheckRed = lipgloss.NewStyle().Foreground(s.CheckRedColor)
+
+	s.AssistantLabel = lipgloss.NewStyle().Foreground(s.AssistantLabelColor).Bold(true)
 
 	s.Pending = lipgloss.NewStyle().Foreground(s.Muted).Italic(true)
 }

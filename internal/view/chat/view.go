@@ -458,7 +458,7 @@ func (v *View) renderMessages() string {
 	}
 
 	userStyle := lipgloss.NewStyle().Foreground(v.styles.Primary).Bold(true)
-	assistantLabel := lipgloss.NewStyle().Foreground(lipgloss.Color("#98c379")).Bold(true)
+	assistantLabel := v.styles.AssistantLabel
 	contentStyle := lipgloss.NewStyle().Foreground(v.styles.Title)
 	mutedStyle := lipgloss.NewStyle().Foreground(v.styles.Muted)
 

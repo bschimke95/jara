@@ -7,7 +7,11 @@ import (
 	"google.golang.org/genai"
 )
 
-const defaultGeminiModel = "gemini-2.0-flash"
+const (
+	defaultGeminiModel       = "gemini-2.0-flash"
+	defaultGeminiTemperature = 0.7
+	defaultGeminiMaxTokens   = 4096
+)
 
 // GeminiClient implements Client using the Google Gemini API.
 type GeminiClient struct {
@@ -58,8 +62,8 @@ func NewGeminiClient(ctx context.Context, apiKey string, opts ...GeminiOption) (
 	g := &GeminiClient{
 		client:      client,
 		model:       defaultGeminiModel,
-		temperature: 0.7,
-		maxTokens:   4096,
+		temperature: defaultGeminiTemperature,
+		maxTokens:   defaultGeminiMaxTokens,
 	}
 	for _, opt := range opts {
 		opt(g)
