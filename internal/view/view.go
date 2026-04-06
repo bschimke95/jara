@@ -136,3 +136,17 @@ type CharmSuggestionReceiver interface {
 type CharmEndpointReceiver interface {
 	SetCharmEndpoints(endpoints map[string]map[string]model.CharmEndpoint)
 }
+
+// Copyable is an optional interface for views that support copying the current
+// selection to the clipboard. The returned string is set via OSC 52.
+type Copyable interface {
+	// CopySelection returns the text of the currently selected row or item.
+	// An empty string means nothing is selected.
+	CopySelection() string
+}
+
+// ClipboardMsg is sent when text has been copied to the clipboard.
+// The app uses this to show a brief notification.
+type ClipboardMsg struct {
+	Text string
+}

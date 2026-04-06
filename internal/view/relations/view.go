@@ -81,6 +81,14 @@ func (r *View) KeyHints() []view.KeyHint {
 	return hints
 }
 
+// CopySelection implements view.Copyable.
+func (r *View) CopySelection() string {
+	if row := r.table.SelectedRow(); row != nil {
+		return strings.Join(row, "\t")
+	}
+	return ""
+}
+
 func (r *View) Init() tea.Cmd { return nil }
 
 func (r *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {

@@ -2,6 +2,8 @@
 package controllers
 
 import (
+	"strings"
+
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
@@ -46,6 +48,14 @@ func (c *View) KeyHints() []view.KeyHint {
 	return []view.KeyHint{
 		{Key: bk(c.keys.Enter), Desc: "models"},
 	}
+}
+
+// CopySelection implements view.Copyable.
+func (c *View) CopySelection() string {
+	if row := c.table.SelectedRow(); row != nil {
+		return strings.Join(row, "\t")
+	}
+	return ""
 }
 
 func (c *View) Init() tea.Cmd { return nil }
