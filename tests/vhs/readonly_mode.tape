@@ -15,6 +15,7 @@ Sleep 1s
 
 # Attempt to scale up (+ key) — should show read-only error briefly.
 Type "+"
+Wait+Screen /Relations/
 Show
 
 Sleep 2s

@@ -7,6 +7,8 @@ Hide
 Type "./jara --demo"
 Enter
 Sleep 2s
+Wait+Screen /Applications/
+Wait+Screen /Relations/
 Show
 
 # Navigate to secrets via command mode.

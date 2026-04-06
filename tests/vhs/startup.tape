@@ -11,6 +11,7 @@ Enter
 # Wait for the model detail view — applications pane with mock data.
 Wait+Screen /Applications/
 Wait+Screen /grafana/
+Wait+Screen /Relations/
 Show
 
 Sleep 2s

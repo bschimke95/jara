@@ -22,6 +22,10 @@ jobs:
       - name: Run VHS integration tests
         run: make test-vhs
 
+      - name: Regenerate golden files for download
+        if: failure()
+        run: make test-vhs-update
+
       - name: Upload golden files on failure
         if: failure()
         uses: actions/upload-artifact@v4
