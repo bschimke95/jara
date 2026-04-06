@@ -156,7 +156,7 @@ func TestMockClient_ConcurrentAccess(t *testing.T) {
 			defer wg.Done()
 			err := client.ScaleApplication(context.Background(), "postgresql", 1)
 			if err != nil {
-				errors <- fmt.Errorf("concurrent scale error: %v", err)
+				errors <- fmt.Errorf("concurrent scale error: %w", err)
 			}
 		}()
 	}

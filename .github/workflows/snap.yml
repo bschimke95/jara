@@ -1,8 +1,10 @@
 name: Snap
 
 on:
-  push:
+  workflow_run:
+    workflows: ["CI"]
     branches: [main]
+    types: [completed]
 
 permissions:
   contents: read
@@ -11,6 +13,7 @@ jobs:
   snap:
     name: Build and Publish Snap
     runs-on: ubuntu-latest
+    if: github.event.workflow_run.conclusion == 'success'
     steps:
       - uses: actions/checkout@v4
         with:
