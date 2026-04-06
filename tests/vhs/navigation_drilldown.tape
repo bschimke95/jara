@@ -32,6 +32,7 @@ Enter
 
 # Wait for applications pane to render.
 Wait+Screen /grafana/
+Wait+Screen /Relations/
 Show
 
 Sleep 2s

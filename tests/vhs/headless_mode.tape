@@ -10,6 +10,7 @@ Enter
 
 # Wait for model view — header box should be absent.
 Wait+Screen /grafana/
+Wait+Screen /Relations/
 Show
 
 Sleep 2s

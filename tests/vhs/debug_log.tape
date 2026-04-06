@@ -94,6 +94,7 @@ Sleep 1s
 
 Escape
 Wait+Screen /Applications/
+Wait+Screen /Relations/
 Show
 
 Sleep 500ms
