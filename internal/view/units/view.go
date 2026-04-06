@@ -65,21 +65,17 @@ func (u *View) SetStatus(status *model.FullStatus) {
 
 // KeyHints returns the view-specific key hints for the header.
 func (u *View) KeyHints() []view.KeyHint {
-	bk := func(b key.Binding) string { return b.Help().Key }
 	return []view.KeyHint{
-		{Key: bk(u.keys.RunAction), Desc: "action"},
-		{Key: bk(u.keys.ScaleUp) + "/" + bk(u.keys.ScaleDown), Desc: "scale"},
-		{Key: bk(u.keys.LogsJump), Desc: "logs (unit)"},
-		{Key: bk(u.keys.LogsView), Desc: "logs"},
+		{Key: view.BindingKey(u.keys.RunAction), Desc: "action"},
+		{Key: view.BindingKey(u.keys.ScaleUp) + "/" + view.BindingKey(u.keys.ScaleDown), Desc: "scale"},
+		{Key: view.BindingKey(u.keys.LogsJump), Desc: "logs (unit)"},
+		{Key: view.BindingKey(u.keys.LogsView), Desc: "logs"},
 	}
 }
 
 // CopySelection implements view.Copyable.
 func (u *View) CopySelection() string {
-	if row := u.table.SelectedRow(); row != nil {
-		return strings.Join(row, "\t")
-	}
-	return ""
+	return view.CopySelectedRow(u.table)
 }
 
 // rebuildRows recomputes the table rows from the current status + pending deltas.

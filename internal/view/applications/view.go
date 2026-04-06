@@ -2,8 +2,6 @@
 package applications
 
 import (
-	"strings"
-
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
@@ -52,22 +50,18 @@ func (a *View) SetCharmSuggestions(names []string) {
 
 // KeyHints returns the view-specific key hints for the header.
 func (a *View) KeyHints() []view.KeyHint {
-	bk := func(b key.Binding) string { return b.Help().Key }
 	return []view.KeyHint{
-		{Key: bk(a.keys.Enter), Desc: "units"},
-		{Key: bk(a.keys.ConfigNav), Desc: "config"},
-		{Key: bk(a.keys.Deploy), Desc: "deploy"},
-		{Key: bk(a.keys.LogsJump), Desc: "logs (app)"},
-		{Key: bk(a.keys.LogsView), Desc: "logs"},
+		{Key: view.BindingKey(a.keys.Enter), Desc: "units"},
+		{Key: view.BindingKey(a.keys.ConfigNav), Desc: "config"},
+		{Key: view.BindingKey(a.keys.Deploy), Desc: "deploy"},
+		{Key: view.BindingKey(a.keys.LogsJump), Desc: "logs (app)"},
+		{Key: view.BindingKey(a.keys.LogsView), Desc: "logs"},
 	}
 }
 
 // CopySelection implements view.Copyable.
 func (a *View) CopySelection() string {
-	if row := a.table.SelectedRow(); row != nil {
-		return strings.Join(row, "\t")
-	}
-	return ""
+	return view.CopySelectedRow(a.table)
 }
 
 func (a *View) Init() tea.Cmd { return nil }

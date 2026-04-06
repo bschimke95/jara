@@ -10,6 +10,7 @@ import (
 
 	"github.com/bschimke95/jara/internal/color"
 	"github.com/bschimke95/jara/internal/ui"
+	"github.com/bschimke95/jara/internal/view"
 )
 
 // ClosedMsg is emitted when the help modal is dismissed.
@@ -65,16 +66,15 @@ func (m *Modal) View() tea.View {
 
 // generalHints returns the global navigation and common key hints.
 func (m *Modal) generalHints() []ui.KeyHint {
-	bk := func(b key.Binding) string { return b.Help().Key }
 	return []ui.KeyHint{
-		{Key: bk(m.keys.Up) + "/" + bk(m.keys.Down), Desc: "up/down"},
-		{Key: bk(m.keys.PageUp) + "/" + bk(m.keys.PageDown), Desc: "page up/down"},
-		{Key: bk(m.keys.Top) + "/" + bk(m.keys.Bottom), Desc: "top/bottom"},
-		{Key: bk(m.keys.Back), Desc: "back"},
-		{Key: bk(m.keys.Filter), Desc: "filter"},
-		{Key: bk(m.keys.Command), Desc: "cmd"},
-		{Key: bk(m.keys.Help), Desc: "help"},
-		{Key: bk(m.keys.Quit), Desc: "quit"},
+		{Key: view.BindingKey(m.keys.Up) + "/" + view.BindingKey(m.keys.Down), Desc: "up/down"},
+		{Key: view.BindingKey(m.keys.PageUp) + "/" + view.BindingKey(m.keys.PageDown), Desc: "page up/down"},
+		{Key: view.BindingKey(m.keys.Top) + "/" + view.BindingKey(m.keys.Bottom), Desc: "top/bottom"},
+		{Key: view.BindingKey(m.keys.Back), Desc: "back"},
+		{Key: view.BindingKey(m.keys.Filter), Desc: "filter"},
+		{Key: view.BindingKey(m.keys.Command), Desc: "cmd"},
+		{Key: view.BindingKey(m.keys.Help), Desc: "help"},
+		{Key: view.BindingKey(m.keys.Quit), Desc: "quit"},
 	}
 }
 

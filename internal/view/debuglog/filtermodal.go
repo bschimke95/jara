@@ -14,6 +14,7 @@ import (
 	"github.com/bschimke95/jara/internal/color"
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/ui"
+	"github.com/bschimke95/jara/internal/view"
 )
 
 // logLevels are the valid Juju debug-log severity levels.
@@ -597,22 +598,20 @@ func (m *FilterModal) renderFooter() string {
 	descStyle := lipgloss.NewStyle().Foreground(m.styles.HintDescColor)
 	sep := descStyle.Render("  │  ")
 
-	bk := func(b key.Binding) string { return b.Help().Key }
-
 	var parts []string
-	parts = append(parts, keyStyle.Render("<"+bk(m.keys.Up)+"/"+bk(m.keys.Down)+">")+" "+descStyle.Render("move"))
+	parts = append(parts, keyStyle.Render("<"+view.BindingKey(m.keys.Up)+"/"+view.BindingKey(m.keys.Down)+">")+" "+descStyle.Render("move"))
 	if m.focus == focusLeft {
-		parts = append(parts, keyStyle.Render("<"+bk(m.keys.Enter)+"/"+bk(m.keys.Right)+">")+" "+descStyle.Render("open"))
+		parts = append(parts, keyStyle.Render("<"+view.BindingKey(m.keys.Enter)+"/"+view.BindingKey(m.keys.Right)+">")+" "+descStyle.Render("open"))
 	} else {
 		if m.leftCursor == leftPaneLevel {
-			parts = append(parts, keyStyle.Render("<"+bk(m.keys.Enter)+">")+" "+descStyle.Render("select"))
+			parts = append(parts, keyStyle.Render("<"+view.BindingKey(m.keys.Enter)+">")+" "+descStyle.Render("select"))
 		} else {
-			parts = append(parts, keyStyle.Render("<"+bk(m.keys.Enter)+">")+" "+descStyle.Render("toggle"))
+			parts = append(parts, keyStyle.Render("<"+view.BindingKey(m.keys.Enter)+">")+" "+descStyle.Render("toggle"))
 		}
-		parts = append(parts, keyStyle.Render("<"+bk(m.keys.Left)+"/"+bk(m.keys.Back)+">")+" "+descStyle.Render("back"))
+		parts = append(parts, keyStyle.Render("<"+view.BindingKey(m.keys.Left)+"/"+view.BindingKey(m.keys.Back)+">")+" "+descStyle.Render("back"))
 	}
-	parts = append(parts, keyStyle.Render("<"+bk(m.keys.ApplyFilter)+">")+" "+descStyle.Render("apply"))
-	parts = append(parts, keyStyle.Render("<"+bk(m.keys.Back)+">")+" "+descStyle.Render("close"))
+	parts = append(parts, keyStyle.Render("<"+view.BindingKey(m.keys.ApplyFilter)+">")+" "+descStyle.Render("apply"))
+	parts = append(parts, keyStyle.Render("<"+view.BindingKey(m.keys.Back)+">")+" "+descStyle.Render("close"))
 
 	return " " + strings.Join(parts, sep)
 }

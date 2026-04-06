@@ -2,7 +2,6 @@ package modelview
 
 import (
 	"fmt"
-	"strings"
 
 	"charm.land/bubbles/v2/table"
 
@@ -45,15 +44,4 @@ func applicationRows(apps map[string]model.Application, s *color.Styles) []table
 		})
 	}
 	return result
-}
-
-func padToHeight(content string, height int) string {
-	lines := strings.Split(content, "\n")
-	for len(lines) < height {
-		lines = append(lines, "")
-	}
-	if len(lines) > height {
-		lines = lines[:height]
-	}
-	return strings.Join(lines, "\n")
 }

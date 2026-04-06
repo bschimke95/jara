@@ -67,15 +67,14 @@ func (d *View) SetStatus(s *model.FullStatus) {
 
 // KeyHints returns the view-specific key hints for the header.
 func (d *View) KeyHints() []view.KeyHint {
-	bk := func(b key.Binding) string { return b.Help().Key }
 	return []view.KeyHint{
-		{Key: bk(d.keys.Back), Desc: "back"},
-		{Key: bk(d.keys.Bottom), Desc: "bottom"},
-		{Key: bk(d.keys.Top), Desc: "top"},
-		{Key: bk(d.keys.FilterOpen), Desc: "filter"},
-		{Key: bk(d.keys.ClearFilter), Desc: "clear filter"},
-		{Key: bk(d.keys.SearchOpen), Desc: "search"},
-		{Key: bk(d.keys.SearchNext) + "/" + bk(d.keys.SearchPrev), Desc: "next/prev match"},
+		{Key: view.BindingKey(d.keys.Back), Desc: "back"},
+		{Key: view.BindingKey(d.keys.Bottom), Desc: "bottom"},
+		{Key: view.BindingKey(d.keys.Top), Desc: "top"},
+		{Key: view.BindingKey(d.keys.FilterOpen), Desc: "filter"},
+		{Key: view.BindingKey(d.keys.ClearFilter), Desc: "clear filter"},
+		{Key: view.BindingKey(d.keys.SearchOpen), Desc: "search"},
+		{Key: view.BindingKey(d.keys.SearchNext) + "/" + view.BindingKey(d.keys.SearchPrev), Desc: "next/prev match"},
 	}
 }
 
