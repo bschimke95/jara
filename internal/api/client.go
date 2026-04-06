@@ -5,10 +5,16 @@ package api
 
 import (
 	"context"
+	"errors"
 	"time"
 
 	"github.com/bschimke95/jara/internal/model"
 )
+
+// ErrNoSelectedModel is returned when a Juju operation requires a model but
+// none is currently selected (e.g. the user has not yet run `juju switch`).
+// Callers should check for this with errors.Is(err, ErrNoSelectedModel).
+var ErrNoSelectedModel = errors.New("no selected model")
 
 // Client defines the interface for fetching Juju status.
 type Client interface {

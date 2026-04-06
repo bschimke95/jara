@@ -81,9 +81,9 @@ func TestIsNoModelError(t *testing.T) {
 	}{
 		{"nil error", nil, false},
 		{"unrelated error", fmt.Errorf("connection refused"), false},
-		{"no selected model", fmt.Errorf("No selected model"), true},
-		{"resolving current model", fmt.Errorf("error resolving current model"), true},
-		{"wrapped no selected model", fmt.Errorf("status: %w", fmt.Errorf("No selected model")), true},
+		{"sentinel directly", api.ErrNoSelectedModel, true},
+		{"wrapped sentinel", fmt.Errorf("resolving current model for controller %q: %w", "prod", fmt.Errorf("current model not set: %w", api.ErrNoSelectedModel)), true},
+		{"double wrapped sentinel", fmt.Errorf("status: %w", fmt.Errorf("inner: %w", api.ErrNoSelectedModel)), true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
