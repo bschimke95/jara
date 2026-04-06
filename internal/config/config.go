@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -271,6 +272,24 @@ func (c *Config) Load(path string) error {
 	}
 	if c.Jara.CharmhubURL == "" {
 		c.Jara.CharmhubURL = DefaultCharmhubURL
+	}
+
+	// Clamp RefreshRate to a sensible range.
+	minRate := 0.5  // 500ms
+	maxRate := 60.0 // 60s
+	if c.Jara.RefreshRate < minRate {
+		c.Jara.RefreshRate = minRate
+	}
+	if c.Jara.RefreshRate > maxRate {
+		c.Jara.RefreshRate = maxRate
+	}
+
+	// Validate LogLevel.
+	switch strings.ToLower(c.Jara.LogLevel) {
+	case "error", "warn", "info", "debug", "trace":
+		c.Jara.LogLevel = strings.ToLower(c.Jara.LogLevel)
+	default:
+		c.Jara.LogLevel = DefaultLogLevel
 	}
 
 	return nil

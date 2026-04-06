@@ -492,6 +492,10 @@ func (c *JujuClient) Status(ctx context.Context) (*model.FullStatus, error) {
 // For IAAS (machine) models it uses AddUnits / DestroyUnits instead,
 // because the ScaleApplication API is only supported on container models.
 func (c *JujuClient) ScaleApplication(ctx context.Context, appName string, delta int) error {
+	if delta == 0 {
+		return nil
+	}
+
 	conn, err := c.connect(ctx)
 	if err != nil {
 		return err
@@ -635,6 +639,10 @@ func (c *JujuClient) DeployApplication(ctx context.Context, opts model.DeployOpt
 // RelateApplications adds a relation between two endpoints using the
 // Application facade's AddRelation call.
 func (c *JujuClient) RelateApplications(ctx context.Context, endpointA, endpointB string) error {
+	if endpointA == "" || endpointB == "" {
+		return fmt.Errorf("both endpoints must be non-empty")
+	}
+
 	conn, err := c.connect(ctx)
 	if err != nil {
 		return err
@@ -651,6 +659,10 @@ func (c *JujuClient) RelateApplications(ctx context.Context, endpointA, endpoint
 // DestroyRelation removes a relation between two endpoints using the
 // Application facade's DestroyRelation call.
 func (c *JujuClient) DestroyRelation(ctx context.Context, endpointA, endpointB string) error {
+	if endpointA == "" || endpointB == "" {
+		return fmt.Errorf("both endpoints must be non-empty")
+	}
+
 	conn, err := c.connect(ctx)
 	if err != nil {
 		return err
@@ -893,6 +905,10 @@ func (c *JujuClient) ListOffers(ctx context.Context) ([]model.Offer, error) {
 
 // AppConfig returns the configuration key-value pairs for an application.
 func (c *JujuClient) AppConfig(ctx context.Context, appName string) ([]model.ConfigEntry, error) {
+	if appName == "" {
+		return nil, fmt.Errorf("application name must be non-empty")
+	}
+
 	conn, err := c.connect(ctx)
 	if err != nil {
 		return nil, err
@@ -933,6 +949,10 @@ func (c *JujuClient) AppConfig(ctx context.Context, appName string) ([]model.Con
 
 // ApplicationActions returns the available charm actions for an application.
 func (c *JujuClient) ApplicationActions(ctx context.Context, appName string) ([]model.ActionSpec, error) {
+	if appName == "" {
+		return nil, fmt.Errorf("application name must be non-empty")
+	}
+
 	conn, err := c.connect(ctx)
 	if err != nil {
 		return nil, err
@@ -958,6 +978,13 @@ func (c *JujuClient) ApplicationActions(ctx context.Context, appName string) ([]
 
 // RunAction executes a named action on a unit and waits for the result.
 func (c *JujuClient) RunAction(ctx context.Context, unitName, actionName string, params map[string]string) (*model.ActionResult, error) {
+	if unitName == "" {
+		return nil, fmt.Errorf("unit name must be non-empty")
+	}
+	if actionName == "" {
+		return nil, fmt.Errorf("action name must be non-empty")
+	}
+
 	conn, err := c.connect(ctx)
 	if err != nil {
 		return nil, err
