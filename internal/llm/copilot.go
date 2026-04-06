@@ -21,6 +21,7 @@ type CopilotClient struct {
 	sdkClient   *copilot.Client
 	model       string
 	githubToken string
+	logLevel    string
 
 	mu      sync.Mutex
 	started bool
@@ -46,6 +47,16 @@ func WithCopilotGitHubToken(token string) CopilotOption {
 	}
 }
 
+// WithCopilotLogLevel sets the log level for the Copilot SDK.
+// Valid values are "error", "warn", "info", "debug". Defaults to "error".
+func WithCopilotLogLevel(level string) CopilotOption {
+	return func(c *CopilotClient) {
+		if level != "" {
+			c.logLevel = level
+		}
+	}
+}
+
 // NewCopilotClient creates a Copilot-backed LLM client using the official SDK.
 // The Copilot CLI binary must be installed on the system and available in PATH.
 // Authentication is handled via environment variables (GITHUB_TOKEN, GH_TOKEN,
@@ -64,14 +75,15 @@ func NewCopilotClient(opts ...CopilotOption) (*CopilotClient, error) {
 	}
 
 	c := &CopilotClient{
-		model: copilotDefaultModel,
+		model:    copilotDefaultModel,
+		logLevel: "error",
 	}
 	for _, opt := range opts {
 		opt(c)
 	}
 
 	clientOpts := &copilot.ClientOptions{
-		LogLevel: "error",
+		LogLevel: c.logLevel,
 		CLIPath:  cliPath,
 	}
 	if c.githubToken != "" {

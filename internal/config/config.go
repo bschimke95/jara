@@ -160,6 +160,9 @@ type SkinConfig struct {
 	// CheckRed is the color for negative/unchecked marks.
 	CheckRed string `yaml:"checkRed,omitempty"`
 
+	// AssistantLabel is the color for the "Assistant:" label in chat.
+	AssistantLabel string `yaml:"assistantLabel,omitempty"`
+
 	// Status maps Juju status strings to hex colors for overrides.
 	Status StatusColorsConfig `yaml:"status,omitempty"`
 }

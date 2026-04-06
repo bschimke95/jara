@@ -643,6 +643,7 @@ func initLLMClient(cfg *config.Config) (llm.Client, error) {
 	case "copilot":
 		opts := []llm.CopilotOption{
 			llm.WithCopilotModel(aiCfg.Model),
+			llm.WithCopilotLogLevel(cfg.Jara.LogLevel),
 		}
 		if cred != "" {
 			opts = append(opts, llm.WithCopilotGitHubToken(cred))
@@ -662,19 +663,16 @@ func initLLMClient(cfg *config.Config) (llm.Client, error) {
 		if cred == "" {
 			return nil, nil
 		}
-		temp := 0.7
-		if aiCfg.Temperature != nil {
-			temp = *aiCfg.Temperature
-		}
-		maxTokens := 4096
-		if aiCfg.MaxTokens != nil {
-			maxTokens = *aiCfg.MaxTokens
-		}
-		c, err := llm.NewGeminiClient(context.Background(), cred,
+		opts := []llm.GeminiOption{
 			llm.WithGeminiModel(aiCfg.Model),
-			llm.WithGeminiTemperature(temp),
-			llm.WithGeminiMaxTokens(maxTokens),
-		)
+		}
+		if aiCfg.Temperature != nil {
+			opts = append(opts, llm.WithGeminiTemperature(*aiCfg.Temperature))
+		}
+		if aiCfg.MaxTokens != nil {
+			opts = append(opts, llm.WithGeminiMaxTokens(*aiCfg.MaxTokens))
+		}
+		c, err := llm.NewGeminiClient(context.Background(), cred, opts...)
 		if err != nil {
 			return nil, err
 		}
