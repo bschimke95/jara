@@ -46,6 +46,8 @@ type Client interface {
 	CharmRelationInfo(ctx context.Context, charmName string) (map[string]model.CharmEndpoint, error)
 	// ListOffers returns application offers for the current model.
 	ListOffers(ctx context.Context) ([]model.Offer, error)
+	// AppConfig returns the configuration key-value pairs for an application.
+	AppConfig(ctx context.Context, appName string) ([]model.ConfigEntry, error)
 	// ListSecrets returns the secrets for the current model.
 	ListSecrets(ctx context.Context) ([]model.Secret, error)
 	// RevealSecret returns the decoded key-value content of a secret.

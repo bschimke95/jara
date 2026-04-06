@@ -42,6 +42,7 @@ type KeyMap struct {
 	ApplyFilter     key.Binding // Shift+F: apply filter in modal
 	Right           key.Binding // l/right: move right in modal
 	Left            key.Binding // h/left: move left in modal
+	ConfigNav       key.Binding // C: view application config
 	ChatNav         key.Binding // c: navigate to AI chat view
 	Yank            key.Binding // y: copy selected row to clipboard
 }
@@ -192,6 +193,10 @@ func DefaultKeyMap() KeyMap {
 		Left: key.NewBinding(
 			key.WithKeys("h", "left"),
 			key.WithHelp("h/←", "left"),
+		),
+		ConfigNav: key.NewBinding(
+			key.WithKeys("C"),
+			key.WithHelp("C", "config"),
 		),
 		ChatNav: key.NewBinding(
 			key.WithKeys("c"),

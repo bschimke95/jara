@@ -1,0 +1,20 @@
+package appconfig
+
+import (
+	"charm.land/bubbles/v2/table"
+
+	"github.com/bschimke95/jara/internal/color"
+	"github.com/bschimke95/jara/internal/model"
+	"github.com/bschimke95/jara/internal/ui"
+)
+
+// View is the Bubble Tea model for the application config table view.
+type View struct {
+	table   table.Model
+	keys    ui.KeyMap
+	styles  *color.Styles
+	width   int
+	height  int
+	appName string
+	entries []model.ConfigEntry
+}

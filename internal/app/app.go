@@ -19,6 +19,7 @@ import (
 	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/ui"
 	"github.com/bschimke95/jara/internal/view"
+	"github.com/bschimke95/jara/internal/view/appconfig"
 	"github.com/bschimke95/jara/internal/view/applications"
 	"github.com/bschimke95/jara/internal/view/chat"
 	"github.com/bschimke95/jara/internal/view/controllers"
@@ -139,6 +140,7 @@ func New(client api.Client, opts ...Option) Model {
 	// Initialize helpModal with the final resolved keys and styles.
 	m.helpModal = helpmodal.New(m.keys, s)
 
+	m.views[nav.AppConfigView] = appconfig.New(keys, s)
 	m.views[nav.ApplicationsView] = applications.New(keys, s)
 	m.views[nav.UnitsView] = units.New("", keys, s)
 	m.views[nav.MachinesView] = machines.New(keys, s)
@@ -386,6 +388,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case offers.FetchOffersMsg:
 		return m, m.fetchOffers()
 
+	case appconfig.FetchAppConfigMsg:
+		return m, m.fetchAppConfig(msg.AppName)
+
 	case debuglog.FilterChangedMsg:
 		return m, m.startDebugLogStream(msg.Filter)
 	}
@@ -452,6 +457,8 @@ func (m Model) viewName() string {
 		return "Secret"
 	case nav.OffersView:
 		return "Offers"
+	case nav.AppConfigView:
+		return "Config"
 	case nav.DebugLogView:
 		return "Debug Log"
 	case nav.ChatView:

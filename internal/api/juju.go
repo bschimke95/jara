@@ -842,6 +842,47 @@ func (c *JujuClient) ListOffers(ctx context.Context) ([]model.Offer, error) {
 	return result, nil
 }
 
+// AppConfig returns the configuration key-value pairs for an application.
+func (c *JujuClient) AppConfig(ctx context.Context, appName string) ([]model.ConfigEntry, error) {
+	conn, err := c.connect(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = conn.Close() }()
+
+	appClient := application.NewClient(conn)
+	result, err := appClient.Get(ctx, appName)
+	if err != nil {
+		return nil, fmt.Errorf("getting app config: %w", err)
+	}
+
+	var entries []model.ConfigEntry
+	for key, raw := range result.CharmConfig {
+		m, ok := raw.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		e := model.ConfigEntry{Key: key}
+		if v, ok := m["value"]; ok {
+			e.Value = fmt.Sprintf("%v", v)
+		}
+		if v, ok := m["default"]; ok {
+			e.Default = fmt.Sprintf("%v", v)
+		}
+		if v, ok := m["source"]; ok {
+			e.Source = fmt.Sprintf("%v", v)
+		}
+		if v, ok := m["type"]; ok {
+			e.Type = fmt.Sprintf("%v", v)
+		}
+		if v, ok := m["description"]; ok {
+			e.Description = fmt.Sprintf("%v", v)
+		}
+		entries = append(entries, e)
+	}
+	return entries, nil
+}
+
 // currentModelType returns the model type ("iaas" or "caas") for the
 // currently targeted model by reading from the local client store.
 func (c *JujuClient) currentModelType() (string, error) {
