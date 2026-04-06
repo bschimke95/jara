@@ -41,8 +41,11 @@ func (v *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case StorageDataMsg:
 		if msg.Err != nil {
+			v.err = msg.Err
 			return v, nil
 		}
+		v.err = nil
+		v.hasData = true
 		v.table.SetRows(Rows(msg.Instances, v.styles))
 		return v, nil
 	}
@@ -52,6 +55,15 @@ func (v *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (v *View) View() tea.View {
+	if v.err != nil {
+		return tea.NewView(v.styles.ErrorStyle.Render("Error: " + v.err.Error()))
+	}
+	if !v.hasData {
+		return tea.NewView(v.styles.MutedText.Render("Loading storage..."))
+	}
+	if len(v.table.Rows()) == 0 {
+		return tea.NewView(v.styles.MutedText.Render("No storage instances found."))
+	}
 	return tea.NewView(v.table.View())
 }
 

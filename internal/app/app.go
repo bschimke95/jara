@@ -451,6 +451,10 @@ func (m Model) contentHeight() int {
 			chrome += 3
 		}
 	}
+	// Account for the error line when one is present.
+	if m.err != nil {
+		chrome++
+	}
 	h := m.height - chrome
 	if h < 5 {
 		h = 5
