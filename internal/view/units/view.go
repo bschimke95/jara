@@ -14,6 +14,7 @@ import (
 	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/ui"
 	"github.com/bschimke95/jara/internal/view"
+	"github.com/bschimke95/jara/internal/view/actionmodal"
 )
 
 // New creates a new units view. If appName is non-empty, only that app's units are shown.
@@ -66,6 +67,7 @@ func (u *View) SetStatus(status *model.FullStatus) {
 func (u *View) KeyHints() []view.KeyHint {
 	bk := func(b key.Binding) string { return b.Help().Key }
 	return []view.KeyHint{
+		{Key: bk(u.keys.RunAction), Desc: "action"},
 		{Key: bk(u.keys.ScaleUp) + "/" + bk(u.keys.ScaleDown), Desc: "scale"},
 		{Key: bk(u.keys.LogsJump), Desc: "logs (unit)"},
 		{Key: bk(u.keys.LogsView), Desc: "logs"},
@@ -136,6 +138,21 @@ func (u *View) rebuildRows() {
 func (u *View) Init() tea.Cmd { return nil }
 
 func (u *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	// When the action modal is open, delegate all messages to it.
+	if u.actionModalOpen {
+		switch msg := msg.(type) {
+		case actionmodal.CloseMsg:
+			u.actionModalOpen = false
+			u.actionModal = nil
+			return u, nil
+		default:
+			var cmd tea.Cmd
+			newModel, cmd := u.actionModal.Update(msg)
+			u.actionModal = newModel.(*actionmodal.Modal)
+			return u, cmd
+		}
+	}
+
 	if msg, ok := msg.(tea.KeyPressMsg); ok {
 		switch {
 		case key.Matches(msg, u.keys.ScaleUp):
@@ -175,6 +192,16 @@ func (u *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return u, func() tea.Msg {
 				return view.NavigateMsg{Target: nav.DebugLogView}
 			}
+		case key.Matches(msg, u.keys.RunAction):
+			unitName := u.selectedUnitName()
+			appName := u.selectedAppName()
+			if unitName != "" && appName != "" {
+				m := actionmodal.New(unitName, appName, u.keys, u.styles)
+				m.SetSize(u.width, u.height)
+				u.actionModal = m
+				u.actionModalOpen = true
+				return u, m.Init()
+			}
 		}
 	}
 	var cmd tea.Cmd
@@ -191,13 +218,25 @@ func (u *View) selectedAppName() string {
 	if row == nil {
 		return ""
 	}
-	unitName := row[0]
+	unitName := strings.TrimSpace(ansi.Strip(row[0]))
 	for i := len(unitName) - 1; i >= 0; i-- {
 		if unitName[i] == '/' {
 			return unitName[:i]
 		}
 	}
 	return ""
+}
+
+// selectedUnitName returns the unit name (e.g. "myapp/0") for the highlighted row.
+func (u *View) selectedUnitName() string {
+	row := u.table.SelectedRow()
+	if row == nil {
+		return ""
+	}
+	name := strings.TrimSpace(ansi.Strip(row[0]))
+	// Strip leading indicator characters like ★.
+	name = strings.TrimLeft(name, "★ ")
+	return name
 }
 
 func (u *View) View() tea.View {
@@ -227,7 +266,11 @@ func (u *View) View() tea.View {
 			u.table.SetRows(rows)
 		}()
 	}
-	return tea.NewView(u.table.View())
+	tableView := u.table.View()
+	if u.actionModalOpen && u.actionModal != nil {
+		return tea.NewView(u.actionModal.Render(tableView))
+	}
+	return tea.NewView(tableView)
 }
 
 func (u *View) Enter(ctx view.NavigateContext) (tea.Cmd, error) {

@@ -233,6 +233,24 @@ type ConfigEntry struct {
 	Description string
 }
 
+// ActionSpec describes an available action for an application's charm.
+type ActionSpec struct {
+	Name        string
+	Description string
+	Params      map[string]interface{} // JSON-Schema style parameter definitions
+}
+
+// ActionResult holds the outcome of a single action execution.
+type ActionResult struct {
+	ID        string
+	Status    string // pending, running, completed, failed, cancelled
+	Message   string
+	Output    map[string]interface{}
+	Enqueued  time.Time
+	Started   time.Time
+	Completed time.Time
+}
+
 // CharmEndpoint describes a single endpoint from a charm's metadata.
 type CharmEndpoint struct {
 	Interface   string

@@ -6,6 +6,7 @@ import (
 	"github.com/bschimke95/jara/internal/color"
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/ui"
+	"github.com/bschimke95/jara/internal/view/actionmodal"
 )
 
 // View is the Bubble Tea model for the units table view.
@@ -18,4 +19,7 @@ type View struct {
 	status       *model.FullStatus
 	appName      string
 	pendingScale map[string]int // net pending unit delta per app
+
+	actionModal     *actionmodal.Modal
+	actionModalOpen bool
 }
