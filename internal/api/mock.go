@@ -140,6 +140,16 @@ func (c *MockClient) ListSecrets(_ context.Context) ([]model.Secret, error) {
 	return s.Secrets, nil
 }
 
+// ListOffers returns synthetic application offers.
+func (c *MockClient) ListOffers(_ context.Context) ([]model.Offer, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return []model.Offer{
+		{Name: "postgresql-db", ApplicationName: "postgresql", OfferURL: "admin/mymodel.postgresql-db", Endpoints: []string{"db"}, ActiveConnCount: 2, TotalConnCount: 3},
+		{Name: "grafana-dashboard", ApplicationName: "grafana", OfferURL: "admin/mymodel.grafana-dashboard", Endpoints: []string{"grafana-dashboard"}, ActiveConnCount: 1, TotalConnCount: 1},
+	}, nil
+}
+
 // RevealSecret returns synthetic decoded content for a mock secret.
 func (c *MockClient) RevealSecret(_ context.Context, uri string, _ int) (map[string]string, error) {
 	c.mu.Lock()
