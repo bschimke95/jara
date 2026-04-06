@@ -10,7 +10,6 @@ import (
 	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/ui"
 	"github.com/bschimke95/jara/internal/view"
-	"github.com/bschimke95/jara/internal/view/relations"
 )
 
 type inputMode int
@@ -208,10 +207,10 @@ func (m Model) renderFilterBar() string {
 }
 
 // applyFilterToActiveView passes the current filter string to views that
-// support view-level filtering (e.g. the relations view).
+// implement the view.Filterable interface.
 func (m *Model) applyFilterToActiveView() {
-	if rv, ok := m.views[m.stack.Current().View].(*relations.View); ok {
-		rv.SetFilter(m.filterStr)
+	if fv, ok := m.views[m.stack.Current().View].(view.Filterable); ok {
+		fv.SetFilter(m.filterStr)
 	}
 }
 
