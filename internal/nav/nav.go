@@ -177,7 +177,11 @@ func (s *Stack) Pop() (StackEntry, bool) {
 }
 
 // Current returns the current (top) entry.
+// Panics if the stack is empty (which should never happen when using NewStack).
 func (s *Stack) Current() StackEntry {
+	if len(s.entries) == 0 {
+		panic("nav.Stack.Current called on empty stack; use NewStack to create stacks")
+	}
 	return s.entries[len(s.entries)-1]
 }
 
@@ -213,7 +217,11 @@ func (s *Stack) Snapshot() []StackEntry {
 }
 
 // Restore replaces the stack entries with a previously-taken snapshot.
+// Panics if snap is empty, as the stack must always have at least one entry.
 func (s *Stack) Restore(snap []StackEntry) {
+	if len(snap) == 0 {
+		panic("nav.Stack.Restore called with empty snapshot")
+	}
 	s.entries = make([]StackEntry, len(snap))
 	copy(s.entries, snap)
 }

@@ -948,6 +948,9 @@ func (c *JujuClient) RunAction(ctx context.Context, unitName, actionName string,
 	if len(enqueued.Actions) == 0 {
 		return nil, fmt.Errorf("no actions enqueued")
 	}
+	if enqueued.Actions[0].Action == nil {
+		return nil, fmt.Errorf("enqueued action has no action details")
+	}
 
 	actionID := enqueued.Actions[0].Action.ID
 

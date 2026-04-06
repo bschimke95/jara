@@ -1,6 +1,8 @@
 package app
 
 import (
+	"fmt"
+
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/bschimke95/jara/internal/nav"
@@ -9,6 +11,10 @@ import (
 
 func (m Model) handleNavigate(msg view.NavigateMsg) (Model, tea.Cmd) {
 	target := m.views[msg.Target]
+	if target == nil {
+		m.err = fmt.Errorf("unknown view: %v", msg.Target)
+		return m, nil
+	}
 
 	// Snapshot the stack before mutating so we can roll back if Enter fails.
 	snap := m.stack.Snapshot()
