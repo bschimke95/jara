@@ -174,6 +174,13 @@ type Copyable interface {
 	CopySelection() string
 }
 
+// Filterable is an optional interface for views that support inline text
+// filtering. The app calls SetFilter with the current filter string whenever
+// the user types in the filter bar.
+type Filterable interface {
+	SetFilter(filter string)
+}
+
 // ClipboardMsg is sent when text has been copied to the clipboard.
 // The app uses this to show a brief notification.
 type ClipboardMsg struct {
