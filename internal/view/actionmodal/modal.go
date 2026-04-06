@@ -360,7 +360,7 @@ func (m *Modal) renderParams(contentW int) string {
 		if i == m.paramCursor && m.paramEdit {
 			val += "█"
 		}
-		if val == "" && !(i == m.paramCursor && m.paramEdit) {
+		if val == "" && (i != m.paramCursor || !m.paramEdit) {
 			sb.WriteString("    " + mutedStyle.Render("(empty)") + "\n")
 		} else {
 			sb.WriteString("    " + val + "\n")
