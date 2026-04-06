@@ -10,6 +10,7 @@ Enter
 
 # Should start directly on the model detail view, skipping controllers.
 Wait+Screen /Applications/
+Wait+Screen /Relations/
 Show
 
 Sleep 2s
