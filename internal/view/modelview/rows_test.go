@@ -5,6 +5,7 @@ import (
 
 	"github.com/bschimke95/jara/internal/color"
 	"github.com/bschimke95/jara/internal/model"
+	"github.com/bschimke95/jara/internal/view"
 )
 
 func TestApplicationColumns(t *testing.T) {
@@ -69,7 +70,7 @@ func TestPadToHeight(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := padToHeight(tt.content, tt.height)
+			got := view.PadToHeight(tt.content, tt.height)
 			lines := 1
 			for _, c := range got {
 				if c == '\n' {

@@ -57,11 +57,10 @@ func (v *View) SetStatus(status *model.FullStatus) {
 
 // KeyHints returns the view-specific key hints for the header.
 func (v *View) KeyHints() []view.KeyHint {
-	bk := func(b key.Binding) string { return b.Help().Key }
 	return []view.KeyHint{
-		{Key: bk(v.keys.Decode), Desc: "decode"},
-		{Key: bk(v.keys.Tab), Desc: "switch"},
-		{Key: bk(v.keys.Back), Desc: "back"},
+		{Key: view.BindingKey(v.keys.Decode), Desc: "decode"},
+		{Key: view.BindingKey(v.keys.Tab), Desc: "switch"},
+		{Key: view.BindingKey(v.keys.Back), Desc: "back"},
 	}
 }
 
@@ -137,7 +136,7 @@ func (v *View) View() tea.View {
 	leftContent := v.renderMetadata()
 	titleStyle := lipgloss.NewStyle().Foreground(v.styles.BorderTitleColor).Bold(true)
 	leftBox := ui.BorderBoxRawTitle(
-		padToHeight(leftContent, v.height-2),
+		view.PadToHeight(leftContent, v.height-2),
 		titleStyle.Render(" Details "),
 		leftW,
 		v.styles,
@@ -150,13 +149,13 @@ func (v *View) View() tea.View {
 	}
 
 	revBox := ui.BorderBoxRawTitle(
-		padToHeight(v.revTable.View(), halfH),
+		view.PadToHeight(v.revTable.View(), halfH),
 		titleStyle.Render(" Revisions "),
 		rightW,
 		v.styles,
 	)
 	accBox := ui.BorderBoxRawTitle(
-		padToHeight(v.accessTable.View(), halfH),
+		view.PadToHeight(v.accessTable.View(), halfH),
 		titleStyle.Render(" Access "),
 		rightW,
 		v.styles,
@@ -335,13 +334,3 @@ func (v *View) splitWidths() (int, int) {
 }
 
 // padToHeight pads or truncates content to exactly the given number of lines.
-func padToHeight(content string, height int) string {
-	lines := strings.Split(content, "\n")
-	for len(lines) < height {
-		lines = append(lines, "")
-	}
-	if len(lines) > height {
-		lines = lines[:height]
-	}
-	return strings.Join(lines, "\n")
-}

@@ -6,6 +6,7 @@ import (
 
 	"github.com/bschimke95/jara/internal/color"
 	"github.com/bschimke95/jara/internal/model"
+	"github.com/bschimke95/jara/internal/view"
 )
 
 func TestRenderDatabagPane_NilData(t *testing.T) {
@@ -113,7 +114,7 @@ func TestSortedKV(t *testing.T) {
 
 func TestPadToHeight(t *testing.T) {
 	content := "line1\nline2"
-	result := padToHeight(content, 5)
+	result := view.PadToHeight(content, 5)
 	lines := strings.Split(result, "\n")
 	if len(lines) != 5 {
 		t.Errorf("padToHeight() produced %d lines, want 5", len(lines))

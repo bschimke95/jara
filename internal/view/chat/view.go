@@ -45,11 +45,10 @@ func (v *View) SetStatus(status *model.FullStatus) {
 
 // KeyHints returns the view-specific key hints for the header.
 func (v *View) KeyHints() []view.KeyHint {
-	bk := func(b key.Binding) string { return b.Help().Key }
 	return []view.KeyHint{
 		{Key: "enter", Desc: "send"},
-		{Key: bk(v.keys.Up) + "/" + bk(v.keys.Down), Desc: "scroll"},
-		{Key: bk(v.keys.Back), Desc: "back"},
+		{Key: view.BindingKey(v.keys.Up) + "/" + view.BindingKey(v.keys.Down), Desc: "scroll"},
+		{Key: view.BindingKey(v.keys.Back), Desc: "back"},
 	}
 }
 

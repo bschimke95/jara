@@ -70,10 +70,9 @@ func (r *View) SetRelationData(data *model.RelationData) {
 
 // KeyHints returns the view-specific key hints for the header.
 func (r *View) KeyHints() []view.KeyHint {
-	bk := func(b key.Binding) string { return b.Help().Key }
 	hints := []view.KeyHint{
-		{Key: bk(r.keys.DeleteRelation), Desc: "delete"},
-		{Key: bk(r.keys.LogsJump), Desc: "logs"},
+		{Key: view.BindingKey(r.keys.DeleteRelation), Desc: "delete"},
+		{Key: view.BindingKey(r.keys.LogsJump), Desc: "logs"},
 	}
 	if r.focus != focusTable {
 		hints = append(hints, view.KeyHint{Key: "tab", Desc: "switch pane"})
@@ -83,10 +82,7 @@ func (r *View) KeyHints() []view.KeyHint {
 
 // CopySelection implements view.Copyable.
 func (r *View) CopySelection() string {
-	if row := r.table.SelectedRow(); row != nil {
-		return strings.Join(row, "\t")
-	}
-	return ""
+	return view.CopySelectedRow(r.table)
 }
 
 func (r *View) Init() tea.Cmd { return nil }
@@ -293,7 +289,7 @@ func (r *View) SetFilter(s string) {
 func (r *View) renderSplitPane() string {
 	leftWidth, rightWidth := r.splitWidths()
 
-	leftContent := padToHeight(r.table.View(), r.height-2)
+	leftContent := view.PadToHeight(r.table.View(), r.height-2)
 	leftBox := ui.BorderBox(leftContent, r.leftPaneTitle(), leftWidth, r.styles)
 
 	sel := r.selectedRelation()

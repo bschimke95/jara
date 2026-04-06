@@ -4,6 +4,10 @@
 package view
 
 import (
+	"strings"
+
+	"charm.land/bubbles/v2/key"
+	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/nav"
@@ -174,4 +178,32 @@ type Copyable interface {
 // The app uses this to show a brief notification.
 type ClipboardMsg struct {
 	Text string
+}
+
+// BindingKey returns the display key string for a key binding.
+// This replaces the common inline closure `bk := func(b key.Binding) string { return b.Help().Key }`.
+func BindingKey(b key.Binding) string {
+	return b.Help().Key
+}
+
+// CopySelectedRow returns the selected table row as a tab-separated string,
+// or an empty string if nothing is selected.
+func CopySelectedRow(t table.Model) string {
+	if row := t.SelectedRow(); row != nil {
+		return strings.Join(row, "\t")
+	}
+	return ""
+}
+
+// PadToHeight pads or truncates a rendered string so it has exactly the
+// given number of lines.
+func PadToHeight(content string, height int) string {
+	lines := strings.Split(content, "\n")
+	for len(lines) < height {
+		lines = append(lines, "")
+	}
+	if len(lines) > height {
+		lines = lines[:height]
+	}
+	return strings.Join(lines, "\n")
 }

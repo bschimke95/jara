@@ -2,8 +2,6 @@
 package machines
 
 import (
-	"strings"
-
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
@@ -45,19 +43,15 @@ func (m *View) SetStatus(status *model.FullStatus) {
 
 // KeyHints returns the view-specific key hints for the header.
 func (m *View) KeyHints() []view.KeyHint {
-	bk := func(b key.Binding) string { return b.Help().Key }
 	return []view.KeyHint{
-		{Key: bk(m.keys.LogsJump), Desc: "logs (machine)"},
-		{Key: bk(m.keys.LogsView), Desc: "logs"},
+		{Key: view.BindingKey(m.keys.LogsJump), Desc: "logs (machine)"},
+		{Key: view.BindingKey(m.keys.LogsView), Desc: "logs"},
 	}
 }
 
 // CopySelection implements view.Copyable.
 func (m *View) CopySelection() string {
-	if row := m.table.SelectedRow(); row != nil {
-		return strings.Join(row, "\t")
-	}
-	return ""
+	return view.CopySelectedRow(m.table)
 }
 
 func (m *View) Init() tea.Cmd { return nil }

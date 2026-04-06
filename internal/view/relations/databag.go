@@ -11,6 +11,7 @@ import (
 	"github.com/bschimke95/jara/internal/color"
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/ui"
+	"github.com/bschimke95/jara/internal/view"
 )
 
 // appColors is a palette of border colours assigned to each application in a
@@ -28,7 +29,7 @@ var appColors = []icolor.Color{
 func renderDatabagPane(rd *model.RelationData, rel *model.Relation, width, height int, focus databagFocus, appScroll, unitScroll int, s *color.Styles) string {
 	if rd == nil || rel == nil {
 		placeholder := lipgloss.NewStyle().Foreground(s.Muted).Render("Select a relation to view databag contents")
-		return ui.BorderBox(padToHeight(placeholder, height-2), "Databags", width, s)
+		return ui.BorderBox(view.PadToHeight(placeholder, height-2), "Databags", width, s)
 	}
 
 	innerWidth := width - 2 // outer border
@@ -310,15 +311,4 @@ func sortedKV(data map[string]string, maxWidth int) []kvPair {
 		pairs = append(pairs, kvPair{key: padded, val: val})
 	}
 	return pairs
-}
-
-func padToHeight(content string, height int) string {
-	lines := strings.Split(content, "\n")
-	for len(lines) < height {
-		lines = append(lines, "")
-	}
-	if len(lines) > height {
-		lines = lines[:height]
-	}
-	return strings.Join(lines, "\n")
 }

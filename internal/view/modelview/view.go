@@ -3,8 +3,6 @@
 package modelview
 
 import (
-	"strings"
-
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
@@ -103,26 +101,22 @@ func (m *View) SetCharmEndpoints(endpoints map[string]map[string]model.CharmEndp
 
 // KeyHints returns the view-specific key hints for the header.
 func (m *View) KeyHints() []view.KeyHint {
-	bk := func(b key.Binding) string { return b.Help().Key }
 	return []view.KeyHint{
-		{Key: bk(m.keys.Enter), Desc: "select"},
-		{Key: bk(m.keys.Deploy), Desc: "deploy"},
-		{Key: bk(m.keys.Relate), Desc: "relate"},
-		{Key: bk(m.keys.ApplicationsNav), Desc: "apps"},
-		{Key: bk(m.keys.UnitsNav), Desc: "units"},
-		{Key: bk(m.keys.RelationsNav), Desc: "relations"},
-		{Key: bk(m.keys.ScaleUp) + "/" + bk(m.keys.ScaleDown), Desc: "scale"},
-		{Key: bk(m.keys.LogsJump), Desc: "logs (app)"},
-		{Key: bk(m.keys.LogsView), Desc: "logs"},
+		{Key: view.BindingKey(m.keys.Enter), Desc: "select"},
+		{Key: view.BindingKey(m.keys.Deploy), Desc: "deploy"},
+		{Key: view.BindingKey(m.keys.Relate), Desc: "relate"},
+		{Key: view.BindingKey(m.keys.ApplicationsNav), Desc: "apps"},
+		{Key: view.BindingKey(m.keys.UnitsNav), Desc: "units"},
+		{Key: view.BindingKey(m.keys.RelationsNav), Desc: "relations"},
+		{Key: view.BindingKey(m.keys.ScaleUp) + "/" + view.BindingKey(m.keys.ScaleDown), Desc: "scale"},
+		{Key: view.BindingKey(m.keys.LogsJump), Desc: "logs (app)"},
+		{Key: view.BindingKey(m.keys.LogsView), Desc: "logs"},
 	}
 }
 
 // CopySelection implements view.Copyable.
 func (m *View) CopySelection() string {
-	if row := m.appTable.SelectedRow(); row != nil {
-		return strings.Join(row, "\t")
-	}
-	return ""
+	return view.CopySelectedRow(m.appTable)
 }
 
 // NoModelMsg is sent by the status stream when no model is selected on the
@@ -259,7 +253,7 @@ func (m *View) renderBackground() string {
 
 	leftContent := m.appTableView()
 	leftBox := ui.BorderBoxRawTitle(
-		padToHeight(leftContent, m.height-2),
+		view.PadToHeight(leftContent, m.height-2),
 		m.leftPaneTitle("A", "pplications"),
 		leftWidth,
 		m.styles,
@@ -271,13 +265,13 @@ func (m *View) renderBackground() string {
 	}
 
 	unitBox := ui.BorderBoxRawTitle(
-		padToHeight(m.unitTable.View(), halfH),
+		view.PadToHeight(m.unitTable.View(), halfH),
 		m.rightPaneTitle("U", "nits"),
 		rightWidth,
 		m.styles,
 	)
 	relBox := ui.BorderBoxRawTitle(
-		padToHeight(m.relationTable.View(), halfH),
+		view.PadToHeight(m.relationTable.View(), halfH),
 		m.rightPaneTitle("R", "elations"),
 		rightWidth,
 		m.styles,
