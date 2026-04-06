@@ -4,7 +4,6 @@ package appconfig
 import (
 	"fmt"
 
-	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
 
@@ -47,9 +46,8 @@ func (v *View) SetSize(width, height int) {
 
 // KeyHints returns the view-specific key hints for the header.
 func (v *View) KeyHints() []view.KeyHint {
-	bk := func(b key.Binding) string { return b.Help().Key }
 	return []view.KeyHint{
-		{Key: bk(v.keys.Back), Desc: "back"},
+		{Key: view.BindingKey(v.keys.Back), Desc: "back"},
 	}
 }
 
