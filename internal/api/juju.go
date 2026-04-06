@@ -31,6 +31,7 @@ import (
 	"github.com/juju/juju/rpc/params"
 	"github.com/juju/loggo/v2"
 	"github.com/juju/names/v6"
+	"gopkg.in/yaml.v3"
 
 	"github.com/bschimke95/jara/internal/model"
 )
@@ -567,12 +568,11 @@ func (c *JujuClient) DeployApplication(ctx context.Context, opts model.DeployOpt
 		arg.Revision = &rev
 	}
 	if len(opts.Config) > 0 {
-		cfgLines := make([]string, 0, len(opts.Config))
-		for k, v := range opts.Config {
-			cfgLines = append(cfgLines, fmt.Sprintf("%s: %s", k, v))
+		configData, marshalErr := yaml.Marshal(opts.Config)
+		if marshalErr != nil {
+			return fmt.Errorf("marshalling config: %w", marshalErr)
 		}
-		sort.Strings(cfgLines)
-		arg.ConfigYAML = strings.Join(cfgLines, "\n") + "\n"
+		arg.ConfigYAML = string(configData)
 	}
 
 	_, _, errs := appClient.DeployFromRepository(ctx, arg)
