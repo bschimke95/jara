@@ -43,6 +43,7 @@ type KeyMap struct {
 	Right           key.Binding // l/right: move right in modal
 	Left            key.Binding // h/left: move left in modal
 	ChatNav         key.Binding // c: navigate to AI chat view
+	Yank            key.Binding // y: copy selected row to clipboard
 }
 
 // DefaultKeyMap returns the default vim-style keybindings.
@@ -196,6 +197,10 @@ func DefaultKeyMap() KeyMap {
 			key.WithKeys("c"),
 			key.WithHelp("c", "chat"),
 		),
+		Yank: key.NewBinding(
+			key.WithKeys("y"),
+			key.WithHelp("y", "copy"),
+		),
 	}
 }
 
@@ -208,7 +213,7 @@ func (k KeyMap) ShortHelp() []key.Binding {
 func (k KeyMap) FullHelp() [][]key.Binding {
 	return [][]key.Binding{
 		{k.Up, k.Down, k.PageUp, k.PageDown, k.Top, k.Bottom},
-		{k.Enter, k.Back, k.Command, k.Filter},
+		{k.Enter, k.Back, k.Command, k.Filter, k.Yank},
 		{k.Quit, k.Help},
 	}
 }

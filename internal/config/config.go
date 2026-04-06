@@ -225,6 +225,7 @@ type KeysConfig struct {
 	SecretsNav      *KeyBindingConfig `yaml:"secretsNav,omitempty"`
 	MachinesNav     *KeyBindingConfig `yaml:"machinesNav,omitempty"`
 	Decode          *KeyBindingConfig `yaml:"decode,omitempty"`
+	Yank            *KeyBindingConfig `yaml:"yank,omitempty"`
 	ApplyFilter     *KeyBindingConfig `yaml:"applyFilter,omitempty"`
 	Right           *KeyBindingConfig `yaml:"right,omitempty"`
 	Left            *KeyBindingConfig `yaml:"left,omitempty"`

@@ -253,6 +253,14 @@ func (m Model) handleGlobalKeys(msg tea.KeyPressMsg) (Model, tea.Cmd, bool) {
 		m.helpModal.SetViewHints(currentView.KeyHints())
 		m.helpModalOpen = true
 		return m, nil, true
+	case key.Matches(msg, m.keys.Yank):
+		currentView := m.views[m.stack.Current().View]
+		if c, ok := currentView.(view.Copyable); ok {
+			if text := c.CopySelection(); text != "" {
+				return m, tea.SetClipboard(text), true
+			}
+		}
+		return m, nil, true
 	}
 	return m, nil, false
 }

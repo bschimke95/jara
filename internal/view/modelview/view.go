@@ -3,6 +3,8 @@
 package modelview
 
 import (
+	"strings"
+
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
@@ -113,6 +115,14 @@ func (m *View) KeyHints() []view.KeyHint {
 		{Key: bk(m.keys.LogsJump), Desc: "logs (app)"},
 		{Key: bk(m.keys.LogsView), Desc: "logs"},
 	}
+}
+
+// CopySelection implements view.Copyable.
+func (m *View) CopySelection() string {
+	if row := m.appTable.SelectedRow(); row != nil {
+		return strings.Join(row, "\t")
+	}
+	return ""
 }
 
 // NoModelMsg is sent by the status stream when no model is selected on the

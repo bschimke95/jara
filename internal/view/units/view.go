@@ -72,6 +72,14 @@ func (u *View) KeyHints() []view.KeyHint {
 	}
 }
 
+// CopySelection implements view.Copyable.
+func (u *View) CopySelection() string {
+	if row := u.table.SelectedRow(); row != nil {
+		return strings.Join(row, "\t")
+	}
+	return ""
+}
+
 // rebuildRows recomputes the table rows from the current status + pending deltas.
 func (u *View) rebuildRows() {
 	if u.status == nil {
