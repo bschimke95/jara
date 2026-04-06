@@ -13,6 +13,7 @@ import (
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/view"
+	"github.com/bschimke95/jara/internal/view/appconfig"
 	"github.com/bschimke95/jara/internal/view/controllers"
 	"github.com/bschimke95/jara/internal/view/models"
 	"github.com/bschimke95/jara/internal/view/modelview"
@@ -318,6 +319,20 @@ func (m Model) fetchOffers() tea.Cmd {
 			return errMsg{fmt.Errorf("fetching offers: %w", err)}
 		}
 		return offers.OffersDataMsg{Offers: offerList}
+	}
+}
+
+// fetchAppConfig returns a Cmd that fetches application configuration.
+func (m Model) fetchAppConfig(appName string) tea.Cmd {
+	client := m.client
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		entries, err := client.AppConfig(ctx, appName)
+		if err != nil {
+			return errMsg{fmt.Errorf("fetching app config: %w", err)}
+		}
+		return appconfig.AppConfigMsg{AppName: appName, Entries: entries}
 	}
 }
 

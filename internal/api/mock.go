@@ -367,6 +367,25 @@ func (c *MockClient) CharmRelationInfo(_ context.Context, charmName string) (map
 	return nil, nil
 }
 
+// AppConfig returns synthetic configuration entries for a mock application.
+func (c *MockClient) AppConfig(_ context.Context, appName string) ([]model.ConfigEntry, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if _, ok := c.status.Applications[appName]; !ok {
+		return nil, fmt.Errorf("application %q not found", appName)
+	}
+
+	// Return a set of plausible config entries for any known application.
+	return []model.ConfigEntry{
+		{Key: "log-level", Value: "info", Default: "info", Source: "default", Type: "string", Description: "Logging verbosity level"},
+		{Key: "max-connections", Value: "100", Default: "50", Source: "user", Type: "int", Description: "Maximum number of concurrent connections"},
+		{Key: "enable-tls", Value: "true", Default: "false", Source: "user", Type: "boolean", Description: "Enable TLS for incoming connections"},
+		{Key: "port", Value: "8080", Default: "8080", Source: "default", Type: "int", Description: "Port to listen on"},
+		{Key: "hostname", Value: "", Default: "", Source: "default", Type: "string", Description: "Hostname to bind to (empty for all interfaces)"},
+	}, nil
+}
+
 // RelateApplications adds a synthetic relation between two endpoints.
 func (c *MockClient) RelateApplications(_ context.Context, endpointA, endpointB string) error {
 	c.mu.Lock()

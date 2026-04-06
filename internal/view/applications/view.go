@@ -55,6 +55,7 @@ func (a *View) KeyHints() []view.KeyHint {
 	bk := func(b key.Binding) string { return b.Help().Key }
 	return []view.KeyHint{
 		{Key: bk(a.keys.Enter), Desc: "units"},
+		{Key: bk(a.keys.ConfigNav), Desc: "config"},
 		{Key: bk(a.keys.Deploy), Desc: "deploy"},
 		{Key: bk(a.keys.LogsJump), Desc: "logs (app)"},
 		{Key: bk(a.keys.LogsView), Desc: "logs"},
@@ -119,6 +120,13 @@ func (a *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if key.Matches(msg, a.keys.LogsView) {
 			return a, func() tea.Msg {
 				return view.NavigateMsg{Target: nav.DebugLogView}
+			}
+		}
+		if key.Matches(msg, a.keys.ConfigNav) {
+			if row := a.table.SelectedRow(); row != nil {
+				return a, func() tea.Msg {
+					return view.NavigateMsg{Target: nav.AppConfigView, Context: row[0]}
+				}
 			}
 		}
 	}
