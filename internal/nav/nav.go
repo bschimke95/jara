@@ -102,6 +102,7 @@ var CommandAliases = map[string]ViewID{
 
 // ResolveCommand looks up a command string and returns the matching ViewID.
 func ResolveCommand(cmd string) (ViewID, bool) {
+	cmd = strings.ToLower(cmd)
 	v, ok := CommandAliases[cmd]
 	return v, ok
 }
