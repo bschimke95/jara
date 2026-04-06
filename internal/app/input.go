@@ -245,6 +245,9 @@ func (m Model) handleGlobalKeys(msg tea.KeyPressMsg) (Model, tea.Cmd, bool) {
 	case key.Matches(msg, m.keys.OffersNav):
 		m2, cmd := m.handleNavigate(view.NavigateMsg{Target: nav.OffersView})
 		return m2, cmd, true
+	case key.Matches(msg, m.keys.StorageNav):
+		m2, cmd := m.handleNavigate(view.NavigateMsg{Target: nav.StorageView})
+		return m2, cmd, true
 	case key.Matches(msg, m.keys.ChatNav):
 		m2, cmd := m.handleNavigate(view.NavigateMsg{Target: nav.ChatView})
 		return m2, cmd, true
