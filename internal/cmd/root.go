@@ -45,7 +45,7 @@ func Execute() {
 func initJaraFlags() {
 	jaraFlags = config.NewFlags()
 
-	// Config file flag.
+	// Config file flag — always set since it has a meaningful default.
 	cfgFile := config.DefaultConfigFile()
 	jaraFlags.ConfigFile = &cfgFile
 	rootCmd.PersistentFlags().StringVar(
@@ -56,83 +56,99 @@ func initJaraFlags() {
 	)
 
 	// Refresh rate.
-	var refreshRate float64
-	jaraFlags.RefreshRate = &refreshRate
-	rootCmd.Flags().Float64VarP(
-		jaraFlags.RefreshRate,
+	rootCmd.Flags().Float64P(
 		"refresh", "r",
 		0, // 0 means "use config file value or default"
 		fmt.Sprintf("Status poll interval in seconds (default %.0f)", config.DefaultRefreshRate),
 	)
 
 	// Log level.
-	var logLevel string
-	jaraFlags.LogLevel = &logLevel
-	rootCmd.Flags().StringVarP(
-		jaraFlags.LogLevel,
+	rootCmd.Flags().StringP(
 		"logLevel", "l",
 		"",
 		"Log level: error, warn, info, debug (default from config or \"info\")",
 	)
 
 	// Log file.
-	var logFile string
-	jaraFlags.LogFile = &logFile
-	rootCmd.Flags().StringVar(
-		jaraFlags.LogFile,
+	rootCmd.Flags().String(
 		"logFile",
 		"",
 		"Path to the log file (default from config or cache dir)",
 	)
 
 	// Headless.
-	var headless bool
-	jaraFlags.Headless = &headless
-	rootCmd.Flags().BoolVar(
-		jaraFlags.Headless,
+	rootCmd.Flags().Bool(
 		"headless",
 		false,
 		"Hide the header panel",
 	)
 
 	// Logoless.
-	var logoless bool
-	jaraFlags.Logoless = &logoless
-	rootCmd.Flags().BoolVar(
-		jaraFlags.Logoless,
+	rootCmd.Flags().Bool(
 		"logoless",
 		false,
 		"Hide the logo in the header",
 	)
 
 	// Read-only.
-	var readOnly bool
-	jaraFlags.ReadOnly = &readOnly
-	rootCmd.Flags().BoolVar(
-		jaraFlags.ReadOnly,
+	rootCmd.Flags().Bool(
 		"readonly",
 		false,
 		"Disable write operations",
 	)
 
 	// Command.
-	var command string
-	jaraFlags.Command = &command
-	rootCmd.Flags().StringVarP(
-		jaraFlags.Command,
+	rootCmd.Flags().StringP(
 		"command", "c",
 		"",
 		"Override the default view/command on launch",
 	)
 
 	// Demo mode (hidden) — use MockClient instead of a real Juju connection.
-	var demo bool
-	jaraFlags.Demo = &demo
-	rootCmd.Flags().BoolVar(
-		jaraFlags.Demo,
+	rootCmd.Flags().Bool(
 		"demo",
 		false,
 		"Use synthetic mock data instead of a live Juju connection",
 	)
 	_ = rootCmd.Flags().MarkHidden("demo")
+}
+
+// resolveFlagsFrom populates jaraFlags pointers only for flags that were
+// explicitly set on the command line. This ensures config-file values
+// are not overridden by zero-valued CLI defaults.
+func resolveFlagsFrom(cmd *cobra.Command) {
+	flags := cmd.Flags()
+
+	if flags.Changed("refresh") {
+		v, _ := flags.GetFloat64("refresh")
+		jaraFlags.RefreshRate = &v
+	}
+	if flags.Changed("logLevel") {
+		v, _ := flags.GetString("logLevel")
+		jaraFlags.LogLevel = &v
+	}
+	if flags.Changed("logFile") {
+		v, _ := flags.GetString("logFile")
+		jaraFlags.LogFile = &v
+	}
+	if flags.Changed("headless") {
+		v, _ := flags.GetBool("headless")
+		jaraFlags.Headless = &v
+	}
+	if flags.Changed("logoless") {
+		v, _ := flags.GetBool("logoless")
+		jaraFlags.Logoless = &v
+	}
+	if flags.Changed("readonly") {
+		v, _ := flags.GetBool("readonly")
+		jaraFlags.ReadOnly = &v
+	}
+	if flags.Changed("command") {
+		v, _ := flags.GetString("command")
+		jaraFlags.Command = &v
+	}
+	if flags.Changed("demo") {
+		v, _ := flags.GetBool("demo")
+		jaraFlags.Demo = &v
+	}
 }

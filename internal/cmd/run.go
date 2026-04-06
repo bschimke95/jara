@@ -17,7 +17,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-func run(_ *cobra.Command, _ []string) error {
+func run(cmd *cobra.Command, _ []string) error {
+	// 0. Resolve CLI flags — only flags explicitly set by the user are populated.
+	resolveFlagsFrom(cmd)
+
 	// 1. Load configuration from file.
 	cfg := config.NewDefault()
 	if err := cfg.Load(*jaraFlags.ConfigFile); err != nil {
