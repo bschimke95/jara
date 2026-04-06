@@ -67,6 +67,7 @@ type Model struct {
 	logCancel    context.CancelFunc      // cancels the debug-log stream
 
 	charmEndpointsFetched bool // true once charm endpoint info has been polled
+	secretsFetched        bool // true once secrets have been explicitly fetched
 
 	err   error
 	ready bool
@@ -239,7 +240,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		// Carry forward secrets from the previous status; they are fetched
 		// via a separate API call and not included in the status stream.
-		if m.status != nil && len(m.status.Secrets) > 0 && len(msg.status.Secrets) == 0 {
+		// Only carry forward when secrets have been explicitly fetched
+		// (secretsFetched == true) and the new status has none — this avoids
+		// incorrectly preserving stale secrets after a model switch.
+		if m.secretsFetched && m.status != nil && len(m.status.Secrets) > 0 && len(msg.status.Secrets) == 0 {
 			msg.status.Secrets = m.status.Secrets
 		}
 		m.status = msg.status
@@ -287,6 +291,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case secretsMsg:
+		m.secretsFetched = true
 		if m.status != nil {
 			m.status.Secrets = msg.Secrets
 			for _, v := range m.views {
@@ -307,6 +312,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case view.StartStatusStreamMsg:
 		m.charmEndpointsFetched = false
+		m.secretsFetched = false
 		return m, m.startStatusStream()
 
 	case view.StartDebugLogStreamMsg:
@@ -322,6 +328,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		for _, v := range m.views {
 			if sr, ok := v.(view.StatusReceiver); ok {
 				sr.SetStatus(nil)
+			}
+			if cr, ok := v.(view.CharmEndpointReceiver); ok {
+				cr.SetCharmEndpoints(nil)
 			}
 		}
 		return m, nil
