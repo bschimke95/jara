@@ -989,6 +989,10 @@ func (c *JujuClient) ListStorage(ctx context.Context) ([]model.StorageInstance, 
 		return nil, fmt.Errorf("listing storage: %w", err)
 	}
 
+	// Build a map from storage tag to pool name by inspecting the
+	// backing volumes and filesystems, which carry the pool field.
+	poolByStorage := storagePoolMap(ctx, storageClient)
+
 	result := make([]model.StorageInstance, 0, len(details))
 	for _, d := range details {
 		kind := "unknown"
@@ -1008,17 +1012,46 @@ func (c *JujuClient) ListStorage(ctx context.Context) ([]model.StorageInstance, 
 		if d.OwnerTag != "" {
 			si.Owner = strings.TrimPrefix(strings.TrimPrefix(d.OwnerTag, "unit-"), "application-")
 		}
-		// Derive pool from first attachment if available.
-		for _, att := range d.Attachments {
-			if att.Location != "" {
-				si.Pool = att.Location
-				break
-			}
+		if pool, ok := poolByStorage[d.StorageTag]; ok {
+			si.Pool = pool
 		}
 		result = append(result, si)
 	}
 	sort.Slice(result, func(i, j int) bool { return result[i].ID < result[j].ID })
 	return result, nil
+}
+
+// storagePoolMap builds a mapping from storage tag to pool name by
+// querying volumes and filesystems. Errors are silently ignored so
+// the caller always gets at least an empty map.
+func storagePoolMap(ctx context.Context, sc *jujuStorage.Client) map[string]string {
+	m := make(map[string]string)
+
+	// Collect pool names from volumes.
+	volResults, err := sc.ListVolumes(ctx, nil)
+	if err == nil {
+		for _, vr := range volResults {
+			for _, v := range vr.Result {
+				if v.Storage != nil && v.Info.Pool != "" {
+					m[v.Storage.StorageTag] = v.Info.Pool
+				}
+			}
+		}
+	}
+
+	// Collect pool names from filesystems.
+	fsResults, err := sc.ListFilesystems(ctx, nil)
+	if err == nil {
+		for _, fr := range fsResults {
+			for _, f := range fr.Result {
+				if f.Storage != nil && f.Info.Pool != "" {
+					m[f.Storage.StorageTag] = f.Info.Pool
+				}
+			}
+		}
+	}
+
+	return m
 }
 
 // currentModelType returns the model type ("iaas" or "caas") for the
