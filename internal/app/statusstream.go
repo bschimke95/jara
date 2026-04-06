@@ -336,6 +336,28 @@ func (m Model) fetchAppConfig(appName string) tea.Cmd {
 	}
 }
 
+// fetchActions returns a Cmd that fetches available actions for an application.
+func (m Model) fetchActions(appName string) tea.Cmd {
+	client := m.client
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		actions, err := client.ApplicationActions(ctx, appName)
+		return view.FetchActionsResponseMsg{AppName: appName, Actions: actions, Err: err}
+	}
+}
+
+// runAction returns a Cmd that executes an action on a unit and waits for the result.
+func (m Model) runAction(unitName, actionName string, params map[string]string) tea.Cmd {
+	client := m.client
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 120*time.Second)
+		defer cancel()
+		result, err := client.RunAction(ctx, unitName, actionName, params)
+		return view.RunActionResultMsg{Result: result, Err: err}
+	}
+}
+
 // isNoModelError checks whether the error indicates that no Juju model is
 // currently selected. It uses errors.Is to check for the sentinel
 // api.ErrNoSelectedModel, which is wrapped by the API layer when the

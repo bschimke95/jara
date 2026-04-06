@@ -391,6 +391,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case appconfig.FetchAppConfigMsg:
 		return m, m.fetchAppConfig(msg.AppName)
 
+	case view.FetchActionsRequestMsg:
+		return m, m.fetchActions(msg.AppName)
+
+	case view.RunActionRequestMsg:
+		return m, m.runAction(msg.UnitName, msg.ActionName, msg.Params)
+
 	case debuglog.FilterChangedMsg:
 		return m, m.startDebugLogStream(msg.Filter)
 	}

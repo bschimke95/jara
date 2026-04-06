@@ -118,6 +118,31 @@ type StopDebugLogStreamMsg struct{}
 // ClearStatusMsg requests the app clear the cached status on all views.
 type ClearStatusMsg struct{}
 
+// RunActionRequestMsg requests that an action be executed on a unit.
+type RunActionRequestMsg struct {
+	UnitName   string
+	ActionName string
+	Params     map[string]string
+}
+
+// RunActionResultMsg carries the result of an action execution back to the view.
+type RunActionResultMsg struct {
+	Result *model.ActionResult
+	Err    error
+}
+
+// FetchActionsRequestMsg requests the available actions for an application.
+type FetchActionsRequestMsg struct {
+	AppName string
+}
+
+// FetchActionsResponseMsg carries the available action specs back to the view.
+type FetchActionsResponseMsg struct {
+	AppName string
+	Actions []model.ActionSpec
+	Err     error
+}
+
 // StatusReceiver is implemented by views that consume model status updates.
 // Views that don't need FullStatus (e.g. Controllers, Models) simply don't
 // implement this interface.
