@@ -59,6 +59,9 @@ func (m Model) handleBack() (Model, tea.Cmd) {
 			cmds = append(cmds, cmd)
 		}
 
+		// Clear any leftover filter from the child view.
+		m.filterStr = ""
+
 		current := m.stack.Current()
 		// Re-size the view we are returning to so it uses the correct contentHeight.
 		m.views[current.View].SetSize(m.width, m.contentHeight())
