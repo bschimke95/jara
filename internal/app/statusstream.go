@@ -216,13 +216,15 @@ func (m Model) revealSecret(uri string, revision int) tea.Cmd {
 
 // scaleApplication returns a Cmd that calls ScaleApplication on the API client.
 func (m Model) scaleApplication(appName string, delta int) tea.Cmd {
+	client := m.client
+	cfg := m.cfg
 	return func() tea.Msg {
-		if m.cfg != nil && m.cfg.Jara.ReadOnly {
+		if cfg != nil && cfg.Jara.ReadOnly {
 			return errMsg{fmt.Errorf("write operations are disabled in read-only mode")}
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 		defer cancel()
-		if err := m.client.ScaleApplication(ctx, appName, delta); err != nil {
+		if err := client.ScaleApplication(ctx, appName, delta); err != nil {
 			return errMsg{err}
 		}
 		return nil
@@ -232,15 +234,17 @@ func (m Model) scaleApplication(appName string, delta int) tea.Cmd {
 // deployApplication returns a Cmd that deploys a new application charm.
 // If modelName is set, deployment is targeted to that model first.
 func (m Model) deployApplication(modelName string, opts model.DeployOptions) tea.Cmd {
+	client := m.client
+	cfg := m.cfg
+	current := m.stack.Current()
 	return func() tea.Msg {
-		if m.cfg != nil && m.cfg.Jara.ReadOnly {
+		if cfg != nil && cfg.Jara.ReadOnly {
 			return errMsg{fmt.Errorf("write operations are disabled in read-only mode")}
 		}
 		if strings.TrimSpace(opts.CharmName) == "" {
 			return errMsg{fmt.Errorf("charm name is required")}
 		}
 		if modelName == "" {
-			current := m.stack.Current()
 			if current.View == nav.ModelView && current.Context != "" {
 				modelName = current.Context
 			}
@@ -248,11 +252,11 @@ func (m Model) deployApplication(modelName string, opts model.DeployOptions) tea
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
 		if modelName != "" {
-			if err := m.client.SelectModel(modelName); err != nil {
+			if err := client.SelectModel(modelName); err != nil {
 				return errMsg{fmt.Errorf("selecting model %q: %w", modelName, err)}
 			}
 		}
-		if err := m.client.DeployApplication(ctx, opts); err != nil {
+		if err := client.DeployApplication(ctx, opts); err != nil {
 			return errMsg{err}
 		}
 		return nil
@@ -261,8 +265,10 @@ func (m Model) deployApplication(modelName string, opts model.DeployOptions) tea
 
 // relateApplications returns a Cmd that creates a relation between two endpoints.
 func (m Model) relateApplications(endpointA, endpointB string) tea.Cmd {
+	client := m.client
+	cfg := m.cfg
 	return func() tea.Msg {
-		if m.cfg != nil && m.cfg.Jara.ReadOnly {
+		if cfg != nil && cfg.Jara.ReadOnly {
 			return errMsg{fmt.Errorf("write operations are disabled in read-only mode")}
 		}
 		if strings.TrimSpace(endpointA) == "" || strings.TrimSpace(endpointB) == "" {
@@ -270,7 +276,7 @@ func (m Model) relateApplications(endpointA, endpointB string) tea.Cmd {
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
-		if err := m.client.RelateApplications(ctx, endpointA, endpointB); err != nil {
+		if err := client.RelateApplications(ctx, endpointA, endpointB); err != nil {
 			return errMsg{err}
 		}
 		return nil
@@ -279,8 +285,10 @@ func (m Model) relateApplications(endpointA, endpointB string) tea.Cmd {
 
 // destroyRelation returns a Cmd that removes a relation between two endpoints.
 func (m Model) destroyRelation(endpointA, endpointB string) tea.Cmd {
+	client := m.client
+	cfg := m.cfg
 	return func() tea.Msg {
-		if m.cfg != nil && m.cfg.Jara.ReadOnly {
+		if cfg != nil && cfg.Jara.ReadOnly {
 			return errMsg{fmt.Errorf("write operations are disabled in read-only mode")}
 		}
 		if strings.TrimSpace(endpointA) == "" || strings.TrimSpace(endpointB) == "" {
@@ -288,7 +296,7 @@ func (m Model) destroyRelation(endpointA, endpointB string) tea.Cmd {
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 		defer cancel()
-		if err := m.client.DestroyRelation(ctx, endpointA, endpointB); err != nil {
+		if err := client.DestroyRelation(ctx, endpointA, endpointB); err != nil {
 			return errMsg{err}
 		}
 		return nil
