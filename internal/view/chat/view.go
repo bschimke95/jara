@@ -7,6 +7,7 @@ import (
 	"context"
 	"strings"
 	"time"
+	"unicode/utf8"
 
 	"charm.land/bubbles/v2/key"
 	tea "charm.land/bubbletea/v2"
@@ -116,14 +117,34 @@ func (v *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return v, nil
 	}
 
+	// When no AI provider is configured the view is a static info screen.
+	// Only handle Back (Esc) to navigate away; let everything else bubble
+	// up to global handlers.
+	if v.llmClient == nil {
+		if key.Matches(kp, v.keys.Back) {
+			return v, func() tea.Msg { return view.GoBackMsg{} }
+		}
+		return v, nil
+	}
+
 	// Handle key presses based on mode.
+	switch v.mode {
+	case modeInput:
+		return v.updateInputMode(kp)
+	case modeScroll:
+		return v.updateScrollMode(kp)
+	}
+
+	return v, nil
+}
+
+// updateInputMode handles keys when the user is typing in the input prompt.
+// All printable characters (including j, k, g, :, /, etc.) are captured as
+// text input. Only non-text keys (arrows, ctrl sequences) are used for
+// scrolling so they don't conflict with typing.
+func (v *View) updateInputMode(kp tea.KeyPressMsg) (*View, tea.Cmd) {
 	switch {
 	case key.Matches(kp, v.keys.Back):
-		if v.mode == modeScroll {
-			v.mode = modeInput
-			v.scrollOffset = 0
-			return v, noopCmd
-		}
 		// In input mode with empty buffer, navigate back.
 		if v.inputBuf == "" {
 			return v, func() tea.Msg { return view.GoBackMsg{} }
@@ -137,31 +158,33 @@ func (v *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case kp.String() == "backspace":
 		if len(v.inputBuf) > 0 {
-			v.inputBuf = v.inputBuf[:len(v.inputBuf)-1]
+			_, size := utf8.DecodeLastRuneInString(v.inputBuf)
+			v.inputBuf = v.inputBuf[:len(v.inputBuf)-size]
 		}
 		return v, noopCmd
 
-	case key.Matches(kp, v.keys.Up):
+	// Allow scrolling with arrow/page keys that don't conflict with text input.
+	// Notably, we match by key string rather than key binding here to avoid
+	// capturing "k"/"j"/"g"/"G" which the user needs to type as text.
+	case kp.String() == "up":
 		return v.handleScroll(1)
 
-	case key.Matches(kp, v.keys.Down):
+	case kp.String() == "down":
 		return v.handleScroll(-1)
 
 	case key.Matches(kp, v.keys.PageUp):
-		return v.handleScroll(v.messageAreaHeight() / 2)
+		delta := v.messageAreaHeight() / 2
+		if delta < 1 {
+			delta = 1
+		}
+		return v.handleScroll(delta)
 
 	case key.Matches(kp, v.keys.PageDown):
-		return v.handleScroll(-v.messageAreaHeight() / 2)
-
-	case key.Matches(kp, v.keys.Top):
-		v.scrollOffset = v.maxScroll()
-		v.mode = modeScroll
-		return v, noopCmd
-
-	case key.Matches(kp, v.keys.Bottom):
-		v.scrollOffset = 0
-		v.mode = modeInput
-		return v, noopCmd
+		delta := v.messageAreaHeight() / 2
+		if delta < 1 {
+			delta = 1
+		}
+		return v.handleScroll(-delta)
 
 	default:
 		// Append printable characters to input buffer.
@@ -171,6 +194,52 @@ func (v *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
+	return v, nil
+}
+
+// updateScrollMode handles keys when the user is scrolling through messages.
+// Only scroll-related keys are consumed; everything else returns nil so that
+// global key handlers can process them (e.g. ":" for command mode, "q" for
+// quit, "?" for help).
+func (v *View) updateScrollMode(kp tea.KeyPressMsg) (*View, tea.Cmd) {
+	switch {
+	case key.Matches(kp, v.keys.Back):
+		v.mode = modeInput
+		v.scrollOffset = 0
+		return v, noopCmd
+
+	case key.Matches(kp, v.keys.Up):
+		return v.handleScroll(1)
+
+	case key.Matches(kp, v.keys.Down):
+		return v.handleScroll(-1)
+
+	case key.Matches(kp, v.keys.PageUp):
+		delta := v.messageAreaHeight() / 2
+		if delta < 1 {
+			delta = 1
+		}
+		return v.handleScroll(delta)
+
+	case key.Matches(kp, v.keys.PageDown):
+		delta := v.messageAreaHeight() / 2
+		if delta < 1 {
+			delta = 1
+		}
+		return v.handleScroll(-delta)
+
+	case key.Matches(kp, v.keys.Top):
+		v.scrollOffset = v.maxScroll()
+		return v, noopCmd
+
+	case key.Matches(kp, v.keys.Bottom):
+		v.scrollOffset = 0
+		v.mode = modeInput
+		return v, noopCmd
+	}
+
+	// In scroll mode, don't consume unhandled keys — let them bubble up
+	// to global handlers (e.g. ':' for command mode, 'q' for quit).
 	return v, nil
 }
 
