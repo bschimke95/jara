@@ -10,6 +10,7 @@ import (
 	"net/url"
 	"sort"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/juju/juju/api"
@@ -51,6 +52,7 @@ func (nopLogger) Helper()                                                       
 
 // JujuClient connects to a real Juju controller using the local client store.
 type JujuClient struct {
+	mu             sync.RWMutex
 	store          jujuclient.ClientStore
 	controllerName string
 	modelUUID      string
@@ -259,6 +261,8 @@ func (c *JujuClient) Close() error {
 // and persists the selection to the local Juju client store so that
 // subsequent juju CLI invocations also use the new controller.
 func (c *JujuClient) SelectController(name string) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	if err := c.store.SetCurrentController(name); err != nil {
 		return fmt.Errorf("persisting controller selection: %w", err)
 	}
@@ -269,12 +273,16 @@ func (c *JujuClient) SelectController(name string) error {
 
 // ControllerName returns the name of the currently targeted controller.
 func (c *JujuClient) ControllerName() string {
+	c.mu.RLock()
+	defer c.mu.RUnlock()
 	return c.controllerName
 }
 
 // SelectModel switches the client to target the given model (qualified name
 // "owner/name") within the current controller and persists the selection.
 func (c *JujuClient) SelectModel(qualifiedName string) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
 	if err := c.store.SetCurrentModel(c.controllerName, qualifiedName); err != nil {
 		return fmt.Errorf("persisting model selection: %w", err)
 	}
@@ -287,14 +295,18 @@ func (c *JujuClient) SelectModel(qualifiedName string) error {
 // from the client store so that the connection is model-scoped (required
 // for the "Client" facade used by Status).
 func (c *JujuClient) connect(ctx context.Context) (api.Connection, error) {
+	c.mu.RLock()
 	modelUUID := c.modelUUID
+	controllerName := c.controllerName
+	c.mu.RUnlock()
+
 	if modelUUID == "" {
 		// Resolve the current model for this controller from the client store.
-		modelName, err := c.store.CurrentModel(c.controllerName)
+		modelName, err := c.store.CurrentModel(controllerName)
 		if err != nil {
-			return nil, fmt.Errorf("resolving current model for controller %q: %w", c.controllerName, fmt.Errorf("%s: %w", err.Error(), ErrNoSelectedModel))
+			return nil, fmt.Errorf("resolving current model for controller %q: %w: %w", controllerName, err, ErrNoSelectedModel)
 		}
-		modelDetails, err := c.store.ModelByName(c.controllerName, modelName)
+		modelDetails, err := c.store.ModelByName(controllerName, modelName)
 		if err != nil {
 			return nil, fmt.Errorf("getting model details for %q: %w", modelName, err)
 		}
@@ -302,7 +314,7 @@ func (c *JujuClient) connect(ctx context.Context) (api.Connection, error) {
 	}
 
 	cfg := connector.ClientStoreConfig{
-		ControllerName: c.controllerName,
+		ControllerName: controllerName,
 		ModelUUID:      modelUUID,
 		ClientStore:    c.store,
 	}
@@ -314,7 +326,7 @@ func (c *JujuClient) connect(ctx context.Context) (api.Connection, error) {
 
 	conn, err := cs.Connect(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("connecting to controller %q: %w", c.controllerName, err)
+		return nil, fmt.Errorf("connecting to controller %q: %w", controllerName, err)
 	}
 
 	return conn, nil
@@ -1024,11 +1036,15 @@ func (c *JujuClient) ListStorage(ctx context.Context) ([]model.StorageInstance, 
 // currentModelType returns the model type ("iaas" or "caas") for the
 // currently targeted model by reading from the local client store.
 func (c *JujuClient) currentModelType() (string, error) {
-	modelName, err := c.store.CurrentModel(c.controllerName)
+	c.mu.RLock()
+	controllerName := c.controllerName
+	c.mu.RUnlock()
+
+	modelName, err := c.store.CurrentModel(controllerName)
 	if err != nil {
-		return "", fmt.Errorf("resolving current model: %w", fmt.Errorf("%s: %w", err.Error(), ErrNoSelectedModel))
+		return "", fmt.Errorf("resolving current model: %w: %w", err, ErrNoSelectedModel)
 	}
-	details, err := c.store.ModelByName(c.controllerName, modelName)
+	details, err := c.store.ModelByName(controllerName, modelName)
 	if err != nil {
 		return "", fmt.Errorf("getting model details: %w", err)
 	}

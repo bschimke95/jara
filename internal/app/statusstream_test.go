@@ -10,6 +10,7 @@ import (
 	"github.com/bschimke95/jara/internal/api"
 	"github.com/bschimke95/jara/internal/config"
 	"github.com/bschimke95/jara/internal/model"
+	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/ui"
 )
 
@@ -20,6 +21,7 @@ func TestDeployApplicationReadOnly(t *testing.T) {
 	m := Model{
 		client: api.NewMockClient(),
 		cfg:    cfg,
+		stack:  nav.NewStack(nav.ModelView),
 	}
 
 	msg := m.deployApplication("", model.DeployOptions{CharmName: "redis-k8s", ApplicationName: "redis"})()
@@ -57,6 +59,7 @@ func TestDeployApplicationTargetsModel(t *testing.T) {
 	m := Model{
 		client: client,
 		cfg:    config.NewDefault(),
+		stack:  nav.NewStack(nav.ModelView),
 	}
 
 	msg := m.deployApplication("admin/default", model.DeployOptions{CharmName: "redis-k8s", ApplicationName: "redis"})()
