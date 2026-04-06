@@ -47,7 +47,14 @@ const (
 	// defaultDebugLogBacklog is the number of recent log lines fetched when
 	// starting a debug-log stream and no explicit backlog is configured.
 	defaultDebugLogBacklog uint = 100
+
+	// charmhubHTTPTimeout is the timeout for individual Charmhub HTTP requests.
+	charmhubHTTPTimeout = 30 * time.Second
 )
+
+// charmhubHTTPClient is a dedicated HTTP client for Charmhub requests,
+// avoiding http.DefaultClient which has no timeout.
+var charmhubHTTPClient = &http.Client{Timeout: charmhubHTTPTimeout}
 
 // nopLogger is a no-op implementation of core/logger.Logger.
 type nopLogger struct{}
@@ -170,7 +177,7 @@ func (c *JujuClient) CharmhubSuggestions(ctx context.Context, query string, limi
 	}
 	req.Header.Set("Accept", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := charmhubHTTPClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("querying charmhub: %w", err)
 	}
@@ -246,7 +253,7 @@ func (c *JujuClient) CharmRelationInfo(ctx context.Context, charmName string) (m
 	}
 	req.Header.Set("Accept", "application/json")
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := charmhubHTTPClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("querying charmhub info: %w", err)
 	}
