@@ -106,14 +106,25 @@ func (c *CopilotClient) ChatStream(ctx context.Context, messages []Message) (<-c
 	var systemPrompt string
 	var lastUserMsg string
 	var history []Message
+
+	// Find the index of the last user message so we can exclude it
+	// from history and use it as the prompt.
+	lastUserIdx := -1
+	for i := len(messages) - 1; i >= 0; i-- {
+		if messages[i].Role == RoleUser {
+			lastUserIdx = i
+			break
+		}
+	}
+
 	for i, m := range messages {
 		switch m.Role {
 		case RoleSystem:
 			systemPrompt = m.Content
 		case RoleUser:
-			lastUserMsg = m.Content
-			// All but the last user message are history.
-			if i < len(messages)-1 {
+			if i == lastUserIdx {
+				lastUserMsg = m.Content
+			} else {
 				history = append(history, m)
 			}
 		case RoleAssistant:
