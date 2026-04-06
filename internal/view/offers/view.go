@@ -39,9 +39,13 @@ func (v *View) Init() tea.Cmd { return nil }
 
 func (v *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if dataMsg, ok := msg.(OffersDataMsg); ok {
-		if dataMsg.Err == nil {
-			v.table.SetRows(Rows(dataMsg.Offers))
+		if dataMsg.Err != nil {
+			v.err = dataMsg.Err
+			return v, nil
 		}
+		v.err = nil
+		v.hasData = true
+		v.table.SetRows(Rows(dataMsg.Offers))
 		return v, nil
 	}
 
@@ -51,6 +55,15 @@ func (v *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (v *View) View() tea.View {
+	if v.err != nil {
+		return tea.NewView(v.styles.ErrorStyle.Render("Error: " + v.err.Error()))
+	}
+	if !v.hasData {
+		return tea.NewView(v.styles.MutedText.Render("Loading offers..."))
+	}
+	if len(v.table.Rows()) == 0 {
+		return tea.NewView(v.styles.MutedText.Render("No application offers found."))
+	}
 	return tea.NewView(v.table.View())
 }
 

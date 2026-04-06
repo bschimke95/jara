@@ -19,9 +19,11 @@ type OffersDataMsg struct {
 
 // View is the Bubble Tea model for the offers table view.
 type View struct {
-	table  table.Model
-	keys   ui.KeyMap
-	styles *color.Styles
-	width  int
-	height int
+	table   table.Model
+	keys    ui.KeyMap
+	styles  *color.Styles
+	width   int
+	height  int
+	err     error
+	hasData bool
 }
