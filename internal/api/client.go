@@ -52,6 +52,8 @@ type Client interface {
 	RunAction(ctx context.Context, unitName, actionName string, params map[string]string) (*model.ActionResult, error)
 	// AppConfig returns the configuration key-value pairs for an application.
 	AppConfig(ctx context.Context, appName string) ([]model.ConfigEntry, error)
+	// ListStorage returns all storage instances in the current model.
+	ListStorage(ctx context.Context) ([]model.StorageInstance, error)
 	// ListSecrets returns the secrets for the current model.
 	ListSecrets(ctx context.Context) ([]model.Secret, error)
 	// RevealSecret returns the decoded key-value content of a secret.

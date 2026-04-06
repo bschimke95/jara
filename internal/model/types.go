@@ -251,6 +251,17 @@ type ActionResult struct {
 	Completed time.Time
 }
 
+// StorageInstance represents a Juju storage instance.
+type StorageInstance struct {
+	ID         string // e.g. "data/0"
+	Kind       string // "block" or "filesystem"
+	Owner      string // unit or app name owning this storage
+	Status     string // "attached", "detaching", etc.
+	Persistent bool
+	Life       string // "alive", "dying", "dead"
+	Pool       string // storage pool name (if known)
+}
+
 // CharmEndpoint describes a single endpoint from a charm's metadata.
 type CharmEndpoint struct {
 	Interface   string

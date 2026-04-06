@@ -38,6 +38,7 @@ type KeyMap struct {
 	SecretsNav      key.Binding // Shift+S: navigate to secrets view
 	MachinesNav     key.Binding // Shift+M: navigate to machines view
 	OffersNav       key.Binding // O: navigate to offers view
+	StorageNav      key.Binding // T: navigate to storage view
 	Decode          key.Binding // d: decode/reveal secret content
 	ApplyFilter     key.Binding // Shift+F: apply filter in modal
 	Right           key.Binding // l/right: move right in modal
@@ -178,6 +179,10 @@ func DefaultKeyMap() KeyMap {
 		OffersNav: key.NewBinding(
 			key.WithKeys("O"),
 			key.WithHelp("O", "offers"),
+		),
+		StorageNav: key.NewBinding(
+			key.WithKeys("T"),
+			key.WithHelp("T", "storage"),
 		),
 		Decode: key.NewBinding(
 			key.WithKeys("d"),

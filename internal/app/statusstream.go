@@ -19,6 +19,7 @@ import (
 	"github.com/bschimke95/jara/internal/view/modelview"
 	"github.com/bschimke95/jara/internal/view/offers"
 	"github.com/bschimke95/jara/internal/view/relations"
+	"github.com/bschimke95/jara/internal/view/storage"
 )
 
 // statusStreamConnectedMsg is sent when the status stream is established.
@@ -355,6 +356,20 @@ func (m Model) runAction(unitName, actionName string, params map[string]string) 
 		defer cancel()
 		result, err := client.RunAction(ctx, unitName, actionName, params)
 		return view.RunActionResultMsg{Result: result, Err: err}
+	}
+}
+
+// fetchStorage returns a Cmd that fetches storage instances.
+func (m Model) fetchStorage() tea.Cmd {
+	client := m.client
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		defer cancel()
+		instances, err := client.ListStorage(ctx)
+		if err != nil {
+			return errMsg{fmt.Errorf("fetching storage: %w", err)}
+		}
+		return storage.StorageDataMsg{Instances: instances}
 	}
 }
 

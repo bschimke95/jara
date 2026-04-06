@@ -32,6 +32,7 @@ import (
 	"github.com/bschimke95/jara/internal/view/relations"
 	"github.com/bschimke95/jara/internal/view/secretdetail"
 	"github.com/bschimke95/jara/internal/view/secrets"
+	"github.com/bschimke95/jara/internal/view/storage"
 	"github.com/bschimke95/jara/internal/view/units"
 )
 
@@ -148,6 +149,7 @@ func New(client api.Client, opts ...Option) Model {
 	m.views[nav.SecretsView] = secrets.New(keys, s)
 	m.views[nav.SecretDetailView] = secretdetail.New(keys, s)
 	m.views[nav.OffersView] = offers.New(keys, s)
+	m.views[nav.StorageView] = storage.New(keys, s)
 	m.views[nav.DebugLogView] = debuglog.New(keys, s)
 	m.views[nav.ControllerView] = controllers.New(keys, s, func() tea.Cmd { return m.pollControllers() })
 	m.views[nav.ModelsView] = models.New(keys, s,
@@ -397,6 +399,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case view.RunActionRequestMsg:
 		return m, m.runAction(msg.UnitName, msg.ActionName, msg.Params)
 
+	case storage.FetchStorageMsg:
+		return m, m.fetchStorage()
+
 	case debuglog.FilterChangedMsg:
 		return m, m.startDebugLogStream(msg.Filter)
 	}
@@ -465,6 +470,8 @@ func (m Model) viewName() string {
 		return "Offers"
 	case nav.AppConfigView:
 		return "Config"
+	case nav.StorageView:
+		return "Storage"
 	case nav.DebugLogView:
 		return "Debug Log"
 	case nav.ChatView:
