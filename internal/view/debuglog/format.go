@@ -18,14 +18,24 @@ func containsIgnoreCase(s, substr string) bool {
 func highlightSearchMatch(line, query string, s *color.Styles) string {
 	lower := strings.ToLower(line)
 	lq := strings.ToLower(query)
-	idx := strings.Index(lower, lq)
-	if idx < 0 {
-		return line
-	}
+	ql := len(query)
 	hl := lipgloss.NewStyle().
 		Foreground(s.SearchHighlightFgColor).
 		Background(s.SearchHighlightBgColor)
-	return line[:idx] + hl.Render(line[idx:idx+len(query)]) + line[idx+len(query):]
+
+	var b strings.Builder
+	pos := 0
+	for {
+		idx := strings.Index(lower[pos:], lq)
+		if idx < 0 {
+			b.WriteString(line[pos:])
+			break
+		}
+		b.WriteString(line[pos : pos+idx])
+		b.WriteString(hl.Render(line[pos+idx : pos+idx+ql]))
+		pos += idx + ql
+	}
+	return b.String()
 }
 
 func severityColor(severity string, s *color.Styles) lipgloss.Style {
