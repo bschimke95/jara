@@ -72,6 +72,7 @@ type JujuClient struct {
 	modelUUID      string
 	conn           api.Connection
 	charmhubURL    string
+	logger         *log.Logger
 }
 
 // JujuClientOption configures a JujuClient.
@@ -98,6 +99,16 @@ func WithCharmhubURL(rawURL string) JujuClientOption {
 	}
 }
 
+// WithLogger sets the logger used for operational warnings. Defaults to
+// log.Default() when not provided.
+func WithLogger(l *log.Logger) JujuClientOption {
+	return func(c *JujuClient) {
+		if l != nil {
+			c.logger = l
+		}
+	}
+}
+
 // NewJujuClient creates a new client backed by the real Juju API.
 // It reads controller/account info from the local Juju client store
 // (typically ~/.local/share/juju).
@@ -110,6 +121,7 @@ func NewJujuClient(opts ...JujuClientOption) (*JujuClient, error) {
 	c := &JujuClient{
 		store:       store,
 		charmhubURL: "https://api.charmhub.io",
+		logger:      log.Default(),
 	}
 	for _, opt := range opts {
 		opt(c)
@@ -428,13 +440,17 @@ func (c *JujuClient) Controllers(_ context.Context) ([]model.Controller, error) 
 
 		// Count models from the client store.
 		models, err := c.store.AllModels(name)
-		if err == nil {
+		if err != nil {
+			c.logger.Printf("warning: listing models for controller %q: %v", name, err)
+		} else {
 			ctrl.Models = len(models)
 		}
 
 		// Account access.
 		account, err := c.store.AccountDetails(name)
-		if err == nil && account != nil {
+		if err != nil {
+			c.logger.Printf("warning: reading account for controller %q: %v", name, err)
+		} else if account != nil {
 			ctrl.Access = account.LastKnownAccess
 		}
 
@@ -745,6 +761,7 @@ func (c *JujuClient) RelationData(ctx context.Context, relationID int) (*model.R
 
 	for _, info := range infos {
 		if info.Error != nil {
+			c.logger.Printf("warning: unit info error for %q: %v", info.Tag, info.Error)
 			continue
 		}
 		for _, erd := range info.RelationData {
@@ -1246,7 +1263,7 @@ func (c *JujuClient) WatchStatus(ctx context.Context, interval time.Duration) (<
 			if conn == nil {
 				conn, err = c.connectFresh(ctx)
 				if err != nil {
-					log.Printf("WatchStatus: reconnect failed: %v (retrying in %s)", err, backoff)
+					c.logger.Printf("WatchStatus: reconnect failed: %v (retrying in %s)", err, backoff)
 					select {
 					case ch <- StatusUpdate{Err: fmt.Errorf("reconnecting: %w", err)}:
 					case <-ctx.Done():
@@ -1272,7 +1289,7 @@ func (c *JujuClient) WatchStatus(ctx context.Context, interval time.Duration) (<
 			fetchCancel()
 
 			if err != nil {
-				log.Printf("WatchStatus: status fetch failed: %v", err)
+				c.logger.Printf("WatchStatus: status fetch failed: %v", err)
 				// Connection likely broken — tear it down so we reconnect.
 				_ = conn.Close()
 				conn = nil
