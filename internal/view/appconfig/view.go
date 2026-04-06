@@ -2,6 +2,8 @@
 package appconfig
 
 import (
+	"fmt"
+
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
@@ -77,6 +79,9 @@ func (v *View) View() tea.View {
 }
 
 func (v *View) Enter(ctx view.NavigateContext) (tea.Cmd, error) {
+	if ctx.Context == "" {
+		return nil, fmt.Errorf("no application specified — press C on an application to view its config")
+	}
 	v.appName = ctx.Context
 	v.entries = nil
 	v.table.SetRows(nil)
