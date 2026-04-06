@@ -250,10 +250,20 @@ func (c *JujuClient) CharmRelationInfo(ctx context.Context, charmName string) (m
 	return result, nil
 }
 
-// Close closes any open API connections.
+// Close closes the cached API connection, if any.
 func (c *JujuClient) Close() error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	return c.closeConnLocked()
+}
+
+// closeConnLocked closes and clears the cached connection.
+// Caller must hold c.mu.
+func (c *JujuClient) closeConnLocked() error {
 	if c.conn != nil {
-		return c.conn.Close()
+		err := c.conn.Close()
+		c.conn = nil
+		return err
 	}
 	return nil
 }
@@ -267,6 +277,9 @@ func (c *JujuClient) SelectController(name string) error {
 	if err := c.store.SetCurrentController(name); err != nil {
 		return fmt.Errorf("persisting controller selection: %w", err)
 	}
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	_ = c.closeConnLocked() // invalidate cached connection
 	c.controllerName = name
 	c.modelUUID = "" // reset model so the new controller's current model is used
 	return nil
@@ -287,19 +300,50 @@ func (c *JujuClient) SelectModel(qualifiedName string) error {
 	if err := c.store.SetCurrentModel(c.controllerName, qualifiedName); err != nil {
 		return fmt.Errorf("persisting model selection: %w", err)
 	}
-	c.modelUUID = "" // will be resolved lazily on next connect()
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	_ = c.closeConnLocked() // invalidate cached connection (model changed)
+	c.modelUUID = ""        // will be resolved lazily on next connect()
 	return nil
 }
 
-// connect establishes an API connection to the configured controller and model.
-// If no model UUID was explicitly provided, it resolves the current model
-// from the client store so that the connection is model-scoped (required
-// for the "Client" facade used by Status).
+// connect returns a cached API connection, creating a new one if necessary.
+// The returned connection is owned by JujuClient — callers MUST NOT close it.
+// Use connectFresh() for long-lived consumers (e.g. DebugLog, WatchStatus)
+// that need their own independent connection.
 func (c *JujuClient) connect(ctx context.Context) (api.Connection, error) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// Reuse existing connection if still healthy.
+	if c.conn != nil && !c.conn.IsBroken(ctx) {
+		return c.conn, nil
+	}
+	// Stale connection — close it before opening a new one.
+	_ = c.closeConnLocked()
+
+	conn, err := c.dialLocked(ctx)
+	if err != nil {
+		return nil, err
+	}
+	c.conn = conn
+	return conn, nil
+}
+
+// connectFresh opens a new, independent API connection that the caller
+// is responsible for closing. Use this for long-lived consumers such as
+// DebugLog and WatchStatus that hold a connection for an extended period.
+func (c *JujuClient) connectFresh(ctx context.Context) (api.Connection, error) {
 	c.mu.RLock()
+	defer c.mu.RUnlock()
+	return c.dialLocked(ctx)
+}
+
+// dialLocked creates a brand-new API connection to the configured controller
+// and model. Caller must hold c.mu (read or write lock).
+func (c *JujuClient) dialLocked(ctx context.Context) (api.Connection, error) {
 	modelUUID := c.modelUUID
 	controllerName := c.controllerName
-	c.mu.RUnlock()
 
 	if modelUUID == "" {
 		// Resolve the current model for this controller from the client store.
@@ -429,7 +473,6 @@ func (c *JujuClient) Status(ctx context.Context) (*model.FullStatus, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer func() { _ = conn.Close() }()
 
 	statusClient := client.NewClient(conn, nopLogger{})
 	result, err := statusClient.Status(ctx, &client.StatusArgs{
@@ -453,7 +496,6 @@ func (c *JujuClient) ScaleApplication(ctx context.Context, appName string, delta
 	if err != nil {
 		return err
 	}
-	defer func() { _ = conn.Close() }()
 
 	modelType, err := c.currentModelType()
 	if err != nil {
@@ -532,7 +574,6 @@ func (c *JujuClient) DeployApplication(ctx context.Context, opts model.DeployOpt
 	if err != nil {
 		return err
 	}
-	defer func() { _ = conn.Close() }()
 
 	appClient := application.NewClient(conn)
 	arg := application.DeployFromRepositoryArg{
@@ -598,7 +639,6 @@ func (c *JujuClient) RelateApplications(ctx context.Context, endpointA, endpoint
 	if err != nil {
 		return err
 	}
-	defer func() { _ = conn.Close() }()
 
 	appClient := application.NewClient(conn)
 	_, err = appClient.AddRelation(ctx, []string{endpointA, endpointB}, nil)
@@ -615,7 +655,6 @@ func (c *JujuClient) DestroyRelation(ctx context.Context, endpointA, endpointB s
 	if err != nil {
 		return err
 	}
-	defer func() { _ = conn.Close() }()
 
 	appClient := application.NewClient(conn)
 	err = appClient.DestroyRelation(ctx, nil, nil, endpointA, endpointB)
@@ -667,7 +706,6 @@ func (c *JujuClient) RelationData(ctx context.Context, relationID int) (*model.R
 	if err != nil {
 		return nil, err
 	}
-	defer func() { _ = conn.Close() }()
 
 	appClient := application.NewClient(conn)
 	infos, err := appClient.UnitsInfo(ctx, unitTags)
@@ -734,7 +772,6 @@ func (c *JujuClient) ListSecrets(ctx context.Context) ([]model.Secret, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer func() { _ = conn.Close() }()
 
 	secClient := jujuSecrets.NewClient(conn)
 	details, err := secClient.ListSecrets(ctx, false, coreSecrets.Filter{})
@@ -791,7 +828,6 @@ func (c *JujuClient) RevealSecret(ctx context.Context, uri string, revision int)
 	if err != nil {
 		return nil, err
 	}
-	defer func() { _ = conn.Close() }()
 
 	parsed, err := coreSecrets.ParseURI(uri)
 	if err != nil {
@@ -825,7 +861,6 @@ func (c *JujuClient) ListOffers(ctx context.Context) ([]model.Offer, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer func() { _ = conn.Close() }()
 
 	offersClient := applicationoffers.NewClient(conn)
 	details, err := offersClient.ListOffers(ctx)
@@ -862,7 +897,6 @@ func (c *JujuClient) AppConfig(ctx context.Context, appName string) ([]model.Con
 	if err != nil {
 		return nil, err
 	}
-	defer func() { _ = conn.Close() }()
 
 	appClient := application.NewClient(conn)
 	result, err := appClient.Get(ctx, appName)
@@ -903,7 +937,6 @@ func (c *JujuClient) ApplicationActions(ctx context.Context, appName string) ([]
 	if err != nil {
 		return nil, err
 	}
-	defer func() { _ = conn.Close() }()
 
 	actionClient := action.NewClient(conn)
 	specs, err := actionClient.ApplicationCharmActions(ctx, appName)
@@ -929,7 +962,6 @@ func (c *JujuClient) RunAction(ctx context.Context, unitName, actionName string,
 	if err != nil {
 		return nil, err
 	}
-	defer func() { _ = conn.Close() }()
 
 	actionParams := make(map[string]interface{}, len(params))
 	for k, v := range params {
@@ -996,7 +1028,6 @@ func (c *JujuClient) ListStorage(ctx context.Context) ([]model.StorageInstance, 
 	if err != nil {
 		return nil, err
 	}
-	defer func() { _ = conn.Close() }()
 
 	storageClient := jujuStorage.NewClient(conn)
 	details, err := storageClient.ListStorageDetails(ctx)
@@ -1091,7 +1122,7 @@ func (c *JujuClient) currentModelType() (string, error) {
 // The returned channel emits log entries until the context is cancelled
 // or the connection is closed.
 func (c *JujuClient) DebugLog(ctx context.Context, filter model.DebugLogFilter) (<-chan model.LogEntry, error) {
-	conn, err := c.connect(ctx)
+	conn, err := c.connectFresh(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -1155,7 +1186,7 @@ func (c *JujuClient) DebugLog(ctx context.Context, filter model.DebugLogFilter) 
 func (c *JujuClient) WatchStatus(ctx context.Context, interval time.Duration) (<-chan StatusUpdate, error) {
 	// Establish the initial connection so callers get an immediate error if
 	// the controller is unreachable.
-	conn, err := c.connect(ctx)
+	conn, err := c.connectFresh(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -1179,7 +1210,7 @@ func (c *JujuClient) WatchStatus(ctx context.Context, interval time.Duration) (<
 		for {
 			// Ensure we have a live connection.
 			if conn == nil {
-				conn, err = c.connect(ctx)
+				conn, err = c.connectFresh(ctx)
 				if err != nil {
 					log.Printf("WatchStatus: reconnect failed: %v (retrying in %s)", err, backoff)
 					select {
