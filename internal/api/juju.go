@@ -36,6 +36,19 @@ import (
 	"github.com/bschimke95/jara/internal/model"
 )
 
+const (
+	// actionPollInterval is the time between polls when waiting for an
+	// action to complete.
+	actionPollInterval = 500 * time.Millisecond
+
+	// statusFetchTimeout is the per-call timeout for fetching Juju status.
+	statusFetchTimeout = 10 * time.Second
+
+	// defaultDebugLogBacklog is the number of recent log lines fetched when
+	// starting a debug-log stream and no explicit backlog is configured.
+	defaultDebugLogBacklog uint = 100
+)
+
 // nopLogger is a no-op implementation of core/logger.Logger.
 type nopLogger struct{}
 
@@ -1014,7 +1027,7 @@ func (c *JujuClient) RunAction(ctx context.Context, unitName, actionName string,
 	actionID := enqueued.Actions[0].Action.ID
 
 	// Poll for completion.
-	ticker := time.NewTicker(500 * time.Millisecond)
+	ticker := time.NewTicker(actionPollInterval)
 	defer ticker.Stop()
 	for {
 		select {
@@ -1068,13 +1081,7 @@ func (c *JujuClient) ListStorage(ctx context.Context) ([]model.StorageInstance, 
 
 	result := make([]model.StorageInstance, 0, len(details))
 	for _, d := range details {
-		kind := "unknown"
-		switch d.Kind {
-		case 1:
-			kind = "block"
-		case 2:
-			kind = "filesystem"
-		}
+		kind := d.Kind.String()
 		si := model.StorageInstance{
 			ID:         strings.TrimPrefix(d.StorageTag, "storage-"),
 			Kind:       kind,
@@ -1155,7 +1162,7 @@ func (c *JujuClient) DebugLog(ctx context.Context, filter model.DebugLogFilter) 
 	}
 
 	params := common.DebugLogParams{
-		Backlog: 100,
+		Backlog: defaultDebugLogBacklog,
 	}
 	if filter.Backlog > 0 {
 		params.Backlog = uint(filter.Backlog)
@@ -1258,7 +1265,7 @@ func (c *JujuClient) WatchStatus(ctx context.Context, interval time.Duration) (<
 
 			// Fetch status on the persistent connection.
 			statusClient := client.NewClient(conn, nopLogger{})
-			fetchCtx, fetchCancel := context.WithTimeout(ctx, 10*time.Second)
+			fetchCtx, fetchCancel := context.WithTimeout(ctx, statusFetchTimeout)
 			result, err := statusClient.Status(fetchCtx, &client.StatusArgs{
 				Patterns: []string{},
 			})
