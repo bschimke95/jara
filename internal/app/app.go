@@ -185,8 +185,13 @@ func New(client api.Client, opts ...Option) Model {
 
 // quit closes any open resources and returns tea.Quit.
 func (m Model) quit() (Model, tea.Cmd) {
+	m.stopStatusStream()
+	m.stopDebugLogStream()
 	if m.llmClient != nil {
 		_ = m.llmClient.Close()
+	}
+	if m.client != nil {
+		_ = m.client.Close()
 	}
 	return m, tea.Quit
 }
