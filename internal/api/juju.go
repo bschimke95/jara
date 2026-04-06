@@ -14,6 +14,7 @@ import (
 
 	"github.com/juju/juju/api"
 	"github.com/juju/juju/api/client/application"
+	"github.com/juju/juju/api/client/applicationoffers"
 	"github.com/juju/juju/api/client/client"
 	jujuSecrets "github.com/juju/juju/api/client/secrets"
 	"github.com/juju/juju/api/common"
@@ -22,6 +23,7 @@ import (
 	"github.com/juju/juju/core/base"
 	"github.com/juju/juju/core/constraints"
 	corelogger "github.com/juju/juju/core/logger"
+	"github.com/juju/juju/core/relation"
 	coreSecrets "github.com/juju/juju/core/secrets"
 	"github.com/juju/juju/rpc/params"
 	"github.com/juju/loggo/v2"
@@ -802,6 +804,42 @@ func (c *JujuClient) RevealSecret(ctx context.Context, uri string, revision int)
 		return nil, fmt.Errorf("secret %q has no value", uri)
 	}
 	return details[0].Value.Values()
+}
+
+func (c *JujuClient) ListOffers(ctx context.Context) ([]model.Offer, error) {
+	conn, err := c.connect(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer func() { _ = conn.Close() }()
+
+	offersClient := applicationoffers.NewClient(conn)
+	details, err := offersClient.ListOffers(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("listing offers: %w", err)
+	}
+
+	result := make([]model.Offer, 0, len(details))
+	for _, d := range details {
+		o := model.Offer{
+			Name:            d.OfferName,
+			ApplicationName: d.ApplicationName,
+			OfferURL:        d.OfferURL,
+			CharmURL:        d.CharmURL,
+			TotalConnCount:  len(d.Connections),
+		}
+		for _, ep := range d.Endpoints {
+			o.Endpoints = append(o.Endpoints, ep.Name)
+		}
+		for _, conn := range d.Connections {
+			if conn.Status == relation.Joined {
+				o.ActiveConnCount++
+			}
+		}
+		result = append(result, o)
+	}
+	sort.Slice(result, func(i, j int) bool { return result[i].Name < result[j].Name })
+	return result, nil
 }
 
 // currentModelType returns the model type ("iaas" or "caas") for the

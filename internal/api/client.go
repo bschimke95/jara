@@ -38,6 +38,8 @@ type Client interface {
 	CharmhubSuggestions(ctx context.Context, query string, limit int) ([]string, error)
 	// CharmRelationInfo returns endpoint metadata for a charm from Charmhub.
 	CharmRelationInfo(ctx context.Context, charmName string) (map[string]model.CharmEndpoint, error)
+	// ListOffers returns application offers for the current model.
+	ListOffers(ctx context.Context) ([]model.Offer, error)
 	// ListSecrets returns the secrets for the current model.
 	ListSecrets(ctx context.Context) ([]model.Secret, error)
 	// RevealSecret returns the decoded key-value content of a secret.

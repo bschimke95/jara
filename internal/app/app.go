@@ -27,6 +27,7 @@ import (
 	"github.com/bschimke95/jara/internal/view/machines"
 	"github.com/bschimke95/jara/internal/view/models"
 	"github.com/bschimke95/jara/internal/view/modelview"
+	"github.com/bschimke95/jara/internal/view/offers"
 	"github.com/bschimke95/jara/internal/view/relations"
 	"github.com/bschimke95/jara/internal/view/secretdetail"
 	"github.com/bschimke95/jara/internal/view/secrets"
@@ -144,6 +145,7 @@ func New(client api.Client, opts ...Option) Model {
 	m.views[nav.RelationsView] = relations.New(keys, s)
 	m.views[nav.SecretsView] = secrets.New(keys, s)
 	m.views[nav.SecretDetailView] = secretdetail.New(keys, s)
+	m.views[nav.OffersView] = offers.New(keys, s)
 	m.views[nav.DebugLogView] = debuglog.New(keys, s)
 	m.views[nav.ControllerView] = controllers.New(keys, s, func() tea.Cmd { return m.pollControllers() })
 	m.views[nav.ModelsView] = models.New(keys, s,
@@ -381,6 +383,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case relations.FetchRelationDataMsg:
 		return m, m.fetchRelationData(msg.RelationID)
 
+	case offers.FetchOffersMsg:
+		return m, m.fetchOffers()
+
 	case debuglog.FilterChangedMsg:
 		return m, m.startDebugLogStream(msg.Filter)
 	}
@@ -445,6 +450,8 @@ func (m Model) viewName() string {
 		return "Secrets"
 	case nav.SecretDetailView:
 		return "Secret"
+	case nav.OffersView:
+		return "Offers"
 	case nav.DebugLogView:
 		return "Debug Log"
 	case nav.ChatView:

@@ -212,6 +212,17 @@ type RelationData struct {
 	UnitData map[string]map[string]string
 }
 
+// Offer represents a Juju application offer (cross-model relation endpoint).
+type Offer struct {
+	Name            string
+	ApplicationName string
+	OfferURL        string
+	CharmURL        string
+	Endpoints       []string // endpoint names
+	ActiveConnCount int
+	TotalConnCount  int
+}
+
 // CharmEndpoint describes a single endpoint from a charm's metadata.
 type CharmEndpoint struct {
 	Interface   string
