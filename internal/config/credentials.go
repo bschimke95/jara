@@ -34,14 +34,22 @@ func LoadAICredential(provider string) string {
 	}
 }
 
-// ghCLIToken attempts to read a GitHub token from the gh CLI config file
-// at ~/.config/gh/hosts.yml.
+// ghCLIToken attempts to read a GitHub token from the gh CLI config file.
+// It respects GH_CONFIG_DIR and XDG_CONFIG_HOME, falling back to ~/.config/gh.
 func ghCLIToken() string {
-	home, err := os.UserHomeDir()
-	if err != nil {
-		return ""
+	dir := os.Getenv("GH_CONFIG_DIR")
+	if dir == "" {
+		if xdg := os.Getenv("XDG_CONFIG_HOME"); xdg != "" {
+			dir = xdg + "/gh"
+		} else {
+			home, err := os.UserHomeDir()
+			if err != nil {
+				return ""
+			}
+			dir = home + "/.config/gh"
+		}
 	}
-	data, err := os.ReadFile(home + "/.config/gh/hosts.yml")
+	data, err := os.ReadFile(dir + "/hosts.yml")
 	if err != nil {
 		return ""
 	}
