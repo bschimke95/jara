@@ -12,8 +12,7 @@ import (
 func (m Model) handleNavigate(msg view.NavigateMsg) (Model, tea.Cmd) {
 	target := m.views[msg.Target]
 	if target == nil {
-		m.err = fmt.Errorf("unknown view: %v", msg.Target)
-		return m, nil
+		return m, m.showToast(fmt.Sprintf("unknown view: %v", msg.Target))
 	}
 
 	// Snapshot the stack before mutating so we can roll back if Enter fails.
@@ -39,10 +38,8 @@ func (m Model) handleNavigate(msg view.NavigateMsg) (Model, tea.Cmd) {
 	if err != nil {
 		// Roll back the stack mutation so the UI stays on the previous view.
 		m.stack.Restore(snap)
-		m.err = err
-		return m, nil
+		return m, m.showToast(err.Error())
 	}
-	m.err = nil
 
 	if cmd != nil {
 		return m, cmd
@@ -70,8 +67,7 @@ func (m Model) handleBack() (Model, tea.Cmd) {
 		if err != nil {
 			// Re-push to undo the pop — back navigation failed.
 			m.stack.Push(prev)
-			m.err = err
-			return m, nil
+			return m, m.showToast(err.Error())
 		}
 		if cmd != nil {
 			cmds = append(cmds, cmd)
