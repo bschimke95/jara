@@ -499,7 +499,7 @@ func (m *Modal) Render(background string) string {
 }
 
 func (m *Modal) renderLeftPane(width int) string {
-	selectedStyle := lipgloss.NewStyle().Foreground(m.styles.CrumbFgColor).Background(m.styles.Highlight).Bold(true)
+	selectedStyle := lipgloss.NewStyle().Background(m.styles.Highlight).Bold(true)
 	focusedStyle := lipgloss.NewStyle().Foreground(m.styles.Title)
 	mutedStyle := lipgloss.NewStyle().Foreground(m.styles.Muted)
 
@@ -527,7 +527,7 @@ func (m *Modal) renderRightPane(width int) string {
 	labelStyle := lipgloss.NewStyle().Foreground(m.styles.InfoLabelColor)
 	valueStyle := lipgloss.NewStyle().Foreground(m.styles.Title)
 	hintStyle := lipgloss.NewStyle().Foreground(m.styles.Muted)
-	selectedStyle := lipgloss.NewStyle().Foreground(m.styles.CrumbFgColor).Background(m.styles.Highlight).Bold(true)
+	selectedStyle := lipgloss.NewStyle().Background(m.styles.Highlight).Bold(true)
 
 	if m.editing {
 		inputLine := valueStyle.Render(m.input.Value()) + lipgloss.NewStyle().Foreground(m.styles.Primary).Render("█")
@@ -634,7 +634,7 @@ func (m *Modal) renderSimple(background string) string {
 func (m *Modal) renderSimplePane(width int) string {
 	valueStyle := lipgloss.NewStyle().Foreground(m.styles.Title)
 	hintStyle := lipgloss.NewStyle().Foreground(m.styles.Muted)
-	selectedStyle := lipgloss.NewStyle().Foreground(m.styles.CrumbFgColor).Background(m.styles.Highlight).Bold(true)
+	selectedStyle := lipgloss.NewStyle().Background(m.styles.Highlight).Bold(true)
 
 	lines := []string{}
 	if m.editing {
