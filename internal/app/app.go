@@ -440,10 +440,6 @@ func (m Model) contentHeight() int {
 		// Header box: logo height + 2 borders.
 		chrome += ui.LogoHeight() + 2
 	}
-	// Views that render their own borders don't need the outer body border.
-	if currentViewID == nav.ModelView || currentViewID == nav.RelationsView {
-		chrome -= 2
-	}
 	chrome += m.inputBarHeight()
 	// When the debug-log search bar is visible it occupies 3 rows (bordered box).
 	if currentViewID == nav.DebugLogView {
