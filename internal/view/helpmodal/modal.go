@@ -167,6 +167,22 @@ func renderSection(title string, hints []ui.KeyHint, contentW int, styles *color
 	return strings.Join(lines, "\n")
 }
 
+// viewNavHints returns the view navigation shortcuts.
+func (m *Modal) viewNavHints() []ui.KeyHint {
+	return []ui.KeyHint{
+		{Key: view.BindingKey(m.keys.ApplicationsNav), Desc: "Applications"},
+		{Key: view.BindingKey(m.keys.UnitsNav), Desc: "Units"},
+		{Key: view.BindingKey(m.keys.RelationsNav), Desc: "Relations"},
+		{Key: view.BindingKey(m.keys.MachinesNav), Desc: "Machines"},
+		{Key: view.BindingKey(m.keys.SecretsNav), Desc: "Secrets"},
+		{Key: view.BindingKey(m.keys.OffersNav), Desc: "Offers"},
+		{Key: view.BindingKey(m.keys.StorageNav), Desc: "Storage"},
+		{Key: view.BindingKey(m.keys.ConfigNav), Desc: "Config"},
+		{Key: view.BindingKey(m.keys.ChatNav), Desc: "Chat"},
+		{Key: view.BindingKey(m.keys.LogsView), Desc: "Debug Log"},
+	}
+}
+
 // renderBox builds the modal box content (without the compositor overlay).
 // It is used by Render and also exposed for testing.
 func (m *Modal) renderBox() string {
@@ -187,6 +203,7 @@ func (m *Modal) renderBox() string {
 	divider := lipgloss.NewStyle().Foreground(m.styles.Muted).Render(strings.Repeat("─", contentW))
 
 	viewSection := renderSection("View", m.viewHints, contentW, m.styles)
+	viewsSection := renderSection("Views", m.viewNavHints(), contentW, m.styles)
 	generalSection := renderSection("General", m.generalHints(), contentW, m.styles)
 
 	hintStyle := lipgloss.NewStyle().
@@ -195,7 +212,7 @@ func (m *Modal) renderBox() string {
 		AlignHorizontal(lipgloss.Center)
 	footer := hintStyle.Render("[esc] or [?] to close")
 
-	content := viewSection + "\n" + divider + "\n" + generalSection + "\n\n" + footer
+	content := viewSection + "\n" + divider + "\n" + viewsSection + "\n" + divider + "\n" + generalSection + "\n\n" + footer
 
 	titleStyle := lipgloss.NewStyle().Foreground(m.styles.Primary).Bold(true)
 	return ui.BorderBoxRawTitle(content, titleStyle.Render(" Key Bindings "), modalW, m.styles)
