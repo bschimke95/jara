@@ -323,7 +323,7 @@ func (m *View) recalcLayout() {
 	rightInner := rightWidth - 2
 
 	m.appTable.SetWidth(leftInner)
-	m.appTable.SetHeight(m.height - 2)
+	m.appTable.SetHeight(m.height - 3) // -2 for border, -1 for header row
 	m.appTable.SetColumns(ui.ScaleColumns(applicationColumns(), leftInner))
 
 	halfH := (m.height - 4) / 2
@@ -332,11 +332,11 @@ func (m *View) recalcLayout() {
 	}
 
 	m.unitTable.SetWidth(rightInner)
-	m.unitTable.SetHeight(halfH)
+	m.unitTable.SetHeight(halfH - 1) // -1 for header row
 	m.unitTable.SetColumns(ui.ScaleColumns(units.CompactColumns(), rightInner))
 
 	m.relationTable.SetWidth(rightInner)
-	m.relationTable.SetHeight(halfH)
+	m.relationTable.SetHeight(halfH - 1) // -1 for header row
 	m.relationTable.SetColumns(ui.ScaleColumns(relations.CompactColumn(), rightInner))
 }
 

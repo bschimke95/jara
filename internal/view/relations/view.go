@@ -49,7 +49,7 @@ func (r *View) SetSize(width, height int) {
 	leftWidth, _ := r.splitWidths()
 	leftInner := leftWidth - 2
 	r.table.SetWidth(leftInner)
-	r.table.SetHeight(height - 2)
+	r.table.SetHeight(height - 3) // -2 for border, -1 for header row
 	r.table.SetColumns(ui.ScaleColumns(Columns(), leftInner))
 }
 
