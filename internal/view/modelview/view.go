@@ -185,7 +185,7 @@ func (m *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.status != nil {
 				rels = m.status.Relations
 			}
-			m.relateModal = relatemodal.New(m.keys, m.styles, suggestions, rels, m.selectedApp)
+			m.relateModal = relatemodal.New(m.keys, m.styles, suggestions, rels)
 			m.relateModal.SetSize(m.width, m.height)
 			m.relateModalOpen = true
 			return m, m.relateModal.BeginEdit()
