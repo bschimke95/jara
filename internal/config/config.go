@@ -27,6 +27,9 @@ const (
 	// DefaultCharmhubURL is the default Charmhub API base URL used for
 	// autocomplete suggestions in deploy modal.
 	DefaultCharmhubURL = "https://api.charmhub.io"
+
+	// DefaultToastDuration is the default duration for error toast messages.
+	DefaultToastDuration = 4 * time.Second
 )
 
 // Config is the top-level configuration for jara.
@@ -62,6 +65,10 @@ type JaraConfig struct {
 
 	// UI holds the theme and key binding configuration.
 	UI UIConfig `yaml:"ui,omitempty"`
+
+	// ToastDuration controls how long error toasts are displayed.
+	// Accepts Go duration strings (e.g. "4s", "2500ms"). Defaults to 4s.
+	ToastDuration time.Duration `yaml:"toastDuration,omitempty"`
 }
 
 // AIConfig holds configuration for the LLM-powered analysis chat.
@@ -244,9 +251,10 @@ type KeysConfig struct {
 func NewDefault() *Config {
 	return &Config{
 		Jara: JaraConfig{
-			RefreshRate: DefaultRefreshRate,
-			LogLevel:    DefaultLogLevel,
-			CharmhubURL: DefaultCharmhubURL,
+			RefreshRate:   DefaultRefreshRate,
+			LogLevel:      DefaultLogLevel,
+			CharmhubURL:   DefaultCharmhubURL,
+			ToastDuration: DefaultToastDuration,
 		},
 	}
 }
@@ -293,6 +301,11 @@ func (c *Config) Load(path string) error {
 		c.Jara.LogLevel = strings.ToLower(c.Jara.LogLevel)
 	default:
 		c.Jara.LogLevel = DefaultLogLevel
+	}
+
+	// Apply default for toast duration.
+	if c.Jara.ToastDuration <= 0 {
+		c.Jara.ToastDuration = DefaultToastDuration
 	}
 
 	return nil

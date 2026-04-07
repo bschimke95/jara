@@ -69,8 +69,20 @@ type Model struct {
 	charmEndpointsFetched bool // true once charm endpoint info has been polled
 	secretsFetched        bool // true once secrets have been explicitly fetched
 
-	err   error
-	ready bool
+	toast      *toastState // active error toast (nil = no toast)
+	toastSeqNo int         // monotonic counter to match dismiss callbacks
+	ready      bool
+}
+
+// toastState holds the currently visible error toast.
+type toastState struct {
+	message string // error message text
+	seqNo   int    // sequence number for matching dismiss callbacks
+}
+
+// toastExpiredMsg is sent when the toast timer expires.
+type toastExpiredMsg struct {
+	seqNo int // the sequence number of the toast that should be dismissed
 }
 
 // Option configures the root Model.
@@ -197,6 +209,29 @@ func (m Model) quit() (Model, tea.Cmd) {
 	return m, tea.Quit
 }
 
+// showToast creates a new error toast and returns a command that will dismiss
+// it after the configured duration. The toast is visible until the timer fires,
+// regardless of navigation or status updates.
+func (m *Model) showToast(message string) tea.Cmd {
+	m.toastSeqNo++
+	seq := m.toastSeqNo
+	m.toast = &toastState{message: message, seqNo: seq}
+	dur := m.cfg.Jara.ToastDuration
+	if dur <= 0 {
+		dur = config.DefaultToastDuration
+	}
+	return tea.Tick(dur, func(_ time.Time) tea.Msg {
+		return toastExpiredMsg{seqNo: seq}
+	})
+}
+
+// clearToast removes the active toast if the sequence number matches.
+func (m *Model) clearToast(seqNo int) {
+	if m.toast != nil && m.toast.seqNo == seqNo {
+		m.toast = nil
+	}
+}
+
 // startupMsg is sent once by Init to trigger stream setup inside Update,
 // where model mutations (like storing the cancel func) are preserved.
 type startupMsg struct{}
@@ -247,7 +282,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			msg.status.Secrets = m.status.Secrets
 		}
 		m.status = msg.status
-		m.err = nil
 		for _, v := range m.views {
 			if sr, ok := v.(view.StatusReceiver); ok {
 				sr.SetStatus(msg.status)
@@ -268,8 +302,8 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		if msg.ctx.Err() != nil {
 			return m, nil
 		}
-		m.err = msg.err
-		return m, readNextStatus(msg.ctx, msg.ch)
+		cmd := m.showToast(msg.err.Error())
+		return m, tea.Batch(cmd, readNextStatus(msg.ctx, msg.ch))
 
 	case debugLogConnectedMsg:
 		return m, readFirstLogBatch(msg.ctx, msg.ch)
@@ -303,7 +337,10 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case errMsg:
-		m.err = msg.err
+		return m, m.showToast(msg.err.Error())
+
+	case toastExpiredMsg:
+		m.clearToast(msg.seqNo)
 		return m, nil
 
 	case view.StopStatusStreamMsg:
@@ -324,7 +361,6 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case view.ClearStatusMsg:
 		m.status = nil
-		m.err = nil
 		for _, v := range m.views {
 			if sr, ok := v.(view.StatusReceiver); ok {
 				sr.SetStatus(nil)
@@ -375,8 +411,7 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case modelview.NoModelMsg:
 		m.stopStatusStream()
-		m.err = fmt.Errorf("no model selected — use \"juju add-model <name>\" to create one")
-
+		return m, m.showToast("no model selected — use \"juju add-model <name>\" to create one")
 	case view.NavigateMsg:
 		return m.handleNavigate(msg)
 
@@ -446,10 +481,6 @@ func (m Model) contentHeight() int {
 		if dl, ok := m.views[nav.DebugLogView].(*debuglog.View); ok && dl.IsSearchActive() {
 			chrome += 3
 		}
-	}
-	// Account for the error line when one is present.
-	if m.err != nil {
-		chrome++
 	}
 	h := m.height - chrome
 	if h < 5 {
@@ -581,14 +612,19 @@ func (m Model) View() tea.View {
 		}
 	}
 
-	// ── Breadcrumb bar ──
-	sections = append(sections, ui.CrumbBar(m.stack.Breadcrumbs(), m.width, m.styles))
-
-	// ── Error line ──
-	if m.err != nil {
-		errStyle := lipgloss.NewStyle().Foreground(m.styles.ErrorColor)
-		sections = append(sections, errStyle.Render(" Error: "+m.err.Error()))
+	// ── Breadcrumb bar (with optional inline toast) ──
+	crumbLine := ui.CrumbBar(m.stack.Breadcrumbs(), m.width, m.styles)
+	if m.toast != nil {
+		toastText := m.styles.ToastStyle.Render(" ⚠ " + m.toast.message + " ")
+		toastWidth := lipgloss.Width(toastText)
+		crumbWidth := lipgloss.Width(crumbLine)
+		gap := m.width - crumbWidth - toastWidth
+		if gap < 1 {
+			gap = 1
+		}
+		crumbLine = crumbLine + strings.Repeat(" ", gap) + toastText + "\n"
 	}
+	sections = append(sections, crumbLine)
 
 	body := lipgloss.JoinVertical(lipgloss.Left, sections...)
 

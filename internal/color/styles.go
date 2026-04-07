@@ -71,6 +71,9 @@ type Styles struct {
 	// InfoValueColor is the raw color for info values.
 	InfoValueColor color.Color
 
+	// ToastBgColor is the raw background color for error toasts.
+	ToastBgColor color.Color
+
 	// HintDescColor is the raw color for hint descriptions.
 	HintDescColor color.Color
 
@@ -138,6 +141,9 @@ type Styles struct {
 
 	// ErrorStyle is for error messages.
 	ErrorStyle lipgloss.Style
+
+	// ToastStyle is for error toast messages (foreground + background).
+	ToastStyle lipgloss.Style
 
 	// MutedText is for less-important text.
 	MutedText lipgloss.Style
@@ -218,6 +224,7 @@ type palette struct {
 	infoLabel         color.Color
 	infoValue         color.Color
 	errorColor        color.Color
+	toastBg           color.Color
 	searchHighlightFg color.Color
 	searchHighlightBg color.Color
 	crumbBgAlt        color.Color
@@ -246,6 +253,7 @@ func defaultPalette() palette {
 		infoLabel:         lipgloss.Color("#5c6370"),
 		infoValue:         lipgloss.Color("#abb2bf"),
 		errorColor:        lipgloss.Color("#e06c75"),
+		toastBg:           lipgloss.Color("#3b2024"),
 		searchHighlightFg: lipgloss.Color("#282c34"),
 		searchHighlightBg: lipgloss.Color("#e5c07b"),
 		crumbBgAlt:        lipgloss.Color("#3e4451"),
@@ -292,6 +300,7 @@ func newStyles(p palette) *Styles {
 		SearchHighlightFgColor: p.searchHighlightFg,
 		SearchHighlightBgColor: p.searchHighlightBg,
 		ErrorColor:             p.errorColor,
+		ToastBgColor:           p.toastBg,
 		CheckGreenColor:        p.checkGreen,
 		CheckRedColor:          p.checkRed,
 		AssistantLabelColor:    p.assistantLabel,
@@ -355,6 +364,10 @@ func (s *Styles) RebuildStyles() {
 	s.CrumbSep = lipgloss.NewStyle().Foreground(s.Subtle)
 
 	s.ErrorStyle = lipgloss.NewStyle().Foreground(s.ErrorColor)
+	s.ToastStyle = lipgloss.NewStyle().
+		Foreground(s.ErrorColor).
+		Background(s.ToastBgColor).
+		Bold(true)
 	s.MutedText = lipgloss.NewStyle().Foreground(s.Muted)
 	s.TitleText = lipgloss.NewStyle().Foreground(s.Title)
 	s.PrimaryText = lipgloss.NewStyle().Foreground(s.Primary).Bold(true)
