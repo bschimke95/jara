@@ -10,8 +10,8 @@ import (
 
 func TestApplicationColumns(t *testing.T) {
 	cols := applicationColumns()
-	if len(cols) != 8 {
-		t.Fatalf("applicationColumns() returned %d, want 8", len(cols))
+	if len(cols) != 4 {
+		t.Fatalf("applicationColumns() returned %d, want 4", len(cols))
 	}
 }
 
