@@ -420,7 +420,7 @@ func (m *Modal) renderDropdown(width int) []string {
 		return nil
 	}
 
-	selectedStyle := lipgloss.NewStyle().Foreground(m.styles.CrumbFgColor).Background(m.styles.Highlight).Bold(true)
+	selectedStyle := lipgloss.NewStyle().Background(m.styles.Highlight).Bold(true)
 	itemStyle := lipgloss.NewStyle().Foreground(m.styles.Title)
 	roleStyle := lipgloss.NewStyle().Foreground(m.styles.Muted)
 
