@@ -26,7 +26,7 @@ var appColors = []icolor.Color{
 
 // renderDatabagPane renders the outer "Databags" box containing two equal-height
 // sub-boxes: "Application Data" (top) and "Unit Data" (bottom).
-func renderDatabagPane(rd *model.RelationData, rel *model.Relation, width, height int, focus databagFocus, appScroll, unitScroll int, s *color.Styles) string {
+func renderDatabagPane(rd *model.RelationData, rel *model.Relation, width, height int, s *color.Styles) string {
 	if rd == nil || rel == nil {
 		placeholder := lipgloss.NewStyle().Foreground(s.Muted).Render("Select a relation to view databag contents")
 		return ui.BorderBox(view.PadToHeight(placeholder, height-2), "Databags", width, s)
@@ -38,8 +38,8 @@ func renderDatabagPane(rd *model.RelationData, rel *model.Relation, width, heigh
 	topH := contentHeight / 2
 	botH := contentHeight - topH
 
-	appBox := renderAppDataBox(rd, rel, innerWidth, topH, appScroll, s)
-	unitBox := renderUnitDataBox(rd, rel, innerWidth, botH, unitScroll, focus == focusUnitData, s)
+	appBox := renderAppDataBox(rd, rel, innerWidth, topH, s)
+	unitBox := renderUnitDataBox(rd, rel, innerWidth, botH, s)
 
 	combined := strings.Split(appBox+"\n"+unitBox, "\n")
 
@@ -55,8 +55,8 @@ func renderDatabagPane(rd *model.RelationData, rel *model.Relation, width, heigh
 }
 
 // renderAppDataBox renders the "Application Data" box with one coloured
-// sub-box per endpoint application. Supports per-box scrolling.
-func renderAppDataBox(rd *model.RelationData, rel *model.Relation, width, height, scroll int, s *color.Styles) string {
+// sub-box per endpoint application.
+func renderAppDataBox(rd *model.RelationData, rel *model.Relation, width, height int, s *color.Styles) string {
 	boxInner := width - 2
 	keyStyle := lipgloss.NewStyle().Foreground(s.InfoLabelColor)
 	valStyle := lipgloss.NewStyle().Foreground(s.InfoValueColor)
@@ -87,11 +87,6 @@ func renderAppDataBox(rd *model.RelationData, rel *model.Relation, width, height
 		lines = append(lines, lipgloss.NewStyle().Foreground(s.Muted).Render("(no application data)"))
 	}
 
-	// Apply scroll.
-	if scroll > 0 && scroll < len(lines) {
-		lines = lines[scroll:]
-	}
-
 	innerH := height - 2
 	for len(lines) < innerH {
 		lines = append(lines, "")
@@ -104,7 +99,7 @@ func renderAppDataBox(rd *model.RelationData, rel *model.Relation, width, height
 }
 
 // renderUnitDataBox renders the "Unit Data" box with one coloured sub-box per unit.
-func renderUnitDataBox(rd *model.RelationData, rel *model.Relation, width, height, scroll int, focused bool, s *color.Styles) string {
+func renderUnitDataBox(rd *model.RelationData, rel *model.Relation, width, height int, s *color.Styles) string {
 	boxInner := width - 2
 	keyStyle := lipgloss.NewStyle().Foreground(s.InfoLabelColor)
 	valStyle := lipgloss.NewStyle().Foreground(s.InfoValueColor)
@@ -159,11 +154,6 @@ func renderUnitDataBox(rd *model.RelationData, rel *model.Relation, width, heigh
 		lines = append(lines, lipgloss.NewStyle().Foreground(s.Muted).Render("(no unit data)"))
 	}
 
-	// Apply scroll.
-	if scroll > 0 && scroll < len(lines) {
-		lines = lines[scroll:]
-	}
-
 	innerH := height - 2
 	for len(lines) < innerH {
 		lines = append(lines, "")
@@ -172,59 +162,7 @@ func renderUnitDataBox(rd *model.RelationData, rel *model.Relation, width, heigh
 		lines = lines[:innerH]
 	}
 
-	title := "Unit Data"
-	if focused {
-		title += " (read-only)"
-	}
-	return ui.BorderBox(strings.Join(lines, "\n"), title, width, s)
-}
-
-// appDataContentLines returns the total number of rendered lines in the
-// Application Data box, for scroll clamping.
-func appDataContentLines(rd *model.RelationData, rel *model.Relation, width int) int {
-	if rd == nil || rel == nil {
-		return 0
-	}
-	boxInner := width - 4 // outer box border + inner box border
-	count := 0
-	for _, ep := range rel.Endpoints {
-		data := rd.ApplicationData[ep.ApplicationName]
-		contentLines := len(data)
-		if contentLines == 0 {
-			contentLines = 1
-		}
-		count += contentLines + 2 // +2 for colored box top/bottom border
-	}
-	_ = boxInner
-	return count
-}
-
-// unitDataContentLines returns the total number of rendered lines in the
-// Unit Data box, for scroll clamping.
-func unitDataContentLines(rd *model.RelationData, rel *model.Relation) int {
-	if rd == nil || rel == nil {
-		return 0
-	}
-	count := 0
-	for _, ep := range rel.Endpoints {
-		appName := ep.ApplicationName
-		for uName := range rd.UnitData {
-			if strings.HasPrefix(uName, appName+"/") {
-				data := rd.UnitData[uName]
-				filtered := 0
-				for k := range data {
-					if k != "leader" {
-						filtered++
-					}
-				}
-				if filtered == 0 {
-					filtered = 1
-				}
-				count += filtered + 2 // +2 for colored box borders
-			}
-		}
-	}
-	return count
+	return ui.BorderBox(strings.Join(lines, "\n"), "Unit Data", width, s)
 }
 
 // coloredBorderBox is like ui.BorderBox but uses a custom border colour.

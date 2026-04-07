@@ -64,20 +64,14 @@ func (r *View) SetStatus(status *model.FullStatus) {
 // SetRelationData stores the fetched relation databag.
 func (r *View) SetRelationData(data *model.RelationData) {
 	r.relationData = data
-	r.appScroll = 0
-	r.unitScroll = 0
 }
 
 // KeyHints returns the view-specific key hints for the header.
 func (r *View) KeyHints() []view.KeyHint {
-	hints := []view.KeyHint{
+	return []view.KeyHint{
 		{Key: view.BindingKey(r.keys.DeleteRelation), Desc: "delete"},
 		{Key: view.BindingKey(r.keys.LogsJump), Desc: "logs"},
 	}
-	if r.focus != focusTable {
-		hints = append(hints, view.KeyHint{Key: "tab", Desc: "switch pane"})
-	}
-	return hints
 }
 
 // CopySelection implements view.Copyable.
@@ -114,8 +108,6 @@ func (r *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		sel := r.selectedRelation()
 		if sel != nil && sel.ID == rdMsg.RelationID {
 			r.relationData = rdMsg.Data
-			r.appScroll = 0
-			r.unitScroll = 0
 		}
 		return r, nil
 	}
@@ -130,26 +122,6 @@ func (r *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (r *View) handleKeyPress(kp tea.KeyPressMsg) (tea.Model, tea.Cmd) {
-	// Tab toggles focus between table, app data, and unit data.
-	if key.Matches(kp, r.keys.Tab) {
-		switch r.focus {
-		case focusTable:
-			r.focus = focusAppData
-			r.table.SetStyles(ui.UnfocusedTableStyles(r.styles))
-		case focusAppData:
-			r.focus = focusUnitData
-		case focusUnitData:
-			r.focus = focusTable
-			r.table.SetStyles(ui.StyledTableHighlightOnly(r.styles))
-		}
-		return r, nil
-	}
-
-	// ── Right pane focused: scroll or enter edit ──
-	if r.focus == focusAppData || r.focus == focusUnitData {
-		return r.handleRightPaneKey(kp)
-	}
-
 	// ── Left pane (table) focused ──
 	prevCursor := r.table.Cursor()
 
@@ -192,61 +164,6 @@ func (r *View) handleKeyPress(kp tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 	return r, cmd
 }
 
-func (r *View) handleRightPaneKey(kp tea.KeyPressMsg) (tea.Model, tea.Cmd) {
-	switch {
-	case key.Matches(kp, r.keys.Down):
-		r.scrollActive(1)
-		return r, nil
-	case key.Matches(kp, r.keys.Up):
-		r.scrollActive(-1)
-		return r, nil
-	case key.Matches(kp, r.keys.PageDown):
-		r.scrollActive(5)
-		return r, nil
-	case key.Matches(kp, r.keys.PageUp):
-		r.scrollActive(-5)
-		return r, nil
-	case key.Matches(kp, r.keys.Back):
-		r.focus = focusTable
-		r.table.SetStyles(ui.StyledTableHighlightOnly(r.styles))
-		return r, consumedKeyCmd()
-	}
-	return r, nil
-}
-
-func (r *View) scrollActive(delta int) {
-	sel := r.selectedRelation()
-	_, rightWidth := r.splitWidths()
-	contentH := r.height - 2
-	boxH := contentH/2 - 2 // inner height of each sub-box
-
-	if r.focus == focusAppData {
-		maxScroll := appDataContentLines(r.relationData, sel, rightWidth) - boxH
-		if maxScroll < 0 {
-			maxScroll = 0
-		}
-		r.appScroll += delta
-		if r.appScroll < 0 {
-			r.appScroll = 0
-		}
-		if r.appScroll > maxScroll {
-			r.appScroll = maxScroll
-		}
-	} else {
-		maxScroll := unitDataContentLines(r.relationData, sel) - boxH
-		if maxScroll < 0 {
-			maxScroll = 0
-		}
-		r.unitScroll += delta
-		if r.unitScroll < 0 {
-			r.unitScroll = 0
-		}
-		if r.unitScroll > maxScroll {
-			r.unitScroll = maxScroll
-		}
-	}
-}
-
 func (r *View) View() tea.View {
 	background := r.renderSplitPane()
 	if r.confirmOpen {
@@ -261,10 +178,6 @@ func (r *View) Enter(_ view.NavigateContext) (tea.Cmd, error) {
 
 func (r *View) Leave() tea.Cmd {
 	r.relationData = nil
-	r.appScroll = 0
-	r.unitScroll = 0
-	r.focus = focusTable
-	r.table.SetStyles(ui.StyledTableHighlightOnly(r.styles))
 	return nil
 }
 
@@ -279,8 +192,6 @@ func (r *View) FilterStr() string {
 func (r *View) SetFilter(s string) {
 	r.filterStr = s
 	r.relationData = nil
-	r.appScroll = 0
-	r.unitScroll = 0
 	r.applyFilter()
 }
 
@@ -293,7 +204,7 @@ func (r *View) renderSplitPane() string {
 	leftBox := ui.BorderBox(leftContent, r.leftPaneTitle(), leftWidth, r.styles)
 
 	sel := r.selectedRelation()
-	rightBox := renderDatabagPane(r.relationData, sel, rightWidth, r.height, r.focus, r.appScroll, r.unitScroll, r.styles)
+	rightBox := renderDatabagPane(r.relationData, sel, rightWidth, r.height, r.styles)
 
 	return lipgloss.JoinHorizontal(lipgloss.Top, leftBox, rightBox)
 }
@@ -377,11 +288,4 @@ func (r *View) requestRelationData() tea.Cmd {
 	return func() tea.Msg {
 		return FetchRelationDataMsg{RelationID: id}
 	}
-}
-
-// consumedKeyCmd returns a no-op command that signals to the parent model
-// that the key press was handled. This prevents the app's global-key handler
-// from re-processing keys the view already consumed (e.g. Escape).
-func consumedKeyCmd() tea.Cmd {
-	return func() tea.Msg { return nil }
 }

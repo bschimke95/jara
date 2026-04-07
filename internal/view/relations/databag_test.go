@@ -10,7 +10,7 @@ import (
 )
 
 func TestRenderDatabagPane_NilData(t *testing.T) {
-	result := renderDatabagPane(nil, nil, 60, 20, focusTable, 0, 0, color.DefaultStyles())
+	result := renderDatabagPane(nil, nil, 60, 20, color.DefaultStyles())
 	if !strings.Contains(result, "Select a relation") {
 		t.Error("expected placeholder text for nil data")
 	}
@@ -37,7 +37,7 @@ func TestRenderDatabagPane_WithData(t *testing.T) {
 		},
 	}
 
-	result := renderDatabagPane(rd, rel, 80, 40, focusAppData, 0, 0, color.DefaultStyles())
+	result := renderDatabagPane(rd, rel, 80, 40, color.DefaultStyles())
 	if !strings.Contains(result, "Databags") {
 		t.Error("expected 'Databags' outer title")
 	}
@@ -83,7 +83,7 @@ func TestRenderDatabagPane_PerUnitBoxes(t *testing.T) {
 		},
 	}
 
-	result := renderDatabagPane(rd, rel, 80, 40, focusUnitData, 0, 0, color.DefaultStyles())
+	result := renderDatabagPane(rd, rel, 80, 40, color.DefaultStyles())
 	// Each unit should appear in its own box.
 	if strings.Count(result, "web/0") < 1 {
 		t.Error("expected web/0 in its own unit box")
@@ -118,54 +118,5 @@ func TestPadToHeight(t *testing.T) {
 	lines := strings.Split(result, "\n")
 	if len(lines) != 5 {
 		t.Errorf("padToHeight() produced %d lines, want 5", len(lines))
-	}
-}
-
-func TestAppDataContentLines(t *testing.T) {
-	rel := &model.Relation{
-		Endpoints: []model.Endpoint{
-			{ApplicationName: "pg"},
-			{ApplicationName: "app"},
-		},
-	}
-	rd := &model.RelationData{
-		ApplicationData: map[string]map[string]string{
-			"pg":  {"host": "10.0.0.1", "port": "5432"},
-			"app": {"version": "1"},
-		},
-	}
-
-	lines := appDataContentLines(rd, rel, 60)
-	// pg: 2 data lines + 2 borders = 4; app: 1 data line + 2 borders = 3; total = 7
-	if lines != 7 {
-		t.Errorf("appDataContentLines() = %d, want 7", lines)
-	}
-
-	// Nil returns 0.
-	if got := appDataContentLines(nil, nil, 60); got != 0 {
-		t.Errorf("appDataContentLines(nil) = %d, want 0", got)
-	}
-}
-
-func TestUnitDataContentLines(t *testing.T) {
-	rel := &model.Relation{
-		Endpoints: []model.Endpoint{
-			{ApplicationName: "pg"},
-		},
-	}
-	rd := &model.RelationData{
-		ApplicationData: map[string]map[string]string{},
-		UnitData: map[string]map[string]string{
-			"pg/0": {"ingress-address": "10.0.0.1", "leader": "true"},
-			"pg/1": {"ingress-address": "10.0.0.2"},
-		},
-	}
-
-	lines := unitDataContentLines(rd, rel)
-	// pg/0: leader key filtered, 1 data line + 2 borders = 3
-	// pg/1: 1 data line + 2 borders = 3
-	// total = 6
-	if lines != 6 {
-		t.Errorf("unitDataContentLines() = %d, want 6", lines)
 	}
 }
