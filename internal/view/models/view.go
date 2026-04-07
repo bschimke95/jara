@@ -22,7 +22,7 @@ func New(keys ui.KeyMap, styles *color.Styles, pollFn func(controller string) te
 		table.WithFocused(true),
 		table.WithHeight(10),
 	)
-	t.SetStyles(ui.StyledTable(styles))
+	t.SetStyles(ui.StyledTableHighlightOnly(styles))
 	return &View{table: t, keys: keys, styles: styles, pollFn: pollFn, selectControllerFn: selectControllerFn, controllerNameFn: controllerNameFn}
 }
 
@@ -89,7 +89,7 @@ func (m *View) Enter(ctx view.NavigateContext) (tea.Cmd, error) {
 		table.WithFocused(true),
 		table.WithHeight(10),
 	)
-	m.table.SetStyles(ui.StyledTable(m.styles))
+	m.table.SetStyles(ui.StyledTableHighlightOnly(m.styles))
 	if m.width > 0 {
 		m.table.SetWidth(m.width)
 		m.table.SetHeight(m.height)

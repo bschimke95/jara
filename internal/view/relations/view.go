@@ -39,7 +39,7 @@ func New(keys ui.KeyMap, styles *color.Styles) *View {
 		table.WithFocused(true),
 		table.WithHeight(10),
 	)
-	t.SetStyles(ui.StyledTable(styles))
+	t.SetStyles(ui.StyledTableHighlightOnly(styles))
 	return &View{table: t, keys: keys, styles: styles}
 }
 
@@ -140,7 +140,7 @@ func (r *View) handleKeyPress(kp tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 			r.focus = focusUnitData
 		case focusUnitData:
 			r.focus = focusTable
-			r.table.SetStyles(ui.StyledTable(r.styles))
+			r.table.SetStyles(ui.StyledTableHighlightOnly(r.styles))
 		}
 		return r, nil
 	}
@@ -208,7 +208,7 @@ func (r *View) handleRightPaneKey(kp tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return r, nil
 	case key.Matches(kp, r.keys.Back):
 		r.focus = focusTable
-		r.table.SetStyles(ui.StyledTable(r.styles))
+		r.table.SetStyles(ui.StyledTableHighlightOnly(r.styles))
 		return r, consumedKeyCmd()
 	}
 	return r, nil
@@ -264,7 +264,7 @@ func (r *View) Leave() tea.Cmd {
 	r.appScroll = 0
 	r.unitScroll = 0
 	r.focus = focusTable
-	r.table.SetStyles(ui.StyledTable(r.styles))
+	r.table.SetStyles(ui.StyledTableHighlightOnly(r.styles))
 	return nil
 }
 
