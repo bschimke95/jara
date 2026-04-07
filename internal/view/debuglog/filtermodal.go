@@ -437,7 +437,6 @@ func (m *FilterModal) renderPanes(leftW, rightW int) (string, string) {
 func (m *FilterModal) renderLeftPane(w int) string {
 	cursorStyle := lipgloss.NewStyle().Foreground(m.styles.Primary).Bold(true)
 	activeHL := lipgloss.NewStyle().
-		Foreground(m.styles.CrumbFgColor).
 		Background(m.styles.Highlight).
 		Bold(true)
 	cursorHL := lipgloss.NewStyle().
@@ -480,7 +479,6 @@ func (m *FilterModal) renderRightPane(w int) string {
 	uncheckedStyle := lipgloss.NewStyle().Foreground(m.styles.CheckRedColor)
 	cursorStyle := lipgloss.NewStyle().Foreground(m.styles.Primary).Bold(true)
 	activeStyle := lipgloss.NewStyle().
-		Foreground(m.styles.CrumbFgColor).
 		Background(m.styles.Highlight).
 		Bold(true)
 	normalStyle := lipgloss.NewStyle().Foreground(m.styles.InfoValueColor)
