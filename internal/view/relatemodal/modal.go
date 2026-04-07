@@ -67,24 +67,18 @@ type Modal struct {
 }
 
 // New creates a new relate modal.
-// prefill is an optional app name to pre-populate endpoint A.
-func New(keys ui.KeyMap, styles *color.Styles, suggestions []endpointSuggestion, relations []model.Relation, prefill string) Modal {
+func New(keys ui.KeyMap, styles *color.Styles, suggestions []endpointSuggestion, relations []model.Relation) Modal {
 	ti := textinput.New()
 	ti.CharLimit = 128
 	ti.Placeholder = "app:endpoint"
 
-	m := Modal{
+	return Modal{
 		keys:        keys,
 		styles:      styles,
 		input:       ti,
 		suggestions: suggestions,
 		relations:   relations,
 	}
-	if prefill != "" {
-		m.endpointA = prefill
-		m.focus = focusEndpointB
-	}
-	return m
 }
 
 // BuildSuggestions constructs endpoint suggestions from the current status.
