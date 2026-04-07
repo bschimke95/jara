@@ -21,7 +21,7 @@ func New(keys ui.KeyMap, styles *color.Styles) *View {
 		table.WithFocused(true),
 		table.WithHeight(10),
 	)
-	t.SetStyles(ui.StyledTable(styles))
+	t.SetStyles(ui.StyledTableHighlightOnly(styles))
 	return &View{table: t, keys: keys, styles: styles}
 }
 

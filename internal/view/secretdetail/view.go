@@ -25,7 +25,7 @@ func New(keys ui.KeyMap, styles *color.Styles) *View {
 		table.WithFocused(true),
 		table.WithHeight(5),
 	)
-	rt.SetStyles(ui.StyledTable(styles))
+	rt.SetStyles(ui.StyledTableHighlightOnly(styles))
 
 	accCols := AccessColumns()
 	at := table.New(
@@ -104,11 +104,11 @@ func (v *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			v.focusAccess = !v.focusAccess
 			if v.focusAccess {
 				v.revTable.SetStyles(ui.UnfocusedTableStyles(v.styles))
-				v.accessTable.SetStyles(ui.StyledTable(v.styles))
+				v.accessTable.SetStyles(ui.StyledTableHighlightOnly(v.styles))
 				v.revTable.Blur()
 				v.accessTable.Focus()
 			} else {
-				v.revTable.SetStyles(ui.StyledTable(v.styles))
+				v.revTable.SetStyles(ui.StyledTableHighlightOnly(v.styles))
 				v.accessTable.SetStyles(ui.UnfocusedTableStyles(v.styles))
 				v.accessTable.Blur()
 				v.revTable.Focus()
@@ -245,7 +245,7 @@ func (v *View) selectedRevisionNumber() int {
 func (v *View) Enter(ctx view.NavigateContext) (tea.Cmd, error) {
 	v.secretURI = ctx.Context
 	v.focusAccess = false
-	v.revTable.SetStyles(ui.StyledTable(v.styles))
+	v.revTable.SetStyles(ui.StyledTableHighlightOnly(v.styles))
 	v.accessTable.SetStyles(ui.UnfocusedTableStyles(v.styles))
 	v.revTable.Focus()
 	v.accessTable.Blur()
