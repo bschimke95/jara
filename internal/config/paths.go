@@ -5,20 +5,17 @@ import (
 	"path/filepath"
 )
 
-// DefaultConfigDir returns the XDG-compliant config directory for jara.
-// It respects $JARA_CONFIG_DIR, then $XDG_CONFIG_HOME/jara, then ~/.config/jara.
+// DefaultConfigDir returns the config directory for jara.
+// It respects $JARA_CONFIG_DIR, otherwise defaults to ~/.jara.
 func DefaultConfigDir() string {
 	if d := os.Getenv("JARA_CONFIG_DIR"); d != "" {
 		return d
-	}
-	if d := os.Getenv("XDG_CONFIG_HOME"); d != "" {
-		return filepath.Join(d, AppName)
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
 		home = os.TempDir()
 	}
-	return filepath.Join(home, ".config", AppName)
+	return filepath.Join(home, ".jara")
 }
 
 // DefaultConfigFile returns the path to the default config file.

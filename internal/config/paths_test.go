@@ -21,12 +21,14 @@ func TestDefaultConfigDirRespectsEnv(t *testing.T) {
 	}
 }
 
-func TestDefaultConfigDirRespectsXDG(t *testing.T) {
+func TestDefaultConfigDirIgnoresXDG(t *testing.T) {
 	t.Setenv("JARA_CONFIG_DIR", "")
 	t.Setenv("XDG_CONFIG_HOME", "/tmp/xdg-test")
 	dir := DefaultConfigDir()
-	if dir != "/tmp/xdg-test/jara" {
-		t.Errorf("DefaultConfigDir with XDG = %q, want /tmp/xdg-test/jara", dir)
+	home, _ := os.UserHomeDir()
+	expected := home + "/.jara"
+	if dir != expected {
+		t.Errorf("DefaultConfigDir with XDG set = %q, want %q (XDG should be ignored)", dir, expected)
 	}
 }
 
@@ -66,10 +68,9 @@ func TestDefaultLogDir(t *testing.T) {
 
 func TestDefaultConfigDirFallbackToHome(t *testing.T) {
 	t.Setenv("JARA_CONFIG_DIR", "")
-	t.Setenv("XDG_CONFIG_HOME", "")
 	dir := DefaultConfigDir()
 	home, _ := os.UserHomeDir()
-	expected := home + "/.config/jara"
+	expected := home + "/.jara"
 	if dir != expected {
 		t.Errorf("DefaultConfigDir fallback = %q, want %q", dir, expected)
 	}
