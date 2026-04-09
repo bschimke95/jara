@@ -21,9 +21,10 @@ applications, units, machines, and relations without leaving the terminal.
 
     sudo snap install jara
 
-After installing, grant jara access to your local Juju credentials:
+After installing, grant jara access to your local Juju credentials and config:
 
     snap connect jara:juju-client-observe
+    snap connect jara:jara-config
 
 ### From source
 
@@ -43,7 +44,7 @@ Requires Go 1.25 or later and a reachable Juju controller.
     jara [flags]
 
     Flags:
-      --config string      path to config file (default: $XDG_CONFIG_HOME/jara/config.yaml)
+      --config string      path to config file (default: ~/.jara/config.yaml)
       --refresh duration   status poll interval (default: 2s)
       --logLevel string    log level: debug, info, warn, error (default: warn)
       --logFile string     write logs to this file instead of stderr
@@ -79,10 +80,8 @@ All key bindings can be remapped in the config file.
 
 ## Configuration
 
-Jara follows the XDG Base Directory specification.  The default config
-path is `$XDG_CONFIG_HOME/jara/config.yaml` (usually
-`~/.config/jara/config.yaml`).  Override it with `--config` or the
-`JARA_CONFIG_DIR` environment variable.
+The default config path is `~/.jara/config.yaml`.  Override it with
+`--config` or the `JARA_CONFIG_DIR` environment variable.
 
 A fully annotated example is provided in `config.example.yaml`.
 

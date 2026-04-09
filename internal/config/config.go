@@ -1,7 +1,7 @@
 // Package config provides configuration management for jara.
-// Configuration is loaded from a YAML file (typically ~/.config/jara/config.yaml)
+// Configuration is loaded from a YAML file (typically ~/.jara/config.yaml)
 // and can be overridden by CLI flags. The design follows k9s conventions:
-// XDG-compliant paths, layered overrides, and a skin/theme system.
+// layered overrides and a skin/theme system.
 package config
 
 import (

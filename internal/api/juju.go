@@ -79,6 +79,7 @@ type JujuClient struct {
 	modelUUID      string
 	conn           api.Connection
 	charmhubURL    string
+	readOnly       bool
 	logger         *log.Logger
 }
 
@@ -113,6 +114,14 @@ func WithLogger(l *log.Logger) JujuClientOption {
 		if l != nil {
 			c.logger = l
 		}
+	}
+}
+
+// WithReadOnly prevents the client from persisting controller and model
+// selections to the local Juju client store.
+func WithReadOnly(ro bool) JujuClientOption {
+	return func(c *JujuClient) {
+		c.readOnly = ro
 	}
 }
 
@@ -303,14 +312,15 @@ func (c *JujuClient) closeConnLocked() error {
 // SelectController switches the client to target a different controller
 // and persists the selection to the local Juju client store so that
 // subsequent juju CLI invocations also use the new controller.
+// In read-only mode the selection is applied in memory only.
 func (c *JujuClient) SelectController(name string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if err := c.store.SetCurrentController(name); err != nil {
-		return fmt.Errorf("persisting controller selection: %w", err)
+	if !c.readOnly {
+		if err := c.store.SetCurrentController(name); err != nil {
+			return fmt.Errorf("persisting controller selection: %w", err)
+		}
 	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	_ = c.closeConnLocked() // invalidate cached connection
 	c.controllerName = name
 	c.modelUUID = "" // reset model so the new controller's current model is used
@@ -326,14 +336,15 @@ func (c *JujuClient) ControllerName() string {
 
 // SelectModel switches the client to target the given model (qualified name
 // "owner/name") within the current controller and persists the selection.
+// In read-only mode the selection is applied in memory only.
 func (c *JujuClient) SelectModel(qualifiedName string) error {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if err := c.store.SetCurrentModel(c.controllerName, qualifiedName); err != nil {
-		return fmt.Errorf("persisting model selection: %w", err)
+	if !c.readOnly {
+		if err := c.store.SetCurrentModel(c.controllerName, qualifiedName); err != nil {
+			return fmt.Errorf("persisting model selection: %w", err)
+		}
 	}
-	c.mu.Lock()
-	defer c.mu.Unlock()
 	_ = c.closeConnLocked() // invalidate cached connection (model changed)
 	c.modelUUID = ""        // will be resolved lazily on next connect()
 	return nil

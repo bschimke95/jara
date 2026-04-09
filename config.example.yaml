@@ -1,5 +1,5 @@
 # Jara Configuration
-# Location: ~/.config/jara/config.yaml
+# Location: ~/.jara/config.yaml
 #
 # All values are optional. Unset keys use the compiled defaults.
 # CLI flags (e.g. --refresh, --headless) override values in this file.

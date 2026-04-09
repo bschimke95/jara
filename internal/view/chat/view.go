@@ -427,7 +427,7 @@ func (v *View) renderNoClient() string {
 	b.WriteString("\n")
 	b.WriteString(noClient.Render("    export GOOGLE_AI_API_KEY=<your-key>"))
 	b.WriteString("\n\n")
-	b.WriteString(noClient.Render("  Or configure in ~/.config/jara/config.yaml:"))
+	b.WriteString(noClient.Render("  Or configure in ~/.jara/config.yaml:"))
 	b.WriteString("\n")
 	b.WriteString(noClient.Render("    jara:"))
 	b.WriteString("\n")

@@ -52,7 +52,10 @@ func run(cmd *cobra.Command, _ []string) error {
 	if jaraFlags.Demo != nil && *jaraFlags.Demo {
 		client = api.NewMockClient()
 	} else {
-		jujuClient, err := api.NewJujuClient(api.WithCharmhubURL(cfg.Jara.CharmhubURL))
+		jujuClient, err := api.NewJujuClient(
+			api.WithCharmhubURL(cfg.Jara.CharmhubURL),
+			api.WithReadOnly(cfg.Jara.ReadOnly),
+		)
 		if err != nil {
 			return fmt.Errorf("creating Juju client: %w", err)
 		}

@@ -11,6 +11,7 @@ description: |
   To connect to your Juju client configuration after installation, run:
 
     snap connect jara:juju-client-observe
+    snap connect jara:jara-config
 
 grade: devel
 confinement: strict
@@ -27,6 +28,7 @@ apps:
       - network
       - network-bind
       - juju-client-observe
+      - jara-config
 
 plugs:
   juju-client-observe:
@@ -36,6 +38,12 @@ plugs:
       - $HOME/.config/juju
     write:
       - $HOME/.local/share/juju
+  jara-config:
+    interface: personal-files
+    read:
+      - $HOME/.jara
+    write:
+      - $HOME/.jara
 
 parts:
   copilot-cli:
