@@ -22,19 +22,21 @@ jobs:
         with:
           go-version-file: go.mod
 
-      - name: Install ffmpeg
-        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+      - name: Install dependencies
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq ffmpeg
+          # ttyd
+          sudo curl -fsSL -o /usr/local/bin/ttyd "https://github.com/tsl0922/ttyd/releases/download/1.7.7/ttyd.x86_64"
+          sudo chmod +x /usr/local/bin/ttyd
+          # vhs
+          go install github.com/charmbracelet/vhs@latest
 
       - name: Build jara
         run: make build-vhs
 
       - name: Generate demo GIF
-        uses: charmbracelet/vhs-action@v2
-        with:
-          path: tests/vhs/demo.tape
-          install-fonts: true
-        env:
-          JARA_ROOT: ${{ github.workspace }}
+        run: JARA_ROOT="${{ github.workspace }}" vhs tests/vhs/demo.tape
 
       - name: Commit and push updated GIF
         run: |
