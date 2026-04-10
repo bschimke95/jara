@@ -1,4 +1,4 @@
-.PHONY: build build-vhs lint test test-integration test-vhs test-vhs-update ensure-vhs fmt vet tidy all
+.PHONY: build build-vhs lint test test-integration test-vhs test-vhs-update ensure-vhs fmt vet tidy demo all
 
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo "dev")
 COMMIT  ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo "none")
@@ -78,6 +78,7 @@ test-vhs: build-vhs ensure-vhs
 	done; \
 	for tape in tests/vhs/*.tape; do \
 		[ "$$(basename "$$tape")" = "_setup.tape" ] && continue; \
+		[ "$$(basename "$$tape")" = "demo.tape" ] && continue; \
 		echo "▶ $$tape"; \
 		JARA_ROOT="$$(pwd)" vhs "$$tape" || { cp "$$tmpdir/bak/"*.ascii tests/vhs/golden/; rm -rf "$$tmpdir"; exit 1; }; \
 	done; \
@@ -106,7 +107,14 @@ test-vhs: build-vhs ensure-vhs
 test-vhs-update: build-vhs ensure-vhs
 	@for tape in tests/vhs/*.tape; do \
 		[ "$$(basename "$$tape")" = "_setup.tape" ] && continue; \
+		[ "$$(basename "$$tape")" = "demo.tape" ] && continue; \
 		echo "▶ $$tape"; \
 		JARA_ROOT="$$(pwd)" vhs "$$tape" || exit 1; \
 	done
 	@echo "\n✓ Golden files regenerated. Review and commit the changes."
+
+# Generate the hero demo GIF for the README.
+demo: build-vhs ensure-vhs
+	@mkdir -p doc
+	JARA_ROOT="$$(pwd)" vhs tests/vhs/demo.tape
+	@echo "\n✓ doc/demo.gif regenerated."
