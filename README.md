@@ -16,16 +16,6 @@
 
 ---
 
-## Highlights
-
-- **Live status streaming** — sub-second refresh of controllers, models, apps, units, machines, and relations
-- **vim-style navigation** — `j`/`k`, `g`/`G`, `Ctrl-u`/`Ctrl-d`, `/` to search
-- **Deep drill-down** — controllers > models > model overview > units, relations, secrets, machines
-- **Debug log streaming** — tail logs in real-time with inline search and a two-pane filter modal
-- **Application scaling** — `+` / `-` to scale apps up and down
-- **AI chat** — ask questions about your model with an integrated LLM assistant
-- **Configurable themes & keys** — customise colours and key bindings via YAML
-
 ## Install
 
 ### Snap (recommended)
