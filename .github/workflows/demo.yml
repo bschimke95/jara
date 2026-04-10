@@ -22,10 +22,17 @@ jobs:
         with:
           go-version-file: go.mod
 
+      - name: Install ffmpeg
+        run: sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+
+      - name: Build jara
+        run: make build-vhs
+
       - name: Generate demo GIF
         uses: charmbracelet/vhs-action@v2
         with:
           path: tests/vhs/demo.tape
+          install-fonts: true
         env:
           JARA_ROOT: ${{ github.workspace }}
 
