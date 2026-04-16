@@ -64,10 +64,10 @@ func TestHintsForView(t *testing.T) {
 	}{
 		{"Controllers", 4},  // select + 3 common
 		{"Models", 5},       // select + back + 3 common
-		{"Model", 8},        // units + relations + logs(app) + logs + scale + 3 common
-		{"Applications", 6}, // enter + logs(app) + logs + 3 common
-		{"Units", 7},        // back + logs(unit) + logs + scale + 3 common
-		{"Machines", 6},     // back + logs(machine) + logs + 3 common
+		{"Model", 7},        // units + relations + logs(app) + scale + 3 common
+		{"Applications", 5}, // enter + logs(app) + 3 common
+		{"Units", 6},        // back + logs(unit) + scale + 3 common
+		{"Machines", 5},     // back + logs(machine) + 3 common
 		{"Relations", 5},    // back + logs + 3 common
 		{"Debug Log", 10},   // back + bottom + top + filter + clear + search + next/prev + 3 common
 		{"Unknown View", 5}, // select + back + 3 common (default case)

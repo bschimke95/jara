@@ -117,28 +117,28 @@ func DefaultKeyMap() KeyMap {
 			key.WithHelp("-", "scale down"),
 		),
 		Deploy: key.NewBinding(
-			key.WithKeys("D"),
-			key.WithHelp("D", "deploy"),
+			key.WithKeys("d"),
+			key.WithHelp("d", "deploy"),
 		),
 		Relate: key.NewBinding(
 			key.WithKeys("r"),
 			key.WithHelp("r", "relate"),
 		),
 		DeleteRelation: key.NewBinding(
-			key.WithKeys("D"),
-			key.WithHelp("D", "delete relation"),
+			key.WithKeys("d"),
+			key.WithHelp("d", "delete relation"),
 		),
 		LogsJump: key.NewBinding(
 			key.WithKeys("L"),
 			key.WithHelp("L", "logs"),
 		),
 		LogsView: key.NewBinding(
-			key.WithKeys("l"),
-			key.WithHelp("l", "logs"),
+			key.WithKeys("L"),
+			key.WithHelp("L", "logs"),
 		),
 		ClearFilter: key.NewBinding(
-			key.WithKeys("D"),
-			key.WithHelp("D", "clear filter"),
+			key.WithKeys("d"),
+			key.WithHelp("d", "clear filter"),
 		),
 		SearchOpen: key.NewBinding(
 			key.WithKeys("/"),
@@ -153,8 +153,8 @@ func DefaultKeyMap() KeyMap {
 			key.WithHelp("N", "prev match"),
 		),
 		FilterOpen: key.NewBinding(
-			key.WithKeys("F"),
-			key.WithHelp("F", "filter"),
+			key.WithKeys("f"),
+			key.WithHelp("f", "filter"),
 		),
 		UnitsNav: key.NewBinding(
 			key.WithKeys("U"),
@@ -189,8 +189,8 @@ func DefaultKeyMap() KeyMap {
 			key.WithHelp("d", "decode"),
 		),
 		ApplyFilter: key.NewBinding(
-			key.WithKeys("F"),
-			key.WithHelp("F", "apply"),
+			key.WithKeys("f"),
+			key.WithHelp("f", "apply"),
 		),
 		Right: key.NewBinding(
 			key.WithKeys("l", "right"),
