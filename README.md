@@ -22,8 +22,6 @@
 
 ```
 sudo snap install jara
-snap connect jara:juju-client-observe
-snap connect jara:jara-config
 ```
 
 ### From source
