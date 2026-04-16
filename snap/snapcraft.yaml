@@ -8,11 +8,6 @@ description: |
   controllers, models, applications, units, machines, and relations without
   leaving the terminal.
 
-  To connect to your Juju client configuration after installation, run:
-
-    snap connect jara:juju-client-observe
-    snap connect jara:jara-config
-
 grade: devel
 confinement: strict
 
@@ -27,23 +22,23 @@ apps:
       - home
       - network
       - network-bind
-      - juju-client-observe
-      - jara-config
+      - dot-jara
+      - dot-local-share-juju
+      - dot-config-juju
 
 plugs:
-  juju-client-observe:
+  dot-jara:
+    interface: personal-files
+    write:
+      - $HOME/.jara
+  dot-local-share-juju:
+    interface: personal-files
+    write:
+      - $HOME/.local/share/juju
+  dot-config-juju:
     interface: personal-files
     read:
-      - $HOME/.local/share/juju
       - $HOME/.config/juju
-    write:
-      - $HOME/.local/share/juju
-  jara-config:
-    interface: personal-files
-    read:
-      - $HOME/.jara
-    write:
-      - $HOME/.jara
 
 parts:
   copilot-cli:
