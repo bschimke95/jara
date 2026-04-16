@@ -45,8 +45,6 @@ Requires **Go 1.25+** and a reachable Juju controller.
 ```
 jara                        # launch the TUI
 jara --readonly             # disable write operations
-jara --refresh 5s           # custom poll interval
-jara --command "controllers" # run a single command and exit
 ```
 
 Press `?` inside jara to see all key bindings.
