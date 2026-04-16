@@ -330,32 +330,28 @@ func HintsForView(viewName string, keys KeyMap) []KeyHint {
 			{Key: bk(keys.UnitsNav), Desc: "units"},
 			{Key: bk(keys.RelationsNav), Desc: "relations"},
 			{Key: bk(keys.LogsJump), Desc: "logs (app)"},
-			{Key: bk(keys.LogsView), Desc: "logs"},
 			{Key: bk(keys.ScaleUp) + "/" + bk(keys.ScaleDown), Desc: "scale"},
 		}, common...)
 	case "Applications":
 		return append([]KeyHint{
 			{Key: bk(keys.Enter), Desc: "units"},
 			{Key: bk(keys.LogsJump), Desc: "logs (app)"},
-			{Key: bk(keys.LogsView), Desc: "logs"},
 		}, common...)
 	case "Units":
 		return append([]KeyHint{
 			{Key: bk(keys.Back), Desc: "back"},
 			{Key: bk(keys.LogsJump), Desc: "logs (unit)"},
-			{Key: bk(keys.LogsView), Desc: "logs"},
 			{Key: bk(keys.ScaleUp) + "/" + bk(keys.ScaleDown), Desc: "scale"},
 		}, common...)
 	case "Machines":
 		return append([]KeyHint{
 			{Key: bk(keys.Back), Desc: "back"},
 			{Key: bk(keys.LogsJump), Desc: "logs (machine)"},
-			{Key: bk(keys.LogsView), Desc: "logs"},
 		}, common...)
 	case "Relations":
 		return append([]KeyHint{
 			{Key: bk(keys.Back), Desc: "back"},
-			{Key: bk(keys.LogsView), Desc: "logs"},
+			{Key: bk(keys.LogsJump), Desc: "logs"},
 		}, common...)
 	case "Debug Log":
 		return append([]KeyHint{

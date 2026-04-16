@@ -110,7 +110,6 @@ func (m *View) KeyHints() []view.KeyHint {
 		{Key: view.BindingKey(m.keys.RelationsNav), Desc: "relations"},
 		{Key: view.BindingKey(m.keys.ScaleUp) + "/" + view.BindingKey(m.keys.ScaleDown), Desc: "scale"},
 		{Key: view.BindingKey(m.keys.LogsJump), Desc: "logs (app)"},
-		{Key: view.BindingKey(m.keys.LogsView), Desc: "logs"},
 	}
 }
 
@@ -209,10 +208,6 @@ func (m *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, func() tea.Msg {
 				return view.NavigateMsg{Target: nav.DebugLogView, Filter: filter}
-			}
-		case key.Matches(msg, m.keys.LogsView):
-			return m, func() tea.Msg {
-				return view.NavigateMsg{Target: nav.DebugLogView}
 			}
 		case key.Matches(msg, m.keys.ScaleUp):
 			if m.selectedApp != "" {

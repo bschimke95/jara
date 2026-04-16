@@ -55,7 +55,6 @@ func (a *View) KeyHints() []view.KeyHint {
 		{Key: view.BindingKey(a.keys.ConfigNav), Desc: "config"},
 		{Key: view.BindingKey(a.keys.Deploy), Desc: "deploy"},
 		{Key: view.BindingKey(a.keys.LogsJump), Desc: "logs (app)"},
-		{Key: view.BindingKey(a.keys.LogsView), Desc: "logs"},
 	}
 }
 
@@ -109,11 +108,6 @@ func (a *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return a, func() tea.Msg {
 				return view.NavigateMsg{Target: nav.DebugLogView, Filter: filter}
-			}
-		}
-		if key.Matches(msg, a.keys.LogsView) {
-			return a, func() tea.Msg {
-				return view.NavigateMsg{Target: nav.DebugLogView}
 			}
 		}
 		if key.Matches(msg, a.keys.ConfigNav) {

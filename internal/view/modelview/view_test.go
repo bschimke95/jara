@@ -15,7 +15,7 @@ func TestUpdateDeployStartsInput(t *testing.T) {
 	v := New(ui.DefaultKeyMap(), color.DefaultStyles(), func(string) error { return nil })
 	v.SetSize(120, 30)
 
-	_, cmd := v.Update(tea.KeyPressMsg{Text: "D", Code: 'D'})
+	_, cmd := v.Update(tea.KeyPressMsg{Text: "d", Code: 'd'})
 	if cmd == nil {
 		t.Fatal("expected focus command when opening modal")
 	}

@@ -69,7 +69,6 @@ func (u *View) KeyHints() []view.KeyHint {
 		{Key: view.BindingKey(u.keys.RunAction), Desc: "action"},
 		{Key: view.BindingKey(u.keys.ScaleUp) + "/" + view.BindingKey(u.keys.ScaleDown), Desc: "scale"},
 		{Key: view.BindingKey(u.keys.LogsJump), Desc: "logs (unit)"},
-		{Key: view.BindingKey(u.keys.LogsView), Desc: "logs"},
 	}
 }
 
@@ -183,10 +182,6 @@ func (u *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return u, func() tea.Msg {
 				return view.NavigateMsg{Target: nav.DebugLogView, Filter: filter}
-			}
-		case key.Matches(msg, u.keys.LogsView):
-			return u, func() tea.Msg {
-				return view.NavigateMsg{Target: nav.DebugLogView}
 			}
 		case key.Matches(msg, u.keys.RunAction):
 			unitName := u.selectedUnitName()

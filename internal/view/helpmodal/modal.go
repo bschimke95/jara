@@ -177,8 +177,6 @@ func (m *Modal) viewNavHints() []ui.KeyHint {
 		{Key: view.BindingKey(m.keys.SecretsNav), Desc: "Secrets"},
 		{Key: view.BindingKey(m.keys.OffersNav), Desc: "Offers"},
 		{Key: view.BindingKey(m.keys.StorageNav), Desc: "Storage"},
-		{Key: view.BindingKey(m.keys.ConfigNav), Desc: "Config"},
-		{Key: view.BindingKey(m.keys.ChatNav), Desc: "Chat"},
 		{Key: view.BindingKey(m.keys.LogsView), Desc: "Debug Log"},
 	}
 }

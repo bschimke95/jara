@@ -147,10 +147,6 @@ func (r *View) handleKeyPress(kp tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		return r, func() tea.Msg {
 			return view.NavigateMsg{Target: nav.DebugLogView}
 		}
-	case key.Matches(kp, r.keys.LogsView):
-		return r, func() tea.Msg {
-			return view.NavigateMsg{Target: nav.DebugLogView}
-		}
 	}
 
 	var cmd tea.Cmd

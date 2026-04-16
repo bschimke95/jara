@@ -45,7 +45,6 @@ func (m *View) SetStatus(status *model.FullStatus) {
 func (m *View) KeyHints() []view.KeyHint {
 	return []view.KeyHint{
 		{Key: view.BindingKey(m.keys.LogsJump), Desc: "logs (machine)"},
-		{Key: view.BindingKey(m.keys.LogsView), Desc: "logs"},
 	}
 }
 
@@ -66,11 +65,6 @@ func (m *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, func() tea.Msg {
 				return view.NavigateMsg{Target: nav.DebugLogView, Filter: filter}
-			}
-		}
-		if key.Matches(kp, m.keys.LogsView) {
-			return m, func() tea.Msg {
-				return view.NavigateMsg{Target: nav.DebugLogView}
 			}
 		}
 	}
