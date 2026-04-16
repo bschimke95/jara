@@ -17,7 +17,7 @@ func TestUpdateDeployStartsInput(t *testing.T) {
 		"postgresql": {Name: "postgresql"},
 	}})
 
-	_, cmd := v.Update(tea.KeyPressMsg{Text: "D", Code: 'D'})
+	_, cmd := v.Update(tea.KeyPressMsg{Text: "d", Code: 'd'})
 	if cmd == nil {
 		t.Fatal("expected focus command when opening modal")
 	}
