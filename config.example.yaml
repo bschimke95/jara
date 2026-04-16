@@ -2,7 +2,7 @@
 # Location: ~/.jara/config.yaml
 #
 # All values are optional. Unset keys use the compiled defaults.
-# CLI flags (e.g. --refresh, --headless) override values in this file.
+# CLI flags (e.g. --headless) override values in this file.
 
 jara:
   # Status poll interval in seconds.

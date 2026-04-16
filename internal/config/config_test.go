@@ -201,21 +201,16 @@ func TestRefreshDuration(t *testing.T) {
 func TestOverride(t *testing.T) {
 	cfg := NewDefault()
 
-	refreshRate := 7.0
 	logLevel := "warn"
 	headless := true
 
 	flags := &Flags{
-		RefreshRate: &refreshRate,
-		LogLevel:    &logLevel,
-		Headless:    &headless,
+		LogLevel: &logLevel,
+		Headless: &headless,
 	}
 
 	cfg.Override(flags)
 
-	if cfg.Jara.RefreshRate != 7.0 {
-		t.Errorf("after Override, RefreshRate = %v, want 7.0", cfg.Jara.RefreshRate)
-	}
 	if cfg.Jara.LogLevel != "warn" {
 		t.Errorf("after Override, LogLevel = %q, want %q", cfg.Jara.LogLevel, "warn")
 	}
@@ -228,18 +223,7 @@ func TestOverrideNilFlags(t *testing.T) {
 	cfg := NewDefault()
 	cfg.Override(nil)
 
-	if cfg.Jara.RefreshRate != DefaultRefreshRate {
-		t.Errorf("RefreshRate changed with nil flags: %v", cfg.Jara.RefreshRate)
-	}
-}
-
-func TestOverrideZeroRefreshRateNotApplied(t *testing.T) {
-	cfg := NewDefault()
-	zero := 0.0
-	flags := &Flags{RefreshRate: &zero}
-	cfg.Override(flags)
-
-	if cfg.Jara.RefreshRate != DefaultRefreshRate {
-		t.Errorf("zero RefreshRate flag should not override: got %v", cfg.Jara.RefreshRate)
+	if cfg.Jara.LogLevel != DefaultLogLevel {
+		t.Errorf("LogLevel changed with nil flags: %v", cfg.Jara.LogLevel)
 	}
 }
