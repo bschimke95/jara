@@ -414,9 +414,7 @@ func (m *View) applicationSuggestions() []string {
 		return nil
 	}
 	out := make([]string, 0, len(m.status.Applications))
-	for _, name := range ui.SortedKeys(m.status.Applications) {
-		out = append(out, name)
-	}
+	out = append(out, ui.SortedKeys(m.status.Applications)...)
 	return out
 }
 

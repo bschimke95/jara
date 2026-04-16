@@ -84,9 +84,7 @@ func (d *View) buildSuggestions() map[leftPane][]string {
 	sugg := make(map[leftPane][]string)
 
 	if d.status != nil {
-		for _, appName := range ui.SortedKeys(d.status.Applications) {
-			sugg[leftPaneApplications] = append(sugg[leftPaneApplications], appName)
-		}
+		sugg[leftPaneApplications] = append(sugg[leftPaneApplications], ui.SortedKeys(d.status.Applications)...)
 		for _, appName := range ui.SortedKeys(d.status.Applications) {
 			app := d.status.Applications[appName]
 			for _, u := range app.Units {
@@ -110,13 +108,13 @@ func (d *View) buildSuggestions() map[leftPane][]string {
 		}
 	}
 
-	modules := make([]string, 0, len(d.seenModules))
-	for mod := range d.seenModules {
-		modules = append(modules, mod)
-	}
-	sort.Strings(modules)
-	for _, mod := range modules {
-		sugg[leftPaneModules] = append(sugg[leftPaneModules], mod)
+	if len(d.seenModules) > 0 {
+		modules := make([]string, 0, len(d.seenModules))
+		for mod := range d.seenModules {
+			modules = append(modules, mod)
+		}
+		sort.Strings(modules)
+		sugg[leftPaneModules] = modules
 	}
 
 	return sugg
