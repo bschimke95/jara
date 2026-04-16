@@ -354,12 +354,12 @@ func (s *Styles) RebuildStyles() {
 
 	s.CrumbActive = lipgloss.NewStyle().
 		Foreground(s.CrumbFgColor).
-		Background(s.CrumbBgColor).
+		Background(s.Highlight).
 		Bold(true).
 		Padding(0, 1)
 	s.CrumbAncestor = lipgloss.NewStyle().
 		Foreground(s.CrumbFgColor).
-		Background(s.CrumbBgAltColor).
+		Background(s.Highlight).
 		Padding(0, 1)
 	s.CrumbSep = lipgloss.NewStyle().Foreground(s.Subtle)
 
