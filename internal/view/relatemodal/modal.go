@@ -104,7 +104,8 @@ func BuildSuggestions(status *model.FullStatus, charmEndpoints map[string]map[st
 
 	var result []endpointSuggestion
 
-	for name, app := range status.Applications {
+	for _, name := range ui.SortedKeys(status.Applications) {
+		app := status.Applications[name]
 		// App-only suggestion (bare app name).
 		result = append(result, endpointSuggestion{
 			Display: name,
@@ -118,7 +119,7 @@ func BuildSuggestions(status *model.FullStatus, charmEndpoints map[string]map[st
 		}
 
 		// One suggestion per endpoint from bindings.
-		for epName := range app.EndpointBindings {
+		for _, epName := range ui.SortedKeys(app.EndpointBindings) {
 			// Skip empty endpoint names and endpoints whose name matches
 			// the app name — the bare app suggestion already covers that.
 			if epName == "" || epName == name {

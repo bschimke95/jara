@@ -164,7 +164,8 @@ func (a *View) charmSuggestions() []string {
 	if a.status == nil {
 		return out
 	}
-	for _, app := range a.status.Applications {
+	for _, appName := range ui.SortedKeys(a.status.Applications) {
+		app := a.status.Applications[appName]
 		if app.Charm != "" {
 			out = append(out, app.Charm)
 		}
@@ -177,9 +178,7 @@ func (a *View) applicationSuggestions() []string {
 		return nil
 	}
 	out := make([]string, 0, len(a.status.Applications))
-	for name := range a.status.Applications {
-		out = append(out, name)
-	}
+	out = append(out, ui.SortedKeys(a.status.Applications)...)
 	return out
 }
 
