@@ -13,8 +13,8 @@ Wait+Screen /Applications/
 Wait+Screen /grafana/
 Sleep 1s
 
-# Open debug log with 'l'.
-Type "l"
+# Open debug log with 'L'.
+Type "L"
 Wait+Screen /Waiting for log/
 Sleep 500ms
 
