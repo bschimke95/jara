@@ -1372,6 +1372,7 @@ func convertFullStatus(s *params.FullStatus) *model.FullStatus {
 	for _, r := range s.Relations {
 		fs.Relations = append(fs.Relations, convertRelation(r))
 	}
+	sort.Slice(fs.Relations, func(i, j int) bool { return fs.Relations[i].ID < fs.Relations[j].ID })
 
 	return fs
 }
