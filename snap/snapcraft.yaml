@@ -22,7 +22,7 @@ apps:
       - home
       - network
       - network-bind
-       - dot-jara
+      - dot-jara
       - dot-local-share-juju
       - dot-config-juju
 
