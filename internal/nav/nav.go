@@ -91,8 +91,6 @@ var CommandAliases = map[string]ViewID{
 	"offers":       OffersView,
 	"offer":        OffersView,
 	"off":          OffersView,
-	"config":       AppConfigView,
-	"cfg":          AppConfigView,
 	"storage":      StorageView,
 	"stor":         StorageView,
 	"chat":         ChatView,
