@@ -22,9 +22,6 @@
 
 ```
 sudo snap install jara
-snap connect jara:dot-jara
-snap connect jara:dot-local-share-juju
-snap connect jara:dot-config-juju
 ```
 
 ### From source

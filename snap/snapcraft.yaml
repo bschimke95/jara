@@ -8,12 +8,6 @@ description: |
   controllers, models, applications, units, machines, and relations without
   leaving the terminal.
 
-  To connect to your Juju client configuration after installation, run:
-
-    snap connect jara:dot-jara
-    snap connect jara:dot-local-share-juju
-    snap connect jara:dot-config-juju
-
 grade: devel
 confinement: strict
 
