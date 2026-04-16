@@ -45,8 +45,8 @@ Sleep 500ms
 
 # ── Filter modal ───────────────────────────────────────────────────────────────
 
-# Open filter modal with 'F'. The search indicator stays in the background.
-Type "F"
+# Open filter modal with 'f'. The search indicator stays in the background.
+Type "f"
 Wait+Screen /Debug Log Filter/
 Sleep 500ms
 
@@ -62,8 +62,8 @@ Down
 Enter
 Sleep 300ms
 
-# Apply the filter with 'F'.
-Type "F"
+# Apply the filter with 'f'.
+Type "f"
 Wait+Screen /level=WARNING/
 Sleep 1s
 
@@ -71,7 +71,7 @@ Sleep 1s
 
 # Re-open the filter modal and dismiss it with Escape (right pane → left pane →
 # close). Each Escape should stay in the debug log view, not navigate back.
-Type "F"
+Type "f"
 Wait+Screen /Debug Log Filter/
 Sleep 300ms
 Type "l"
@@ -86,8 +86,8 @@ Sleep 500ms
 
 # ── Clear filter ───────────────────────────────────────────────────────────────
 
-# Clear the active filter with 'D'.
-Type "D"
+# Clear the active filter with 'd'.
+Type "d"
 Sleep 1s
 
 # ── Back ───────────────────────────────────────────────────────────────────────
