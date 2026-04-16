@@ -84,10 +84,11 @@ func (d *View) buildSuggestions() map[leftPane][]string {
 	sugg := make(map[leftPane][]string)
 
 	if d.status != nil {
-		for appName := range d.status.Applications {
+		for _, appName := range ui.SortedKeys(d.status.Applications) {
 			sugg[leftPaneApplications] = append(sugg[leftPaneApplications], appName)
 		}
-		for _, app := range d.status.Applications {
+		for _, appName := range ui.SortedKeys(d.status.Applications) {
+			app := d.status.Applications[appName]
 			for _, u := range app.Units {
 				sugg[leftPaneUnits] = append(sugg[leftPaneUnits], u.Name)
 				for _, sub := range u.Subordinates {
@@ -95,7 +96,13 @@ func (d *View) buildSuggestions() map[leftPane][]string {
 				}
 			}
 		}
-		for _, mach := range d.status.Machines {
+		machIDs := make([]string, 0, len(d.status.Machines))
+		for id := range d.status.Machines {
+			machIDs = append(machIDs, id)
+		}
+		sort.Strings(machIDs)
+		for _, id := range machIDs {
+			mach := d.status.Machines[id]
 			sugg[leftPaneMachines] = append(sugg[leftPaneMachines], "machine-"+mach.ID)
 			for _, c := range mach.Containers {
 				sugg[leftPaneMachines] = append(sugg[leftPaneMachines], "machine-"+c.ID)
@@ -103,7 +110,12 @@ func (d *View) buildSuggestions() map[leftPane][]string {
 		}
 	}
 
+	modules := make([]string, 0, len(d.seenModules))
 	for mod := range d.seenModules {
+		modules = append(modules, mod)
+	}
+	sort.Strings(modules)
+	for _, mod := range modules {
 		sugg[leftPaneModules] = append(sugg[leftPaneModules], mod)
 	}
 
