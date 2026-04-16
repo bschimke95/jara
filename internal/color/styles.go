@@ -246,7 +246,7 @@ func defaultPalette() palette {
 		muted:             lipgloss.Color("#5c6370"),
 		hintKey:           lipgloss.Color("#e5c07b"),
 		hintDesc:          lipgloss.Color("#5c6370"),
-		crumbFg:           lipgloss.Color("#282c34"),
+		crumbFg:           lipgloss.Color("#abb2bf"),
 		crumbBg:           lipgloss.Color("#61afef"),
 		border:            lipgloss.Color("#4b5263"),
 		borderTitle:       lipgloss.Color("#61afef"),
@@ -354,12 +354,12 @@ func (s *Styles) RebuildStyles() {
 
 	s.CrumbActive = lipgloss.NewStyle().
 		Foreground(s.CrumbFgColor).
-		Background(s.CrumbBgColor).
+		Background(s.Highlight).
 		Bold(true).
 		Padding(0, 1)
 	s.CrumbAncestor = lipgloss.NewStyle().
 		Foreground(s.CrumbFgColor).
-		Background(s.CrumbBgAltColor).
+		Background(s.Highlight).
 		Padding(0, 1)
 	s.CrumbSep = lipgloss.NewStyle().Foreground(s.Subtle)
 
