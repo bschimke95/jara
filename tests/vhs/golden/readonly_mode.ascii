@@ -43,11 +43,11 @@
 > ./jara --demo --readonly
 │                                                                                                                   │
 │                                   <enter> select     <+/->   scale                     ██╗ █████╗ ██████╗  █████╗ │
-│Controller: prod-aws               <D>     deploy     <L>     logs (app)                ██║██╔══██╗██╔══██╗██╔══██╗│
-│Model:      production             <r>     relate     <l>     logs                      ██║███████║██████╔╝███████║│
-│Cloud:      aws/us-east-1          <A>     apps       <:>     cmd                  ██   ██║██╔══██║██╔══██╗██╔══██║│
-│Juju:       3.6.1                  <U>     units      <q>     quit                 ╚█████╔╝██║  ██║██║  ██║██║  ██║│
-│Jara:       test                   <R>     relations  <?>     help                  ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+│Controller: prod-aws               <d>     deploy     <L>     logs (app)                ██║██╔══██╗██╔══██╗██╔══██╗│
+│Model:      production             <r>     relate     <:>     cmd                       ██║███████║██████╔╝███████║│
+│Cloud:      aws/us-east-1          <A>     apps       <q>     quit                 ██   ██║██╔══██║██╔══██╗██╔══██║│
+│Juju:       3.6.1                  <U>     units      <?>     help                 ╚█████╔╝██║  ██║██║  ██║██║  ██║│
+│Jara:       test                   <R>     relations                                ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
 ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─────────────────────────── Applications ───────────────────────────╮╭────────────── Units(grafana) ───────────────╮
 │ NAME               STATUS        SCALE  MESSAGE                    ││ UNIT         WORK…  AGENT  MESSAGE          │
@@ -85,11 +85,11 @@
 > ./jara --demo --readonly
 │                                                                                                                   │
 │                                   <enter> select     <+/->   scale                     ██╗ █████╗ ██████╗  █████╗ │
-│Controller: prod-aws               <D>     deploy     <L>     logs (app)                ██║██╔══██╗██╔══██╗██╔══██╗│
-│Model:      production             <r>     relate     <l>     logs                      ██║███████║██████╔╝███████║│
-│Cloud:      aws/us-east-1          <A>     apps       <:>     cmd                  ██   ██║██╔══██║██╔══██╗██╔══██║│
-│Juju:       3.6.1                  <U>     units      <q>     quit                 ╚█████╔╝██║  ██║██║  ██║██║  ██║│
-│Jara:       test                   <R>     relations  <?>     help                  ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
+│Controller: prod-aws               <d>     deploy     <L>     logs (app)                ██║██╔══██╗██╔══██╗██╔══██╗│
+│Model:      production             <r>     relate     <:>     cmd                       ██║███████║██████╔╝███████║│
+│Cloud:      aws/us-east-1          <A>     apps       <q>     quit                 ██   ██║██╔══██║██╔══██╗██╔══██║│
+│Juju:       3.6.1                  <U>     units      <?>     help                 ╚█████╔╝██║  ██║██║  ██║██║  ██║│
+│Jara:       test                   <R>     relations                                ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
 ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
 ╭─────────────────────────── Applications ───────────────────────────╮╭────────────── Units(grafana) ───────────────╮
 │ NAME               STATUS        SCALE  MESSAGE                    ││ UNIT         WORK…  AGENT  MESSAGE          │

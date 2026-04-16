@@ -46,7 +46,7 @@ func TestLogsNavigation(t *testing.T) {
 	v := New(ui.DefaultKeyMap(), color.DefaultStyles())
 	v.SetSize(120, 30)
 
-	_, cmd := v.Update(tea.KeyPressMsg{Text: "l", Code: 'l'})
+	_, cmd := v.Update(tea.KeyPressMsg{Text: "L", Code: 'L'})
 	if cmd == nil {
 		t.Fatal("expected navigation command on 'l'")
 	}
