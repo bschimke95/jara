@@ -55,13 +55,6 @@ func initJaraFlags() {
 		"Path to the jara configuration file",
 	)
 
-	// Refresh rate.
-	rootCmd.Flags().Float64P(
-		"refresh", "r",
-		0, // 0 means "use config file value or default"
-		fmt.Sprintf("Status poll interval in seconds (default %.0f)", config.DefaultRefreshRate),
-	)
-
 	// Log level.
 	rootCmd.Flags().StringP(
 		"logLevel", "l",
@@ -97,13 +90,6 @@ func initJaraFlags() {
 		"Disable write operations",
 	)
 
-	// Command.
-	rootCmd.Flags().StringP(
-		"command", "c",
-		"",
-		"Override the default view/command on launch",
-	)
-
 	// Demo mode (hidden) — use MockClient instead of a real Juju connection.
 	rootCmd.Flags().Bool(
 		"demo",
@@ -119,10 +105,6 @@ func initJaraFlags() {
 func resolveFlagsFrom(cmd *cobra.Command) {
 	flags := cmd.Flags()
 
-	if flags.Changed("refresh") {
-		v, _ := flags.GetFloat64("refresh")
-		jaraFlags.RefreshRate = &v
-	}
 	if flags.Changed("logLevel") {
 		v, _ := flags.GetString("logLevel")
 		jaraFlags.LogLevel = &v
@@ -142,10 +124,6 @@ func resolveFlagsFrom(cmd *cobra.Command) {
 	if flags.Changed("readonly") {
 		v, _ := flags.GetBool("readonly")
 		jaraFlags.ReadOnly = &v
-	}
-	if flags.Changed("command") {
-		v, _ := flags.GetString("command")
-		jaraFlags.Command = &v
 	}
 	if flags.Changed("demo") {
 		v, _ := flags.GetBool("demo")
