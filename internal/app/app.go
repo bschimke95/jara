@@ -2,7 +2,6 @@ package app
 
 import (
 	"context"
-	"fmt"
 	"strings"
 	"time"
 
@@ -14,14 +13,12 @@ import (
 	"github.com/bschimke95/jara/internal/api"
 	"github.com/bschimke95/jara/internal/color"
 	"github.com/bschimke95/jara/internal/config"
-	"github.com/bschimke95/jara/internal/llm"
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/ui"
 	"github.com/bschimke95/jara/internal/view"
 	"github.com/bschimke95/jara/internal/view/appconfig"
 	"github.com/bschimke95/jara/internal/view/applications"
-	"github.com/bschimke95/jara/internal/view/chat"
 	"github.com/bschimke95/jara/internal/view/controllers"
 	"github.com/bschimke95/jara/internal/view/debuglog"
 	"github.com/bschimke95/jara/internal/view/helpmodal"
@@ -38,11 +35,10 @@ import (
 
 // Model is the root Bubble Tea model.
 type Model struct {
-	client    api.Client
-	cfg       *config.Config
-	status    *model.FullStatus
-	styles    *color.Styles
-	llmClient llm.Client
+	client api.Client
+	cfg    *config.Config
+	status *model.FullStatus
+	styles *color.Styles
 
 	jaraVersion string
 	demo        bool
@@ -119,7 +115,7 @@ func WithVersion(v string) Option {
 	}
 }
 
-// WithDemo enables demo mode (uses mock LLM client).
+// WithDemo enables demo mode.
 func WithDemo(d bool) Option {
 	return func(m *Model) {
 		m.demo = d
@@ -174,25 +170,6 @@ func New(client api.Client, opts ...Option) Model {
 		func(name string) error { return m.client.SelectModel(name) },
 	)
 
-	// Initialize LLM client for the AI chat view.
-	var llmClient llm.Client
-	var llmInitErr string
-	if m.demo {
-		llmClient = llm.NewMockClient(20 * time.Millisecond)
-	} else {
-		var err error
-		llmClient, err = initLLMClient(m.cfg)
-		if err != nil {
-			llmInitErr = err.Error()
-		}
-	}
-	m.llmClient = llmClient
-	systemPrompt := m.cfg.Jara.AI.SystemPrompt
-	if systemPrompt == "" {
-		systemPrompt = llm.DefaultSystemPrompt
-	}
-	m.views[nav.ChatView] = chat.New(keys, s, llmClient, systemPrompt, llmInitErr)
-
 	return m
 }
 
@@ -200,9 +177,6 @@ func New(client api.Client, opts ...Option) Model {
 func (m Model) quit() (Model, tea.Cmd) {
 	m.stopStatusStream()
 	m.stopDebugLogStream()
-	if m.llmClient != nil {
-		_ = m.llmClient.Close()
-	}
 	if m.client != nil {
 		_ = m.client.Close()
 	}
@@ -519,8 +493,6 @@ func (m Model) viewName() string {
 		return "Storage"
 	case nav.DebugLogView:
 		return "Debug Log"
-	case nav.ChatView:
-		return "Chat"
 	default:
 		return "jara"
 	}
@@ -669,61 +641,4 @@ func (m Model) buildHeaderHints(viewHints []ui.KeyHint) []ui.KeyHint {
 	// Always append help as the last hint.
 	hints = append(hints, helpHint)
 	return hints
-}
-
-// initLLMClient creates an LLM client based on the current configuration.
-// Returns (nil, nil) when no credentials are available (graceful degradation).
-// Returns (nil, err) when credentials exist but the client cannot be created
-// (e.g. the Copilot CLI binary is missing).
-func initLLMClient(cfg *config.Config) (llm.Client, error) {
-	provider := strings.ToLower(strings.TrimSpace(cfg.Jara.AI.Provider))
-	if provider == "" {
-		provider = "copilot"
-	}
-
-	cred := config.LoadAICredential(provider)
-	aiCfg := cfg.Jara.AI
-
-	switch provider {
-	case "copilot":
-		opts := []llm.CopilotOption{
-			llm.WithCopilotModel(aiCfg.Model),
-			llm.WithCopilotLogLevel(cfg.Jara.LogLevel),
-		}
-		if cred != "" {
-			opts = append(opts, llm.WithCopilotGitHubToken(cred))
-		}
-		c, err := llm.NewCopilotClient(opts...)
-		if err != nil {
-			// Only surface the error when credentials were found — if there are
-			// no credentials this is the expected "not configured" path.
-			if cred != "" {
-				return nil, err
-			}
-			return nil, nil
-		}
-		return c, nil
-
-	case "gemini":
-		if cred == "" {
-			return nil, nil
-		}
-		opts := []llm.GeminiOption{
-			llm.WithGeminiModel(aiCfg.Model),
-		}
-		if aiCfg.Temperature != nil {
-			opts = append(opts, llm.WithGeminiTemperature(*aiCfg.Temperature))
-		}
-		if aiCfg.MaxTokens != nil {
-			opts = append(opts, llm.WithGeminiMaxTokens(*aiCfg.MaxTokens))
-		}
-		c, err := llm.NewGeminiClient(context.Background(), cred, opts...)
-		if err != nil {
-			return nil, err
-		}
-		return c, nil
-
-	default:
-		return nil, fmt.Errorf("unknown AI provider: %q (supported: copilot, gemini)", provider)
-	}
 }

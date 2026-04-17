@@ -45,7 +45,6 @@ type KeyMap struct {
 	Left            key.Binding // h/left: move left in modal
 	RunAction       key.Binding // a: run action on unit
 	ConfigNav       key.Binding // C: view application config
-	ChatNav         key.Binding // c: navigate to AI chat view
 	Yank            key.Binding // y: copy selected row to clipboard
 }
 
@@ -207,10 +206,6 @@ func DefaultKeyMap() KeyMap {
 		ConfigNav: key.NewBinding(
 			key.WithKeys("C"),
 			key.WithHelp("C", "config"),
-		),
-		ChatNav: key.NewBinding(
-			key.WithKeys("c"),
-			key.WithHelp("c", "chat"),
 		),
 		Yank: key.NewBinding(
 			key.WithKeys("y"),
