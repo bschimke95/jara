@@ -47,6 +47,7 @@ type KeyMap struct {
 	ConfigNav       key.Binding // C: view application config
 	Yank            key.Binding // y: copy selected row to clipboard
 	Inspect         key.Binding // i: show detail info for selected row
+	EntitySwitch    key.Binding // s: switch entity context (e.g. filter by app)
 }
 
 // DefaultKeyMap returns the default vim-style keybindings.
@@ -215,6 +216,10 @@ func DefaultKeyMap() KeyMap {
 		Inspect: key.NewBinding(
 			key.WithKeys("i"),
 			key.WithHelp("i", "info"),
+		),
+		EntitySwitch: key.NewBinding(
+			key.WithKeys("s"),
+			key.WithHelp("s", "switch entity"),
 		),
 	}
 }

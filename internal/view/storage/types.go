@@ -28,4 +28,6 @@ type View struct {
 	hasData   bool
 	instances []model.StorageInstance
 	filterStr string
+	appName   string // entity switch: filter by owner application
+	status    *model.FullStatus
 }

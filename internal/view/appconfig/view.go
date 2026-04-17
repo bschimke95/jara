@@ -3,6 +3,7 @@ package appconfig
 
 import (
 	"fmt"
+	"sort"
 
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
@@ -59,6 +60,7 @@ func (v *View) KeyHints() []view.KeyHint {
 		{Key: view.BindingKey(v.keys.Inspect), Desc: "info"},
 		{Key: view.BindingKey(v.keys.Back), Desc: "back"},
 		{Key: view.BindingKey(v.keys.Yank), Desc: "copy value"},
+		{Key: view.BindingKey(v.keys.EntitySwitch), Desc: "switch app"},
 	}
 }
 
@@ -103,6 +105,27 @@ func (v *View) Enter(ctx view.NavigateContext) (tea.Cmd, error) {
 }
 
 func (v *View) Leave() tea.Cmd { return nil }
+
+// SetStatus implements view.StatusReceiver.
+func (v *View) SetStatus(status *model.FullStatus) {
+	v.status = status
+}
+
+// SwitchTitle implements view.EntitySwitchable.
+func (v *View) SwitchTitle() string { return "Switch Application" }
+
+// SwitchableEntities implements view.EntitySwitchable.
+func (v *View) SwitchableEntities() ([]string, string) {
+	if v.status == nil {
+		return nil, v.appName
+	}
+	names := make([]string, 0, len(v.status.Applications))
+	for name := range v.status.Applications {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names, v.appName
+}
 
 // SetFilter implements view.Filterable.
 func (v *View) SetFilter(filter string) {
