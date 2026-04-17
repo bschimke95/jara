@@ -44,10 +44,20 @@ func (v *View) SetSize(width, height int) {
 	v.table.SetColumns(ui.ScaleColumns(columns(), width))
 }
 
+// CopySelection returns the value of the currently selected config entry.
+func (v *View) CopySelection() string {
+	row := v.table.SelectedRow()
+	if len(row) < 2 {
+		return ""
+	}
+	return row[1] // VALUE column
+}
+
 // KeyHints returns the view-specific key hints for the header.
 func (v *View) KeyHints() []view.KeyHint {
 	return []view.KeyHint{
 		{Key: view.BindingKey(v.keys.Back), Desc: "back"},
+		{Key: view.BindingKey(v.keys.Yank), Desc: "copy value"},
 	}
 }
 
