@@ -51,7 +51,6 @@ func ResolveKeyMap(keys KeysConfig) ui.KeyMap {
 	overrideBinding(&km.Left, keys.Left, "left")
 	overrideBinding(&km.RunAction, keys.RunAction, "run action")
 	overrideBinding(&km.ConfigNav, keys.ConfigNav, "config")
-	overrideBinding(&km.ChatNav, keys.ChatNav, "chat")
 
 	return km
 }

@@ -60,36 +60,12 @@ type JaraConfig struct {
 	// CharmhubURL is the base URL for Charmhub API requests.
 	CharmhubURL string `yaml:"charmhubURL,omitempty"`
 
-	// AI holds the LLM provider configuration for the AI chat view.
-	AI AIConfig `yaml:"ai,omitempty"`
-
 	// UI holds the theme and key binding configuration.
 	UI UIConfig `yaml:"ui,omitempty"`
 
 	// ToastDuration controls how long error toasts are displayed.
 	// Accepts Go duration strings (e.g. "4s", "2500ms"). Defaults to 4s.
 	ToastDuration time.Duration `yaml:"toastDuration,omitempty"`
-}
-
-// AIConfig holds configuration for the LLM-powered analysis chat.
-type AIConfig struct {
-	// Provider selects the LLM backend: "copilot" or "gemini".
-	Provider string `yaml:"provider,omitempty"`
-
-	// Model overrides the default model for the chosen provider.
-	Model string `yaml:"model,omitempty"`
-
-	// BaseURL overrides the API endpoint (useful for proxies).
-	BaseURL string `yaml:"baseURL,omitempty"`
-
-	// SystemPrompt replaces the built-in system prompt.
-	SystemPrompt string `yaml:"systemPrompt,omitempty"`
-
-	// Temperature controls sampling randomness (0.0–2.0).
-	Temperature *float64 `yaml:"temperature,omitempty"`
-
-	// MaxTokens limits the maximum response length.
-	MaxTokens *int `yaml:"maxTokens,omitempty"`
 }
 
 // UIConfig groups all user-interface related configuration.
@@ -167,9 +143,6 @@ type SkinConfig struct {
 	// CheckRed is the color for negative/unchecked marks.
 	CheckRed string `yaml:"checkRed,omitempty"`
 
-	// AssistantLabel is the color for the "Assistant:" label in chat.
-	AssistantLabel string `yaml:"assistantLabel,omitempty"`
-
 	// Status maps Juju status strings to hex colors for overrides.
 	Status StatusColorsConfig `yaml:"status,omitempty"`
 }
@@ -244,7 +217,6 @@ type KeysConfig struct {
 	Left            *KeyBindingConfig `yaml:"left,omitempty"`
 	RunAction       *KeyBindingConfig `yaml:"runAction,omitempty"`
 	ConfigNav       *KeyBindingConfig `yaml:"configNav,omitempty"`
-	ChatNav         *KeyBindingConfig `yaml:"chatNav,omitempty"`
 }
 
 // NewDefault returns a Config with all compiled defaults.
