@@ -11,6 +11,7 @@ import (
 	"github.com/bschimke95/jara/internal/ui"
 	"github.com/bschimke95/jara/internal/view"
 	"github.com/bschimke95/jara/internal/view/infomodal"
+	"github.com/bschimke95/jara/internal/view/switchmodal"
 )
 
 type inputMode int
@@ -280,6 +281,18 @@ func (m Model) handleGlobalKeys(msg tea.KeyPressMsg) (Model, tea.Cmd, bool) {
 				m.infoModal = infomodal.New(*data, m.keys, m.styles)
 				m.infoModal.SetSize(m.width, m.height)
 				m.infoModalOpen = true
+				return m, nil, true
+			}
+		}
+		return m, nil, true
+	case key.Matches(msg, m.keys.EntitySwitch):
+		currentView := m.views[m.stack.Current().View]
+		if es, ok := currentView.(view.EntitySwitchable); ok {
+			entities, current := es.SwitchableEntities()
+			if len(entities) > 0 {
+				m.switchModal = switchmodal.New(es.SwitchTitle(), entities, current, m.keys, m.styles)
+				m.switchModal.SetSize(m.width, m.height)
+				m.switchModalOpen = true
 				return m, nil, true
 			}
 		}

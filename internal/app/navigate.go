@@ -51,6 +51,32 @@ func (m Model) handleNavigate(msg view.NavigateMsg) (Model, tea.Cmd) {
 	return m, nil
 }
 
+// switchEntityContext re-enters the current view with a new entity context.
+// An empty entity clears the filter (show all).
+func (m Model) switchEntityContext(entity string) (Model, tea.Cmd) {
+	current := m.stack.Current()
+	v := m.views[current.View]
+	if v == nil {
+		return m, nil
+	}
+
+	// Update the stack entry context.
+	m.stack.SetCurrentContext(entity)
+
+	v.SetSize(m.width, m.contentHeight())
+	if m.status != nil {
+		if sr, ok := v.(view.StatusReceiver); ok {
+			sr.SetStatus(m.status)
+		}
+	}
+
+	cmd, err := v.Enter(view.NavigateContext{Context: entity})
+	if err != nil {
+		return m, m.showToast(err.Error())
+	}
+	return m, cmd
+}
+
 func (m Model) handleBack() (Model, tea.Cmd) {
 	prev := m.stack.Current()
 	if _, ok := m.stack.Pop(); ok {
