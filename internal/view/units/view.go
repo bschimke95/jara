@@ -44,20 +44,25 @@ func (u *View) SetStatus(status *model.FullStatus) {
 	if status == nil {
 		return
 	}
-	// Reconcile pending scale: clear entries where live unit count has caught up.
+	// Reconcile pending scale: reduce deltas as live unit count catches up.
 	for appName, delta := range u.pendingScale {
 		app, ok := status.Applications[appName]
 		if !ok {
 			delete(u.pendingScale, appName)
 			continue
 		}
-		if delta < 0 {
-			if len(app.Units) <= app.Scale {
+		remaining := app.Scale - len(app.Units)
+		if delta > 0 {
+			if remaining <= 0 {
 				delete(u.pendingScale, appName)
+			} else if remaining < delta {
+				u.pendingScale[appName] = remaining
 			}
 		} else {
-			if len(app.Units) >= app.Scale {
+			if remaining >= 0 {
 				delete(u.pendingScale, appName)
+			} else if remaining > delta {
+				u.pendingScale[appName] = remaining
 			}
 		}
 	}

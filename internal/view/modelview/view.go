@@ -77,13 +77,18 @@ func (m *View) SetStatus(status *model.FullStatus) {
 			delete(m.pendingScale, appName)
 			continue
 		}
-		if delta < 0 {
-			if len(app.Units) <= app.Scale {
+		remaining := app.Scale - len(app.Units)
+		if delta > 0 {
+			if remaining <= 0 {
 				delete(m.pendingScale, appName)
+			} else if remaining < delta {
+				m.pendingScale[appName] = remaining
 			}
 		} else {
-			if len(app.Units) >= app.Scale {
+			if remaining >= 0 {
 				delete(m.pendingScale, appName)
+			} else if remaining > delta {
+				m.pendingScale[appName] = remaining
 			}
 		}
 	}
