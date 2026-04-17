@@ -56,6 +56,7 @@ func (v *View) CopySelection() string {
 // KeyHints returns the view-specific key hints for the header.
 func (v *View) KeyHints() []view.KeyHint {
 	return []view.KeyHint{
+		{Key: view.BindingKey(v.keys.Inspect), Desc: "info"},
 		{Key: view.BindingKey(v.keys.Back), Desc: "back"},
 		{Key: view.BindingKey(v.keys.Yank), Desc: "copy value"},
 	}
@@ -112,4 +113,24 @@ func (v *View) SetFilter(filter string) {
 func (v *View) rebuildRows() {
 	allRows := rows(v.entries)
 	v.table.SetRows(view.FilterRows(allRows, 0, v.filterStr, v.styles.SearchHighlight))
+}
+
+// InspectSelection implements view.Inspectable.
+func (v *View) InspectSelection() *view.InspectData {
+	idx := v.table.Cursor()
+	if idx < 0 || idx >= len(v.entries) {
+		return nil
+	}
+	e := v.entries[idx]
+	return &view.InspectData{
+		Title: e.Key,
+		Fields: []view.InspectField{
+			{Label: "Key", Value: e.Key},
+			{Label: "Value", Value: e.Value},
+			{Label: "Default", Value: e.Default},
+			{Label: "Source", Value: e.Source},
+			{Label: "Type", Value: e.Type},
+			{Label: "Description", Value: e.Description},
+		},
+	}
 }

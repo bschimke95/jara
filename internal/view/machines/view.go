@@ -2,6 +2,8 @@
 package machines
 
 import (
+	"strings"
+
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
@@ -56,6 +58,7 @@ func (m *View) rebuildRows() {
 // KeyHints returns the view-specific key hints for the header.
 func (m *View) KeyHints() []view.KeyHint {
 	return []view.KeyHint{
+		{Key: view.BindingKey(m.keys.Inspect), Desc: "info"},
 		{Key: view.BindingKey(m.keys.LogsJump), Desc: "logs (machine)"},
 	}
 }
@@ -91,3 +94,34 @@ func (m *View) View() tea.View {
 
 func (m *View) Enter(_ view.NavigateContext) (tea.Cmd, error) { return nil, nil }
 func (m *View) Leave() tea.Cmd                                { return nil }
+
+// InspectSelection implements view.Inspectable.
+func (m *View) InspectSelection() *view.InspectData {
+	row := m.table.SelectedRow()
+	if row == nil || m.status == nil {
+		return nil
+	}
+	id := row[0]
+	mc, ok := m.status.Machines[id]
+	if !ok {
+		return nil
+	}
+	since := ""
+	if mc.Since != nil {
+		since = mc.Since.Format("2006-01-02 15:04:05")
+	}
+	return &view.InspectData{
+		Title: "Machine " + id,
+		Fields: []view.InspectField{
+			{Label: "ID", Value: mc.ID},
+			{Label: "Status", Value: mc.Status},
+			{Label: "Status Message", Value: mc.StatusMessage},
+			{Label: "DNS Name", Value: mc.DNSName},
+			{Label: "IP Addresses", Value: strings.Join(mc.IPAddresses, ", ")},
+			{Label: "Instance ID", Value: mc.InstanceID},
+			{Label: "Base", Value: mc.Base},
+			{Label: "Hardware", Value: mc.Hardware},
+			{Label: "Since", Value: since},
+		},
+	}
+}
