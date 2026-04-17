@@ -654,6 +654,7 @@ func (c *MockClient) buildInitialStatus() *model.FullStatus {
 			Type:    "iaas",
 			Version: "3.6.1",
 		},
+		ControllerTimestamp: &now,
 		Applications: map[string]model.Application{
 			"postgresql": {
 				Name: "postgresql", Status: "active", StatusMessage: "Live master (14.12)",
