@@ -17,4 +17,5 @@ type View struct {
 	height    int
 	status    *model.FullStatus
 	filterStr string
+	appName   string // entity switch: filter by owner application
 }

@@ -217,6 +217,7 @@ type KeysConfig struct {
 	Left            *KeyBindingConfig `yaml:"left,omitempty"`
 	RunAction       *KeyBindingConfig `yaml:"runAction,omitempty"`
 	ConfigNav       *KeyBindingConfig `yaml:"configNav,omitempty"`
+	EntitySwitch    *KeyBindingConfig `yaml:"entitySwitch,omitempty"`
 }
 
 // NewDefault returns a Config with all compiled defaults.

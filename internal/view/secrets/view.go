@@ -3,6 +3,8 @@ package secrets
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/table"
@@ -51,7 +53,14 @@ func (s *View) rebuildRows() {
 	if s.status == nil {
 		return
 	}
-	allRows := Rows(s.status.Secrets)
+	var filtered []model.Secret
+	for _, sec := range s.status.Secrets {
+		if s.appName != "" && secretOwnerApp(sec.Owner) != s.appName {
+			continue
+		}
+		filtered = append(filtered, sec)
+	}
+	allRows := Rows(filtered)
 	s.table.SetRows(view.FilterRows(allRows, 0, s.filterStr, s.styles.SearchHighlight))
 }
 
@@ -61,6 +70,7 @@ func (s *View) KeyHints() []view.KeyHint {
 		{Key: view.BindingKey(s.keys.Enter), Desc: "detail"},
 		{Key: view.BindingKey(s.keys.Inspect), Desc: "info"},
 		{Key: view.BindingKey(s.keys.LogsView), Desc: "logs"},
+		{Key: view.BindingKey(s.keys.EntitySwitch), Desc: "switch app"},
 	}
 }
 
@@ -75,13 +85,10 @@ func (s *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if kp, ok := msg.(tea.KeyPressMsg); ok {
 		switch {
 		case key.Matches(kp, s.keys.Enter):
-			if s.status != nil && len(s.status.Secrets) > 0 {
-				idx := s.table.Cursor()
-				if idx >= 0 && idx < len(s.status.Secrets) {
-					uri := s.status.Secrets[idx].URI
-					return s, func() tea.Msg {
-						return view.NavigateMsg{Target: nav.SecretDetailView, Context: uri}
-					}
+			if row := s.table.SelectedRow(); row != nil {
+				uri := row[0]
+				return s, func() tea.Msg {
+					return view.NavigateMsg{Target: nav.SecretDetailView, Context: uri}
 				}
 			}
 		case key.Matches(kp, s.keys.LogsView):
@@ -99,19 +106,74 @@ func (s *View) View() tea.View {
 	return tea.NewView(s.table.View())
 }
 
-func (s *View) Enter(_ view.NavigateContext) (tea.Cmd, error) { return nil, nil }
-func (s *View) Leave() tea.Cmd                                { return nil }
+func (s *View) Enter(ctx view.NavigateContext) (tea.Cmd, error) {
+	s.appName = ctx.Context
+	s.rebuildRows()
+	return nil, nil
+}
+
+func (s *View) Leave() tea.Cmd { return nil }
+
+// SwitchTitle implements view.EntitySwitchable.
+func (s *View) SwitchTitle() string { return "Switch Application" }
+
+// SwitchableEntities implements view.EntitySwitchable.
+func (s *View) SwitchableEntities() ([]string, string) {
+	if s.status == nil {
+		return nil, s.appName
+	}
+	seen := make(map[string]bool)
+	for _, sec := range s.status.Secrets {
+		app := secretOwnerApp(sec.Owner)
+		if app != "" {
+			seen[app] = true
+		}
+	}
+	names := make([]string, 0, len(seen))
+	for n := range seen {
+		names = append(names, n)
+	}
+	sort.Strings(names)
+	return names, s.appName
+}
+
+// secretOwnerApp extracts the application name from a secret owner string.
+// Owner is like "application-postgresql", "unit-mysql-0", or "model".
+func secretOwnerApp(owner string) string {
+	if strings.HasPrefix(owner, "application-") {
+		return owner[len("application-"):]
+	}
+	if strings.HasPrefix(owner, "unit-") {
+		rest := owner[5:]
+		if idx := strings.LastIndex(rest, "-"); idx > 0 {
+			return rest[:idx]
+		}
+	}
+	return owner
+}
 
 // InspectSelection implements view.Inspectable.
 func (s *View) InspectSelection() *view.InspectData {
 	if s.status == nil || len(s.status.Secrets) == 0 {
 		return nil
 	}
-	idx := s.table.Cursor()
-	if idx < 0 || idx >= len(s.status.Secrets) {
+	row := s.table.SelectedRow()
+	if row == nil {
 		return nil
 	}
-	sec := s.status.Secrets[idx]
+	uri := row[0]
+	var sec model.Secret
+	found := false
+	for _, sc := range s.status.Secrets {
+		if sc.URI == uri {
+			sec = sc
+			found = true
+			break
+		}
+	}
+	if !found {
+		return nil
+	}
 	expire := ""
 	if sec.ExpireTime != nil {
 		expire = sec.ExpireTime.Format("2006-01-02 15:04:05")

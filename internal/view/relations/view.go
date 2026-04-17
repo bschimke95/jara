@@ -72,6 +72,7 @@ func (r *View) KeyHints() []view.KeyHint {
 		{Key: view.BindingKey(r.keys.Inspect), Desc: "info"},
 		{Key: view.BindingKey(r.keys.DeleteRelation), Desc: "delete"},
 		{Key: view.BindingKey(r.keys.LogsJump), Desc: "logs"},
+		{Key: view.BindingKey(r.keys.EntitySwitch), Desc: "switch app"},
 	}
 }
 
@@ -169,13 +170,37 @@ func (r *View) View() tea.View {
 	return tea.NewView(background)
 }
 
-func (r *View) Enter(_ view.NavigateContext) (tea.Cmd, error) {
+func (r *View) Enter(ctx view.NavigateContext) (tea.Cmd, error) {
+	r.appName = ctx.Context
+	r.applyFilter()
 	return r.requestRelationData(), nil
 }
 
 func (r *View) Leave() tea.Cmd {
 	r.relationData = nil
 	return nil
+}
+
+// SwitchTitle implements view.EntitySwitchable.
+func (r *View) SwitchTitle() string { return "Switch Application" }
+
+// SwitchableEntities implements view.EntitySwitchable.
+func (r *View) SwitchableEntities() ([]string, string) {
+	if r.status == nil {
+		return nil, r.appName
+	}
+	seen := make(map[string]bool)
+	for _, rel := range r.status.Relations {
+		for _, ep := range rel.Endpoints {
+			seen[ep.ApplicationName] = true
+		}
+	}
+	names := make([]string, 0, len(seen))
+	for n := range seen {
+		names = append(names, n)
+	}
+	sort.Strings(names)
+	return names, r.appName
 }
 
 // FilterStr returns the current filter string.
@@ -243,21 +268,32 @@ func (r *View) applyFilter() {
 	}
 
 	var rels []model.Relation
-	if r.filterStr == "" {
-		rels = append(rels, r.status.Relations...)
-	} else {
-		lower := strings.ToLower(r.filterStr)
-		for _, rel := range r.status.Relations {
-			if matchesFilter(rel, lower) {
-				rels = append(rels, rel)
+	for _, rel := range r.status.Relations {
+		// Filter by app name if set.
+		if r.appName != "" && !relationInvolvesApp(rel, r.appName) {
+			continue
+		}
+		if r.filterStr != "" {
+			if !matchesFilter(rel, strings.ToLower(r.filterStr)) {
+				continue
 			}
 		}
+		rels = append(rels, rel)
 	}
 
 	sort.Slice(rels, func(i, j int) bool { return rels[i].ID < rels[j].ID })
 
 	r.filteredRels = rels
 	r.table.SetRows(Rows(rels))
+}
+
+func relationInvolvesApp(rel model.Relation, app string) bool {
+	for _, ep := range rel.Endpoints {
+		if ep.ApplicationName == app {
+			return true
+		}
+	}
+	return false
 }
 
 func matchesFilter(rel model.Relation, lower string) bool {

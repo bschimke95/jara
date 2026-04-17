@@ -18,4 +18,5 @@ type View struct {
 	appName   string
 	entries   []model.ConfigEntry
 	filterStr string
+	status    *model.FullStatus
 }

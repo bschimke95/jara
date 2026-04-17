@@ -19,6 +19,9 @@ type View struct {
 	height int
 	status *model.FullStatus
 
+	// Entity switch: filter relations by application name.
+	appName string
+
 	// Search/filter state.
 	filterStr    string
 	filteredRels []model.Relation
