@@ -181,12 +181,13 @@ type SecretAccessInfo struct {
 
 // FullStatus is the aggregate snapshot of a Juju model.
 type FullStatus struct {
-	Model        ModelInfo
-	Applications map[string]Application
-	Machines     map[string]Machine
-	Relations    []Relation
-	Secrets      []Secret
-	FetchedAt    time.Time
+	Model               ModelInfo
+	Applications        map[string]Application
+	Machines            map[string]Machine
+	Relations           []Relation
+	Secrets             []Secret
+	ControllerTimestamp *time.Time
+	FetchedAt           time.Time
 }
 
 // DeployOptions captures supported Juju deploy settings collected from the UI.

@@ -1350,7 +1350,9 @@ func (c *JujuClient) WatchStatus(ctx context.Context, interval time.Duration) (<
 
 // convertFullStatus maps the Juju API params.FullStatus to our domain model.
 func convertFullStatus(s *params.FullStatus) *model.FullStatus {
-	fs := &model.FullStatus{}
+	fs := &model.FullStatus{
+		ControllerTimestamp: s.ControllerTimestamp,
+	}
 
 	// Model info.
 	fs.Model = convertModelInfo(s.Model)
