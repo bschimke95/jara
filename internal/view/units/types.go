@@ -7,6 +7,7 @@ import (
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/ui"
 	"github.com/bschimke95/jara/internal/view/actionmodal"
+	"github.com/bschimke95/jara/internal/view/confirmodal"
 )
 
 // View is the Bubble Tea model for the units table view.
@@ -23,4 +24,9 @@ type View struct {
 
 	actionModal     *actionmodal.Modal
 	actionModalOpen bool
+
+	confirmModal confirmodal.Modal
+	confirmOpen  bool
+	removingUnit string // unit name pending removal
+	removeForce  bool   // force-remove toggle
 }
