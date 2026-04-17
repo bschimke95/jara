@@ -596,16 +596,3 @@ func buildParamFields(params map[string]interface{}) []paramField {
 	})
 	return fields
 }
-
-func truncate(s string, max int) string {
-	if max <= 0 {
-		return ""
-	}
-	if len(s) <= max {
-		return s
-	}
-	if max <= 3 {
-		return s[:max]
-	}
-	return s[:max-3] + "..."
-}
