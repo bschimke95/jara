@@ -10,11 +10,12 @@ import (
 
 // View is the Bubble Tea model for the application config table view.
 type View struct {
-	table   table.Model
-	keys    ui.KeyMap
-	styles  *color.Styles
-	width   int
-	height  int
-	appName string
-	entries []model.ConfigEntry
+	table     table.Model
+	keys      ui.KeyMap
+	styles    *color.Styles
+	width     int
+	height    int
+	appName   string
+	entries   []model.ConfigEntry
+	filterStr string
 }
