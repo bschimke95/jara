@@ -6,6 +6,7 @@ import (
 	"github.com/bschimke95/jara/internal/color"
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/ui"
+	"github.com/bschimke95/jara/internal/view/actionmodal"
 	"github.com/bschimke95/jara/internal/view/deploymodal"
 )
 
@@ -22,6 +23,9 @@ type View struct {
 
 	deployModalOpen bool
 	deployModal     deploymodal.Modal
+
+	actionModalOpen bool
+	actionModal     *actionmodal.Modal
 
 	charmhubSuggestions []string
 }

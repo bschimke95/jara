@@ -14,6 +14,7 @@ import (
 	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/ui"
 	"github.com/bschimke95/jara/internal/view"
+	"github.com/bschimke95/jara/internal/view/actionmodal"
 	"github.com/bschimke95/jara/internal/view/deploymodal"
 	"github.com/bschimke95/jara/internal/view/relatemodal"
 	"github.com/bschimke95/jara/internal/view/relations"
@@ -118,6 +119,7 @@ func (m *View) SetCharmEndpoints(endpoints map[string]map[string]model.CharmEndp
 func (m *View) KeyHints() []view.KeyHint {
 	return []view.KeyHint{
 		{Key: view.BindingKey(m.keys.Enter), Desc: "select"},
+		{Key: view.BindingKey(m.keys.RunAction), Desc: "action"},
 		{Key: view.BindingKey(m.keys.Deploy), Desc: "deploy"},
 		{Key: view.BindingKey(m.keys.Relate), Desc: "relate"},
 		{Key: view.BindingKey(m.keys.ApplicationsNav), Desc: "apps"},
@@ -140,6 +142,21 @@ type NoModelMsg struct{}
 func (m *View) Init() tea.Cmd { return nil }
 
 func (m *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	// Action modal takes priority when open.
+	if m.actionModalOpen {
+		switch msg.(type) {
+		case actionmodal.CloseMsg:
+			m.actionModalOpen = false
+			m.actionModal = nil
+			return m, nil
+		default:
+			var cmd tea.Cmd
+			newModel, cmd := m.actionModal.Update(msg)
+			m.actionModal = newModel.(*actionmodal.Modal)
+			return m, cmd
+		}
+	}
+
 	if m.deployModalOpen {
 		switch msg := msg.(type) {
 		case deploymodal.AppliedMsg:
@@ -238,6 +255,19 @@ func (m *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.refreshRightPane()
 				return m, func() tea.Msg { return view.ScaleRequestMsg{AppName: app, Delta: -1} }
 			}
+		case key.Matches(msg, m.keys.RunAction):
+			if m.selectedApp != "" && m.status != nil {
+				if app, ok := m.status.Applications[m.selectedApp]; ok {
+					unitNames := view.UnitNamesLeaderFirst(app)
+					if len(unitNames) > 0 {
+						am := actionmodal.NewWithUnits(m.selectedApp, unitNames, m.keys, m.styles)
+						am.SetSize(m.width, m.height)
+						m.actionModal = am
+						m.actionModalOpen = true
+						return m, am.Init()
+					}
+				}
+			}
 		}
 	}
 
@@ -249,6 +279,9 @@ func (m *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (m *View) View() tea.View {
 	background := m.renderBackground()
+	if m.actionModalOpen && m.actionModal != nil {
+		return tea.NewView(m.actionModal.Render(background))
+	}
 	if m.deployModalOpen {
 		return tea.NewView(m.deployModal.Render(background))
 	}
