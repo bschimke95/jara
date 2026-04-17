@@ -218,6 +218,8 @@ type KeysConfig struct {
 	RunAction       *KeyBindingConfig `yaml:"runAction,omitempty"`
 	ConfigNav       *KeyBindingConfig `yaml:"configNav,omitempty"`
 	EntitySwitch    *KeyBindingConfig `yaml:"entitySwitch,omitempty"`
+	NewModel        *KeyBindingConfig `yaml:"newModel,omitempty"`
+	RemoveModel     *KeyBindingConfig `yaml:"removeModel,omitempty"`
 }
 
 // NewDefault returns a Config with all compiled defaults.

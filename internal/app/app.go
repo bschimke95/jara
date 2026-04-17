@@ -319,6 +319,14 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case errMsg:
 		return m, m.showToast(msg.err.Error())
 
+	case modelDestroyStartedMsg:
+		// Update the view immediately (model likely shows "dying"),
+		// then start background polling until the model is fully removed.
+		if mv, ok := m.views[nav.ModelsView].(*models.View); ok {
+			mv.SetModels(msg.models)
+		}
+		return m, m.pollModelRemoval(msg.qualifiedName)
+
 	case toastExpiredMsg:
 		m.clearToast(msg.seqNo)
 		return m, nil
@@ -455,6 +463,12 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case view.DestroyRelationRequestMsg:
 		return m, m.destroyRelation(msg.EndpointA, msg.EndpointB)
+
+	case view.CreateModelRequestMsg:
+		return m, m.createModel(msg.Name)
+
+	case view.DestroyModelRequestMsg:
+		return m, m.destroyModel(msg.QualifiedName, msg.Force)
 
 	case view.RevealSecretRequestMsg:
 		return m, m.revealSecret(msg.URI, msg.Revision)
@@ -636,21 +650,30 @@ func (m Model) View() tea.View {
 		}
 	}
 
-	// ── Breadcrumb bar (with optional inline toast) ──
+	// ── Breadcrumb bar ──
 	crumbLine := ui.CrumbBar(m.stack.Breadcrumbs(), m.width, m.styles)
-	if m.toast != nil {
-		toastText := m.styles.ToastStyle.Render(" ⚠ " + m.toast.message + " ")
-		toastWidth := lipgloss.Width(toastText)
-		crumbWidth := lipgloss.Width(crumbLine)
-		gap := m.width - crumbWidth - toastWidth
-		if gap < 1 {
-			gap = 1
-		}
-		crumbLine = crumbLine + strings.Repeat(" ", gap) + toastText + "\n"
-	}
 	sections = append(sections, crumbLine)
 
 	body := lipgloss.JoinVertical(lipgloss.Left, sections...)
+
+	// ── Toast overlay ──
+	if m.toast != nil {
+		toastBorder := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			BorderForeground(m.styles.ErrorColor).
+			Padding(0, 1)
+		toastInner := m.styles.ToastStyle.Render(" ⚠ " + m.toast.message + " ")
+		toastBox := toastBorder.Render(toastInner)
+		toastW := lipgloss.Width(toastBox)
+		x := (m.width - toastW) / 2
+		if x < 0 {
+			x = 0
+		}
+		y := m.height * 19 / 20
+		bgLayer := lipgloss.NewLayer(body)
+		toastLayer := lipgloss.NewLayer(toastBox).X(x).Y(y).Z(1)
+		body = lipgloss.NewCompositor(bgLayer, toastLayer).Render()
+	}
 
 	// ── Info modal overlay ──
 	if m.infoModalOpen && m.infoModal != nil {

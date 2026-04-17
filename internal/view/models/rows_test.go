@@ -8,10 +8,10 @@ import (
 
 func TestColumns(t *testing.T) {
 	cols := columns()
-	if len(cols) != 4 {
-		t.Fatalf("columns() returned %d, want 4", len(cols))
+	if len(cols) != 5 {
+		t.Fatalf("columns() returned %d, want 5", len(cols))
 	}
-	want := []string{"NAME", "OWNER", "TYPE", "UUID"}
+	want := []string{"NAME", "OWNER", "TYPE", "STATUS", "UUID"}
 	for i, c := range cols {
 		if c.Title != want[i] {
 			t.Errorf("columns()[%d].Title = %q, want %q", i, c.Title, want[i])

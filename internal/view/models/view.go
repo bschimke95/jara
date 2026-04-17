@@ -13,6 +13,8 @@ import (
 	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/ui"
 	"github.com/bschimke95/jara/internal/view"
+	"github.com/bschimke95/jara/internal/view/confirmodal"
+	"github.com/bschimke95/jara/internal/view/newmodelmodal"
 )
 
 // New creates a new models view.
@@ -57,6 +59,8 @@ func (m *View) rebuildRows() {
 func (m *View) KeyHints() []view.KeyHint {
 	return []view.KeyHint{
 		{Key: view.BindingKey(m.keys.Enter), Desc: "open model"},
+		{Key: view.BindingKey(m.keys.NewModel), Desc: "new model"},
+		{Key: view.BindingKey(m.keys.RemoveModel), Desc: "remove model"},
 		{Key: view.BindingKey(m.keys.Inspect), Desc: "info"},
 	}
 }
@@ -69,13 +73,65 @@ func (m *View) CopySelection() string {
 func (m *View) Init() tea.Cmd { return nil }
 
 func (m *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	// ── New model modal takes priority ──
+	if m.newModelOpen {
+		switch msg := msg.(type) {
+		case newmodelmodal.AppliedMsg:
+			m.newModelOpen = false
+			name := msg.Name
+			return m, func() tea.Msg {
+				return view.CreateModelRequestMsg{Name: name}
+			}
+		case newmodelmodal.ClosedMsg:
+			m.newModelOpen = false
+			return m, nil
+		default:
+			updated, cmd := m.newModelModal.Update(msg)
+			if nm, ok := updated.(*newmodelmodal.Modal); ok {
+				m.newModelModal = *nm
+			}
+			return m, cmd
+		}
+	}
+
+	// ── Remove confirm modal takes priority ──
+	if m.confirmOpen {
+		switch msg := msg.(type) {
+		case confirmodal.ConfirmedMsg:
+			m.confirmOpen = false
+			name, force := m.removingName, m.removeForce
+			m.removingName = ""
+			m.removeForce = false
+			return m, func() tea.Msg {
+				return view.DestroyModelRequestMsg{QualifiedName: name, Force: force}
+			}
+		case confirmodal.CancelledMsg:
+			m.confirmOpen = false
+			m.removingName = ""
+			m.removeForce = false
+			return m, nil
+		default:
+			if kp, ok := msg.(tea.KeyPressMsg); ok && kp.String() == "f" {
+				m.removeForce = !m.removeForce
+				m.confirmModal = m.buildRemoveConfirmModal()
+				return m, nil
+			}
+			updated, cmd := m.confirmModal.Update(msg)
+			if cm, ok := updated.(*confirmodal.Modal); ok {
+				m.confirmModal = *cm
+			}
+			return m, cmd
+		}
+	}
+
 	switch msg := msg.(type) {
 	case UpdatedMsg:
 		m.SetModels(msg.Models)
 		return m, nil
 
 	case tea.KeyPressMsg:
-		if key.Matches(msg, m.keys.Enter) {
+		switch {
+		case key.Matches(msg, m.keys.Enter):
 			if row := m.table.SelectedRow(); row != nil {
 				if idx := m.table.Cursor(); idx < len(m.models) {
 					qualifiedName := m.models[idx].Name
@@ -83,6 +139,19 @@ func (m *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						return view.NavigateMsg{Target: nav.ModelView, Context: qualifiedName}
 					}
 				}
+			}
+		case key.Matches(msg, m.keys.NewModel):
+			m.newModelModal = newmodelmodal.New(m.keys, m.styles)
+			m.newModelModal.SetSize(m.width, m.height)
+			m.newModelOpen = true
+			return m, m.newModelModal.Init()
+		case key.Matches(msg, m.keys.RemoveModel):
+			if idx := m.table.Cursor(); idx >= 0 && idx < len(m.models) {
+				m.removingName = m.models[idx].Name
+				m.removeForce = false
+				m.confirmModal = m.buildRemoveConfirmModal()
+				m.confirmOpen = true
+				return m, nil
 			}
 		}
 	}
@@ -93,7 +162,14 @@ func (m *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *View) View() tea.View {
-	return tea.NewView(m.table.View())
+	bg := m.table.View()
+	if m.newModelOpen {
+		return tea.NewView(m.newModelModal.Render(bg))
+	}
+	if m.confirmOpen {
+		return tea.NewView(m.confirmModal.Render(bg))
+	}
+	return tea.NewView(bg)
 }
 
 func (m *View) Enter(ctx view.NavigateContext) (tea.Cmd, error) {
@@ -127,6 +203,18 @@ func (m *View) Enter(ctx view.NavigateContext) (tea.Cmd, error) {
 }
 
 func (m *View) Leave() tea.Cmd { return nil }
+
+// buildRemoveConfirmModal creates the confirmation modal for model removal.
+func (m *View) buildRemoveConfirmModal() confirmodal.Modal {
+	forceLabel := "off"
+	if m.removeForce {
+		forceLabel = "ON"
+	}
+	msg := fmt.Sprintf("Destroy model %s?\n\n[f] force: %s", m.removingName, forceLabel)
+	cm := confirmodal.New(m.keys, m.styles, "Destroy Model", msg)
+	cm.SetSize(m.width, m.height)
+	return cm
+}
 
 // InspectSelection implements view.Inspectable.
 func (m *View) InspectSelection() *view.InspectData {

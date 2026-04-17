@@ -95,6 +95,11 @@ type InfrastructureClient interface {
 	SelectModel(qualifiedName string) error
 	// ControllerName returns the name of the currently targeted controller.
 	ControllerName() string
+	// CreateModel creates a new model on the current controller.
+	CreateModel(ctx context.Context, name string) error
+	// DestroyModel destroys a model by qualified name. When force is true
+	// the model is removed even if it has persistent storage or errors.
+	DestroyModel(ctx context.Context, qualifiedName string, force bool) error
 }
 
 // Client defines the full interface for fetching Juju status and managing

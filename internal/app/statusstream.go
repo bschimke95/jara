@@ -45,6 +45,14 @@ type statusStreamErrMsg struct {
 
 type errMsg struct{ err error }
 
+// modelDestroyStartedMsg is returned after a destroy API call succeeds.
+// It carries the first re-poll (model likely shows "dying") and the
+// qualified name so a background poller can wait for full removal.
+type modelDestroyStartedMsg struct {
+	qualifiedName string
+	models        []model.ModelSummary
+}
+
 type charmhubSuggestionsMsg struct {
 	Names []string
 }
@@ -317,6 +325,111 @@ func (m Model) destroyRelation(endpointA, endpointB string) tea.Cmd {
 			return errMsg{err}
 		}
 		return nil
+	}
+}
+
+// createModel returns a Cmd that creates a new model on the current controller.
+func (m Model) createModel(name string) tea.Cmd {
+	client := m.client
+	cfg := m.cfg
+	return func() tea.Msg {
+		if cfg != nil && cfg.Jara.ReadOnly {
+			return errMsg{fmt.Errorf("write operations are disabled in read-only mode")}
+		}
+		if strings.TrimSpace(name) == "" {
+			return errMsg{fmt.Errorf("model name is required")}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		if err := client.CreateModel(ctx, name); err != nil {
+			return errMsg{err}
+		}
+		controllerName := client.ControllerName()
+		modelList, err := pollUntil(ctx, func() ([]model.ModelSummary, error) {
+			return client.Models(ctx, controllerName)
+		}, func(mdls []model.ModelSummary) bool {
+			for _, m := range mdls {
+				if m.ShortName == name {
+					return true
+				}
+			}
+			return false
+		})
+		if err != nil {
+			return errMsg{err}
+		}
+		return models.UpdatedMsg{Models: modelList}
+	}
+}
+
+// destroyModel returns a Cmd that destroys a model by qualified name.
+// It performs a single re-poll after the API call and returns immediately
+// so the UI can show the transitional status (e.g. "dying").
+func (m Model) destroyModel(qualifiedName string, force bool) tea.Cmd {
+	client := m.client
+	cfg := m.cfg
+	return func() tea.Msg {
+		if cfg != nil && cfg.Jara.ReadOnly {
+			return errMsg{fmt.Errorf("write operations are disabled in read-only mode")}
+		}
+		if strings.TrimSpace(qualifiedName) == "" {
+			return errMsg{fmt.Errorf("model name is required")}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+		defer cancel()
+		if err := client.DestroyModel(ctx, qualifiedName, force); err != nil {
+			return errMsg{err}
+		}
+		controllerName := client.ControllerName()
+		modelList, err := client.Models(ctx, controllerName)
+		if err != nil {
+			return errMsg{err}
+		}
+		return modelDestroyStartedMsg{qualifiedName: qualifiedName, models: modelList}
+	}
+}
+
+// pollModelRemoval polls until the model is gone from the list.
+func (m Model) pollModelRemoval(qualifiedName string) tea.Cmd {
+	client := m.client
+	return func() tea.Msg {
+		ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+		defer cancel()
+		controllerName := client.ControllerName()
+		modelList, err := pollUntil(ctx, func() ([]model.ModelSummary, error) {
+			return client.Models(ctx, controllerName)
+		}, func(mdls []model.ModelSummary) bool {
+			for _, m := range mdls {
+				if m.Name == qualifiedName {
+					return false
+				}
+			}
+			return true
+		})
+		if err != nil {
+			return errMsg{err}
+		}
+		return models.UpdatedMsg{Models: modelList}
+	}
+}
+
+// pollUntil re-polls until the condition is met or the context expires.
+func pollUntil(ctx context.Context, fetch func() ([]model.ModelSummary, error), done func([]model.ModelSummary) bool) ([]model.ModelSummary, error) {
+	ticker := time.NewTicker(500 * time.Millisecond)
+	defer ticker.Stop()
+	for {
+		list, err := fetch()
+		if err != nil {
+			return nil, err
+		}
+		if done(list) {
+			return list, nil
+		}
+		select {
+		case <-ctx.Done():
+			return nil, fmt.Errorf("timed out waiting for model list to update")
+		case <-ticker.C:
+		}
 	}
 }
 

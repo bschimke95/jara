@@ -182,7 +182,7 @@ func TestMatchCommands(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := MatchCommands(tt.prefix)
+			got := MatchCommands(tt.prefix, 0)
 			if len(got) != tt.wantLen {
 				t.Errorf("MatchCommands(%q) returned %d matches, want %d", tt.prefix, len(got), tt.wantLen)
 				for i, m := range got {
@@ -200,7 +200,7 @@ func TestMatchCommands(t *testing.T) {
 func TestMatchCommands_Deduplication(t *testing.T) {
 	// Multiple aliases point to the same view (e.g. "controller", "controllers", "ctrl"
 	// all point to ControllerView). MatchCommands should deduplicate by target.
-	matches := MatchCommands("c")
+	matches := MatchCommands("c", 0)
 	targets := make(map[ViewID]bool)
 	for _, m := range matches {
 		if targets[m.Target] {

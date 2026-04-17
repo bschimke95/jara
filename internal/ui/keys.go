@@ -49,6 +49,8 @@ type KeyMap struct {
 	Inspect         key.Binding // i: show detail info for selected row
 	RemoveUnit      key.Binding // r: remove selected unit
 	EntitySwitch    key.Binding // s: switch entity context (e.g. filter by app)
+	NewModel        key.Binding // n: create a new model
+	RemoveModel     key.Binding // r: remove/destroy a model
 }
 
 // DefaultKeyMap returns the default vim-style keybindings.
@@ -225,6 +227,14 @@ func DefaultKeyMap() KeyMap {
 		EntitySwitch: key.NewBinding(
 			key.WithKeys("s"),
 			key.WithHelp("s", "switch entity"),
+		),
+		NewModel: key.NewBinding(
+			key.WithKeys("n"),
+			key.WithHelp("n", "new model"),
+		),
+		RemoveModel: key.NewBinding(
+			key.WithKeys("r"),
+			key.WithHelp("r", "remove model"),
 		),
 	}
 }

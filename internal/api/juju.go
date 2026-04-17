@@ -18,6 +18,7 @@ import (
 	"github.com/juju/juju/api/client/application"
 	"github.com/juju/juju/api/client/applicationoffers"
 	"github.com/juju/juju/api/client/client"
+	"github.com/juju/juju/api/client/modelmanager"
 	jujuSecrets "github.com/juju/juju/api/client/secrets"
 	jujuStorage "github.com/juju/juju/api/client/storage"
 	"github.com/juju/juju/api/common"
@@ -350,6 +351,123 @@ func (c *JujuClient) SelectModel(qualifiedName string) error {
 	return nil
 }
 
+// CreateModel creates a new model on the current controller using the
+// controller's default cloud and region. The model is owned by the
+// currently authenticated user.
+func (c *JujuClient) CreateModel(ctx context.Context, name string) error {
+	if strings.TrimSpace(name) == "" {
+		return fmt.Errorf("model name cannot be empty")
+	}
+
+	conn, err := c.connectController(ctx)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	c.mu.RLock()
+	controllerName := c.controllerName
+	c.mu.RUnlock()
+
+	account, err := c.store.AccountDetails(controllerName)
+	if err != nil {
+		return fmt.Errorf("reading account for controller %q: %w", controllerName, err)
+	}
+
+	userTag := names.NewUserTag(account.User)
+
+	ctrlDetails, err := c.store.ControllerByName(controllerName)
+	if err != nil {
+		return fmt.Errorf("reading controller %q: %w", controllerName, err)
+	}
+
+	mmClient := modelmanager.NewClient(conn)
+	mi, err := mmClient.CreateModel(ctx, name, userTag, ctrlDetails.Cloud, ctrlDetails.CloudRegion, names.CloudCredentialTag{}, nil)
+	if err != nil {
+		return fmt.Errorf("creating model %q: %w", name, err)
+	}
+
+	// Register the new model in the local client store so that
+	// SelectModel and connect() can resolve it by name.
+	qualifiedName := account.User + "/" + name
+	if err := c.store.UpdateModel(controllerName, qualifiedName, jujuclient.ModelDetails{
+		ModelUUID: mi.UUID,
+		ModelType: mi.Type,
+	}); err != nil {
+		return fmt.Errorf("registering model %q in local store: %w", name, err)
+	}
+	return nil
+}
+
+// DestroyModel destroys a model by its qualified name ("owner/name").
+// When force is true the model is removed even if it contains errors or
+// persistent storage.
+func (c *JujuClient) DestroyModel(ctx context.Context, qualifiedName string, force bool) error {
+	if strings.TrimSpace(qualifiedName) == "" {
+		return fmt.Errorf("model name cannot be empty")
+	}
+
+	c.mu.RLock()
+	controllerName := c.controllerName
+	c.mu.RUnlock()
+
+	details, err := c.store.ModelByName(controllerName, qualifiedName)
+	if err != nil {
+		return fmt.Errorf("looking up model %q: %w", qualifiedName, err)
+	}
+
+	conn, err := c.connectController(ctx)
+	if err != nil {
+		return err
+	}
+	defer conn.Close()
+
+	modelTag := names.NewModelTag(details.ModelUUID)
+	destroyStorage := true
+	var forcePtr *bool
+	if force {
+		forcePtr = &force
+	}
+
+	mmClient := modelmanager.NewClient(conn)
+	if err := mmClient.DestroyModel(ctx, modelTag, &destroyStorage, forcePtr, nil, nil); err != nil {
+		return fmt.Errorf("destroying model %q: %w", qualifiedName, err)
+	}
+
+	// Remove the model from the local client store so it no longer
+	// appears in cached lookups.
+	_ = c.store.RemoveModel(controllerName, qualifiedName)
+
+	return nil
+}
+
+// connectController opens a controller-level API connection (no model).
+// This is required for facades like ModelManager that are not available
+// when connected to a specific model. The caller is responsible for
+// closing the returned connection.
+func (c *JujuClient) connectController(ctx context.Context) (api.Connection, error) {
+	c.mu.RLock()
+	controllerName := c.controllerName
+	c.mu.RUnlock()
+
+	cfg := connector.ClientStoreConfig{
+		ControllerName: controllerName,
+		ClientStore:    c.store,
+	}
+
+	cs, err := connector.NewClientStore(cfg)
+	if err != nil {
+		return nil, fmt.Errorf("creating controller connector: %w", err)
+	}
+
+	conn, err := cs.Connect(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("connecting to controller %q: %w", controllerName, err)
+	}
+
+	return conn, nil
+}
+
 // connect returns a cached API connection, creating a new one if necessary.
 // The returned connection is owned by JujuClient — callers MUST NOT close it.
 // Use connectFresh() for long-lived consumers (e.g. DebugLog, WatchStatus)
@@ -485,24 +603,45 @@ func (c *JujuClient) Controllers(_ context.Context) ([]model.Controller, error) 
 
 // Models returns the list of models for the given controller from the local
 // Juju client store. No API connection is required.
-func (c *JujuClient) Models(_ context.Context, controllerName string) ([]model.ModelSummary, error) {
-	allModels, err := c.store.AllModels(controllerName)
+func (c *JujuClient) Models(ctx context.Context, controllerName string) ([]model.ModelSummary, error) {
+	conn, err := c.connectController(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("connecting to controller %q: %w", controllerName, err)
+	}
+	defer conn.Close()
+
+	c.mu.RLock()
+	ctrlName := c.controllerName
+	c.mu.RUnlock()
+
+	account, err := c.store.AccountDetails(ctrlName)
+	if err != nil {
+		return nil, fmt.Errorf("reading account for controller %q: %w", ctrlName, err)
+	}
+
+	mmClient := modelmanager.NewClient(conn)
+	userModels, err := mmClient.ListModelSummaries(ctx, account.User, false)
 	if err != nil {
 		return nil, fmt.Errorf("listing models for controller %q: %w", controllerName, err)
 	}
 
 	currentModel, _ := c.store.CurrentModel(controllerName)
 
-	summaries := make([]model.ModelSummary, 0, len(allModels))
-	for qualifiedName, details := range allModels {
-		// qualifiedName is "owner/name".
-		owner, shortName, _ := strings.Cut(qualifiedName, "/")
+	summaries := make([]model.ModelSummary, 0, len(userModels))
+	for _, um := range userModels {
+		owner := string(um.Qualifier)
+		qualifiedName := owner + "/" + um.Name
+		status := string(um.Status.Status)
+		if um.Life != "" && um.Life != "alive" {
+			status = string(um.Life)
+		}
 		summaries = append(summaries, model.ModelSummary{
 			Name:      qualifiedName,
-			ShortName: shortName,
+			ShortName: um.Name,
 			Owner:     owner,
-			Type:      string(details.ModelType),
-			UUID:      details.ModelUUID,
+			Type:      string(um.Type),
+			UUID:      um.UUID,
+			Status:    status,
 			Current:   qualifiedName == currentModel,
 		})
 	}
