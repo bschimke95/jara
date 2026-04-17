@@ -510,22 +510,18 @@ func (m Model) View() tea.View {
 	// ── Header box: status info (left) + key hints (center) + logo (right) ──
 	if !m.cfg.Jara.Headless {
 		controllerName := m.client.ControllerName()
-		modelName, cloud, region, modelType, timestamp := "", "", "", "", ""
+		modelName, cloud, region := "", "", ""
 		if m.status != nil {
 			modelName = m.status.Model.Name
 			cloud = m.status.Model.Cloud
 			region = m.status.Model.Region
-			modelType = m.status.Model.Type
-			if m.status.ControllerTimestamp != nil {
-				timestamp = m.status.ControllerTimestamp.Format("15:04:05Z")
-			}
 		}
 		hints := m.buildHeaderHints(currentView.KeyHints())
 		jujuVersion := ""
 		if m.status != nil {
 			jujuVersion = m.status.Model.Version
 		}
-		headerInner := ui.HeaderContent(controllerName, modelName, cloud, region, modelType, timestamp, m.jaraVersion, jujuVersion, hints, m.width-2, m.styles)
+		headerInner := ui.HeaderContent(controllerName, modelName, cloud, region, m.jaraVersion, jujuVersion, hints, m.width-2, m.styles)
 		sections = append(sections, ui.BorderBox(headerInner, "", m.width, m.styles))
 	}
 
