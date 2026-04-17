@@ -2,6 +2,7 @@ package app
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"time"
 
@@ -559,18 +560,21 @@ func (m Model) View() tea.View {
 	// ── Header box: status info (left) + key hints (center) + logo (right) ──
 	if !m.cfg.Jara.Headless {
 		controllerName := m.client.ControllerName()
-		modelName, cloud, region := "", "", ""
+		modelName, cloud, region, timestamp := "", "", "", ""
 		if m.status != nil {
 			modelName = m.status.Model.Name
 			cloud = m.status.Model.Cloud
 			region = m.status.Model.Region
+			if m.status.ControllerTimestamp != nil {
+				timestamp = shortAge(time.Since(*m.status.ControllerTimestamp))
+			}
 		}
 		hints := m.buildHeaderHints(currentView.KeyHints())
 		jujuVersion := ""
 		if m.status != nil {
 			jujuVersion = m.status.Model.Version
 		}
-		headerInner := ui.HeaderContent(controllerName, modelName, cloud, region, m.jaraVersion, jujuVersion, hints, m.width-2, m.styles)
+		headerInner := ui.HeaderContent(controllerName, modelName, cloud, region, m.jaraVersion, jujuVersion, timestamp, hints, m.width-2, m.styles)
 		sections = append(sections, ui.BorderBox(headerInner, "", m.width, m.styles))
 	}
 
@@ -700,4 +704,27 @@ func (m Model) buildHeaderHints(viewHints []ui.KeyHint) []ui.KeyHint {
 	// Always append help as the last hint.
 	hints = append(hints, helpHint)
 	return hints
+}
+
+// shortAge formats a duration as a compact age string (e.g. "3m22s", "2h5m", "4d12h").
+func shortAge(d time.Duration) string {
+	if d < 0 {
+		d = 0
+	}
+	switch {
+	case d < time.Minute:
+		return fmt.Sprintf("%ds", int(d.Seconds()))
+	case d < time.Hour:
+		m := int(d.Minutes())
+		s := int(d.Seconds()) % 60
+		return fmt.Sprintf("%dm%ds", m, s)
+	case d < 24*time.Hour:
+		h := int(d.Hours())
+		m := int(d.Minutes()) % 60
+		return fmt.Sprintf("%dh%dm", h, m)
+	default:
+		days := int(d.Hours()) / 24
+		h := int(d.Hours()) % 24
+		return fmt.Sprintf("%dd%dh", days, h)
+	}
 }
