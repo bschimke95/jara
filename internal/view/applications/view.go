@@ -3,7 +3,6 @@ package applications
 
 import (
 	"fmt"
-	"strings"
 
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/table"
@@ -241,29 +240,46 @@ func (a *View) InspectSelection() *view.InspectData {
 	if !ok {
 		return nil
 	}
-	unitNames := make([]string, 0, len(app.Units))
-	for _, u := range app.Units {
-		unitNames = append(unitNames, u.Name)
-	}
 	since := ""
 	if app.Since != nil {
 		since = app.Since.Format("2006-01-02 15:04:05")
 	}
-	return &view.InspectData{
-		Title: name,
-		Fields: []view.InspectField{
-			{Label: "Name", Value: app.Name},
-			{Label: "Status", Value: app.Status},
-			{Label: "Status Message", Value: app.StatusMessage},
-			{Label: "Charm", Value: app.Charm},
-			{Label: "Channel", Value: app.CharmChannel},
-			{Label: "Revision", Value: fmt.Sprintf("%d", app.CharmRev)},
-			{Label: "Scale", Value: fmt.Sprintf("%d", app.Scale)},
-			{Label: "Exposed", Value: fmt.Sprintf("%v", app.Exposed)},
-			{Label: "Workload Version", Value: app.WorkloadVersion},
-			{Label: "Base", Value: app.Base},
-			{Label: "Since", Value: since},
-			{Label: "Units", Value: strings.Join(unitNames, ", ")},
-		},
+	fields := []view.InspectField{
+		{Label: "Name", Value: app.Name},
+		{Label: "Status", Value: app.Status},
+		{Label: "Status Message", Value: app.StatusMessage},
+		{Label: "Charm", Value: app.Charm},
+		{Label: "Channel", Value: app.CharmChannel},
+		{Label: "Revision", Value: fmt.Sprintf("%d", app.CharmRev)},
+		{Label: "Scale", Value: fmt.Sprintf("%d", app.Scale)},
+		{Label: "Exposed", Value: fmt.Sprintf("%v", app.Exposed)},
+		{Label: "Workload Version", Value: app.WorkloadVersion},
+		{Label: "Base", Value: app.Base},
+		{Label: "Since", Value: since},
 	}
+	// Append per-unit detail so the full workload/agent messages are visible.
+	for _, u := range app.Units {
+		fields = appendUnitFields(fields, u)
+		for _, sub := range u.Subordinates {
+			fields = appendUnitFields(fields, sub)
+		}
+	}
+	return &view.InspectData{
+		Title:  name,
+		Fields: fields,
+	}
+}
+
+func appendUnitFields(fields []view.InspectField, u model.Unit) []view.InspectField {
+	leader := ""
+	if u.Leader {
+		leader = "*"
+	}
+	fields = append(fields, view.InspectField{
+		Label: fmt.Sprintf("── %s %s", u.Name, leader),
+		Value: fmt.Sprintf("%s: %s | agent: %s: %s",
+			u.WorkloadStatus, u.WorkloadMessage,
+			u.AgentStatus, u.AgentMessage),
+	})
+	return fields
 }

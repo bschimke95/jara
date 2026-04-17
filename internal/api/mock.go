@@ -245,6 +245,29 @@ func (c *MockClient) ScaleApplication(_ context.Context, appName string, delta i
 	return nil
 }
 
+// RemoveUnit removes a specific unit from the mock status.
+func (c *MockClient) RemoveUnit(_ context.Context, unitName string, _ bool) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	// Find which application owns this unit.
+	for appName, app := range c.status.Applications {
+		for i, u := range app.Units {
+			if u.Name == unitName {
+				delete(c.status.Machines, u.Machine)
+				app.Units = append(app.Units[:i], app.Units[i+1:]...)
+				app.Scale--
+				if app.Scale < 0 {
+					app.Scale = 0
+				}
+				c.status.Applications[appName] = app
+				return nil
+			}
+		}
+	}
+	return fmt.Errorf("unit %q not found", unitName)
+}
+
 // DeployApplication adds a new synthetic application to the current status.
 func (c *MockClient) DeployApplication(_ context.Context, opts model.DeployOptions) error {
 	c.mu.Lock()

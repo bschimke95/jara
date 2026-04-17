@@ -614,6 +614,26 @@ func (c *JujuClient) ScaleApplication(ctx context.Context, appName string, delta
 	return nil
 }
 
+// RemoveUnit removes a single unit by name. When force is true, the unit is
+// removed even if it is in an error state.
+func (c *JujuClient) RemoveUnit(ctx context.Context, unitName string, force bool) error {
+	conn, err := c.connect(ctx)
+	if err != nil {
+		return err
+	}
+
+	appClient := application.NewClient(conn)
+	params := application.DestroyUnitsParams{
+		Units: []string{unitName},
+		Force: force,
+	}
+	_, err = appClient.DestroyUnits(ctx, params)
+	if err != nil {
+		return fmt.Errorf("removing unit %q: %w", unitName, err)
+	}
+	return nil
+}
+
 // DeployApplication deploys a charm from the configured repository into the
 // current model.
 func (c *JujuClient) DeployApplication(ctx context.Context, opts model.DeployOptions) error {

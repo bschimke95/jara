@@ -77,14 +77,11 @@ func (m *View) SetStatus(status *model.FullStatus) {
 			delete(m.pendingScale, appName)
 			continue
 		}
-		if delta < 0 {
-			if len(app.Units) <= app.Scale {
-				delete(m.pendingScale, appName)
-			}
+		remaining := app.Scale - len(app.Units)
+		if remaining <= 0 || remaining >= delta {
+			delete(m.pendingScale, appName)
 		} else {
-			if len(app.Units) >= app.Scale {
-				delete(m.pendingScale, appName)
-			}
+			m.pendingScale[appName] = remaining
 		}
 	}
 	m.refreshRightPane()
@@ -251,8 +248,6 @@ func (m *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, m.keys.ScaleDown):
 			if m.selectedApp != "" {
 				app := m.selectedApp
-				m.pendingScale[app]--
-				m.refreshRightPane()
 				return m, func() tea.Msg { return view.ScaleRequestMsg{AppName: app, Delta: -1} }
 			}
 		case key.Matches(msg, m.keys.RunAction):
@@ -418,17 +413,9 @@ func (m *View) refreshRightPane() {
 
 	if app, ok := m.status.Applications[appName]; ok {
 		rows := units.CompactRowsForApp(app, m.styles)
-		if delta := m.pendingScale[appName]; delta != 0 {
+		if delta := m.pendingScale[appName]; delta > 0 {
 			pending := units.PendingCompactRows(appName, app.Units, delta, m.styles)
-			if delta < 0 {
-				tail := len(rows) - len(pending)
-				if tail < 0 {
-					tail = 0
-				}
-				rows = append(rows[:tail], pending...)
-			} else {
-				rows = append(rows, pending...)
-			}
+			rows = append(rows, pending...)
 		}
 		m.unitTable.SetRows(rows)
 	} else {

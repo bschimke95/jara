@@ -231,6 +231,23 @@ func (m Model) scaleApplication(appName string, delta int) tea.Cmd {
 	}
 }
 
+// removeUnit returns a Cmd that removes a specific unit.
+func (m Model) removeUnit(unitName string, force bool) tea.Cmd {
+	client := m.client
+	cfg := m.cfg
+	return func() tea.Msg {
+		if cfg != nil && cfg.Jara.ReadOnly {
+			return errMsg{fmt.Errorf("write operations are disabled in read-only mode")}
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+		defer cancel()
+		if err := client.RemoveUnit(ctx, unitName, force); err != nil {
+			return errMsg{err}
+		}
+		return nil
+	}
+}
+
 // deployApplication returns a Cmd that deploys a new application charm.
 // If modelName is set, deployment is targeted to that model first.
 func (m Model) deployApplication(modelName string, opts model.DeployOptions) tea.Cmd {

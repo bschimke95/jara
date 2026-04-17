@@ -99,6 +99,9 @@ func (m *Modal) Render(background string) string {
 
 	var lines []string
 	for _, f := range m.data.Fields {
+		if f.Value == "" || f.Value == "0" {
+			continue
+		}
 		lines = append(lines, labelStyle.Render(f.Label))
 		// Word-wrap the value to contentW.
 		wrapped := wordWrap(f.Value, contentW-2)

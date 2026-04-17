@@ -47,6 +47,7 @@ type KeyMap struct {
 	ConfigNav       key.Binding // C: view application config
 	Yank            key.Binding // y: copy selected row to clipboard
 	Inspect         key.Binding // i: show detail info for selected row
+	RemoveUnit      key.Binding // r: remove selected unit
 	EntitySwitch    key.Binding // s: switch entity context (e.g. filter by app)
 }
 
@@ -216,6 +217,10 @@ func DefaultKeyMap() KeyMap {
 		Inspect: key.NewBinding(
 			key.WithKeys("i"),
 			key.WithHelp("i", "info"),
+		),
+		RemoveUnit: key.NewBinding(
+			key.WithKeys("r"),
+			key.WithHelp("r", "remove unit"),
 		),
 		EntitySwitch: key.NewBinding(
 			key.WithKeys("s"),
