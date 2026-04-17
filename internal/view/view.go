@@ -204,6 +204,17 @@ type Inspectable interface {
 	InspectSelection() *InspectData
 }
 
+// EntitySwitchable is an optional interface for views that support switching
+// the active entity context (e.g. filtering units by application). Views
+// return the list of available entity names plus the currently active one.
+// An empty current value means no entity filter is active (show all).
+type EntitySwitchable interface {
+	// SwitchableEntities returns available entity names and the current selection.
+	SwitchableEntities() (entities []string, current string)
+	// SwitchTitle returns the modal title (e.g. "Switch Application").
+	SwitchTitle() string
+}
+
 // ClipboardMsg is sent when text has been copied to the clipboard.
 // The app uses this to show a brief notification.
 type ClipboardMsg struct {

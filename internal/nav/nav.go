@@ -178,6 +178,14 @@ func (s *Stack) Current() StackEntry {
 	return s.entries[len(s.entries)-1]
 }
 
+// SetCurrentContext updates the context of the current (top) stack entry.
+func (s *Stack) SetCurrentContext(ctx string) {
+	if len(s.entries) == 0 {
+		panic("nav.Stack.SetCurrentContext called on empty stack")
+	}
+	s.entries[len(s.entries)-1].Context = ctx
+}
+
 // Breadcrumbs returns the display names of all entries in the stack.
 func (s *Stack) Breadcrumbs() []string {
 	crumbs := make([]string, len(s.entries))

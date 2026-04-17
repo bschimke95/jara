@@ -3,11 +3,14 @@ package storage
 
 import (
 	"fmt"
+	"sort"
+	"strings"
 
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
 
 	"github.com/bschimke95/jara/internal/color"
+	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/ui"
 	"github.com/bschimke95/jara/internal/view"
 )
@@ -36,6 +39,7 @@ func (v *View) SetSize(width, height int) {
 func (v *View) KeyHints() []view.KeyHint {
 	return []view.KeyHint{
 		{Key: view.BindingKey(v.keys.Inspect), Desc: "info"},
+		{Key: view.BindingKey(v.keys.EntitySwitch), Desc: "switch app"},
 	}
 }
 
@@ -72,11 +76,51 @@ func (v *View) View() tea.View {
 	return tea.NewView(v.table.View())
 }
 
-func (v *View) Enter(_ view.NavigateContext) (tea.Cmd, error) {
+func (v *View) Enter(ctx view.NavigateContext) (tea.Cmd, error) {
+	v.appName = ctx.Context
 	return func() tea.Msg { return FetchStorageMsg{} }, nil
 }
 
 func (v *View) Leave() tea.Cmd { return nil }
+
+// SetStatus implements view.StatusReceiver.
+func (v *View) SetStatus(status *model.FullStatus) {
+	v.status = status
+}
+
+// SwitchTitle implements view.EntitySwitchable.
+func (v *View) SwitchTitle() string { return "Switch Application" }
+
+// SwitchableEntities implements view.EntitySwitchable.
+func (v *View) SwitchableEntities() ([]string, string) {
+	// Derive app names from storage owners (owner is like "unit-myapp-0" or "myapp").
+	seen := make(map[string]bool)
+	for _, si := range v.instances {
+		app := storageOwnerApp(si.Owner)
+		if app != "" {
+			seen[app] = true
+		}
+	}
+	names := make([]string, 0, len(seen))
+	for n := range seen {
+		names = append(names, n)
+	}
+	sort.Strings(names)
+	return names, v.appName
+}
+
+// storageOwnerApp extracts the application name from a storage owner string.
+// Owner can be "unit-myapp-0" or just "myapp".
+func storageOwnerApp(owner string) string {
+	if strings.HasPrefix(owner, "unit-") {
+		// "unit-myapp-0" -> "myapp"
+		rest := owner[5:]
+		if idx := strings.LastIndex(rest, "-"); idx > 0 {
+			return rest[:idx]
+		}
+	}
+	return owner
+}
 
 // SetFilter implements view.Filterable.
 func (v *View) SetFilter(filter string) {
@@ -85,17 +129,36 @@ func (v *View) SetFilter(filter string) {
 }
 
 func (v *View) rebuildRows() {
-	allRows := Rows(v.instances, v.styles)
+	var filtered []model.StorageInstance
+	for _, si := range v.instances {
+		if v.appName != "" && storageOwnerApp(si.Owner) != v.appName {
+			continue
+		}
+		filtered = append(filtered, si)
+	}
+	allRows := Rows(filtered, v.styles)
 	v.table.SetRows(view.FilterRows(allRows, 0, v.filterStr, v.styles.SearchHighlight))
 }
 
 // InspectSelection implements view.Inspectable.
 func (v *View) InspectSelection() *view.InspectData {
-	idx := v.table.Cursor()
-	if idx < 0 || idx >= len(v.instances) {
+	row := v.table.SelectedRow()
+	if row == nil {
 		return nil
 	}
-	si := v.instances[idx]
+	id := row[0]
+	var si model.StorageInstance
+	found := false
+	for _, inst := range v.instances {
+		if inst.ID == id {
+			si = inst
+			found = true
+			break
+		}
+	}
+	if !found {
+		return nil
+	}
 	return &view.InspectData{
 		Title: si.ID,
 		Fields: []view.InspectField{

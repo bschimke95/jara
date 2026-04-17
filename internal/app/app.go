@@ -31,6 +31,7 @@ import (
 	"github.com/bschimke95/jara/internal/view/secretdetail"
 	"github.com/bschimke95/jara/internal/view/secrets"
 	"github.com/bschimke95/jara/internal/view/storage"
+	"github.com/bschimke95/jara/internal/view/switchmodal"
 	"github.com/bschimke95/jara/internal/view/units"
 )
 
@@ -53,13 +54,15 @@ type Model struct {
 	suggestions        []nav.CommandMatch
 	selectedSuggestion int
 
-	keys          ui.KeyMap
-	width         int
-	height        int
-	helpModalOpen bool
-	helpModal     helpmodal.Modal
-	infoModalOpen bool
-	infoModal     *infomodal.Modal
+	keys            ui.KeyMap
+	width           int
+	height          int
+	helpModalOpen   bool
+	helpModal       helpmodal.Modal
+	infoModalOpen   bool
+	infoModal       *infomodal.Modal
+	switchModalOpen bool
+	switchModal     *switchmodal.Modal
 
 	statusCancel context.CancelFunc      // cancels the status stream
 	statusCh     <-chan api.StatusUpdate // receives status snapshots
@@ -387,6 +390,32 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
+	// ── Switch modal: owns all keys when open ──
+	if m.switchModalOpen {
+		switch msg := msg.(type) {
+		case switchmodal.SelectedMsg:
+			m.switchModalOpen = false
+			m.switchModal = nil
+			return m.switchEntityContext(msg.Entity)
+		case switchmodal.PreviewMsg:
+			return m.switchEntityContext(msg.Entity)
+		case switchmodal.ClosedMsg:
+			m.switchModalOpen = false
+			m.switchModal = nil
+			// Restore the original entity if the user cancelled.
+			return m.switchEntityContext(msg.Original)
+		default:
+			if _, ok := msg.(tea.KeyPressMsg); ok {
+				updated, cmd := m.switchModal.Update(msg)
+				if sm, ok := updated.(*switchmodal.Modal); ok {
+					m.switchModal = sm
+				}
+				return m, cmd
+			}
+			return m, nil
+		}
+	}
+
 	// ── Delegate to the active view ──
 	// Views get priority so they can override global key bindings
 	// (e.g. the debug-log view handles '/' for in-buffer search).
@@ -626,6 +655,11 @@ func (m Model) View() tea.View {
 	// ── Info modal overlay ──
 	if m.infoModalOpen && m.infoModal != nil {
 		return tea.NewView(m.infoModal.Render(body))
+	}
+
+	// ── Switch modal overlay ──
+	if m.switchModalOpen && m.switchModal != nil {
+		return tea.NewView(m.switchModal.Render(body))
 	}
 
 	// ── Help modal overlay ──

@@ -48,6 +48,7 @@ type KeyMap struct {
 	Yank            key.Binding // y: copy selected row to clipboard
 	Inspect         key.Binding // i: show detail info for selected row
 	RemoveUnit      key.Binding // r: remove selected unit
+	EntitySwitch    key.Binding // s: switch entity context (e.g. filter by app)
 }
 
 // DefaultKeyMap returns the default vim-style keybindings.
@@ -220,6 +221,10 @@ func DefaultKeyMap() KeyMap {
 		RemoveUnit: key.NewBinding(
 			key.WithKeys("r"),
 			key.WithHelp("r", "remove unit"),
+		),
+		EntitySwitch: key.NewBinding(
+			key.WithKeys("s"),
+			key.WithHelp("s", "switch entity"),
 		),
 	}
 }

@@ -3,6 +3,7 @@ package units
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"charm.land/bubbles/v2/key"
@@ -70,6 +71,7 @@ func (u *View) KeyHints() []view.KeyHint {
 		{Key: view.BindingKey(u.keys.RemoveUnit), Desc: "remove"},
 		{Key: view.BindingKey(u.keys.ScaleUp) + "/" + view.BindingKey(u.keys.ScaleDown), Desc: "scale"},
 		{Key: view.BindingKey(u.keys.LogsJump), Desc: "logs (unit)"},
+		{Key: view.BindingKey(u.keys.EntitySwitch), Desc: "switch app"},
 	}
 }
 
@@ -320,6 +322,22 @@ func (u *View) Enter(ctx view.NavigateContext) (tea.Cmd, error) {
 }
 
 func (u *View) Leave() tea.Cmd { return nil }
+
+// SwitchTitle implements view.EntitySwitchable.
+func (u *View) SwitchTitle() string { return "Switch Application" }
+
+// SwitchableEntities implements view.EntitySwitchable.
+func (u *View) SwitchableEntities() ([]string, string) {
+	if u.status == nil {
+		return nil, u.appName
+	}
+	names := make([]string, 0, len(u.status.Applications))
+	for name := range u.status.Applications {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names, u.appName
+}
 
 // InspectSelection implements view.Inspectable.
 func (u *View) InspectSelection() *view.InspectData {
