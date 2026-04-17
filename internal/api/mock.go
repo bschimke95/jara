@@ -396,7 +396,24 @@ func (c *MockClient) ApplicationActions(_ context.Context, appName string) ([]mo
 	}
 
 	return []model.ActionSpec{
-		{Name: "backup", Description: "Create a backup of the application data"},
+		{
+			Name:        "backup",
+			Description: "Create a backup of the application data",
+			Params: map[string]interface{}{
+				"type": "object",
+				"properties": map[string]interface{}{
+					"target": map[string]interface{}{
+						"type":        "string",
+						"description": "Backup target path",
+					},
+					"compress": map[string]interface{}{
+						"type":        "boolean",
+						"description": "Whether to compress the backup",
+						"default":     true,
+					},
+				},
+			},
+		},
 		{Name: "restart", Description: "Restart the application services"},
 		{Name: "get-password", Description: "Retrieve the admin password"},
 	}, nil
