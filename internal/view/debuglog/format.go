@@ -41,7 +41,7 @@ func highlightSearchMatch(line, query string, s *color.Styles) string {
 func severityColor(severity string, s *color.Styles) lipgloss.Style {
 	switch strings.ToUpper(severity) {
 	case "ERROR", "CRITICAL":
-		return lipgloss.NewStyle().Foreground(s.CheckRedColor)
+		return lipgloss.NewStyle().Foreground(lipgloss.ANSIColor(1)).Bold(true)
 	case "WARNING":
 		return lipgloss.NewStyle().Foreground(s.StatusColor("waiting"))
 	case "INFO":
