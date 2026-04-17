@@ -263,12 +263,12 @@ func (m *Modal) View() tea.View {
 
 // Render draws the modal overlay on top of the given background.
 func (m *Modal) Render(background string) string {
-	innerW := m.width * 50 / 100
-	if innerW < 40 {
-		innerW = 40
+	innerW := m.width * 70 / 100
+	if innerW < 60 {
+		innerW = 60
 	}
-	if innerW > 72 {
-		innerW = 72
+	if innerW > 120 {
+		innerW = 120
 	}
 	contentW := innerW - 2
 
@@ -286,33 +286,7 @@ func (m *Modal) Render(background string) string {
 			content = lipgloss.NewStyle().Width(contentW).AlignHorizontal(lipgloss.Center).
 				Render("No actions available for this charm.")
 		} else {
-			var sb strings.Builder
-			// Show unit selector when multiple units are available.
-			if len(m.availableUnits) > 1 {
-				unitLabel := lipgloss.NewStyle().Foreground(m.styles.Secondary).
-					Render("Target: ")
-				unitValue := lipgloss.NewStyle().Bold(true).Render(m.unitName)
-				unitHint := lipgloss.NewStyle().Foreground(m.styles.Muted).
-					Render(fmt.Sprintf("  [tab] %d/%d", m.unitIndex+1, len(m.availableUnits)))
-				sb.WriteString(unitLabel + unitValue + unitHint + "\n\n")
-			}
-			for i, a := range m.actions {
-				prefix := "  "
-				if i == m.cursor {
-					prefix = color.ForegroundText(m.styles.HintKeyColor, "▸ ")
-				}
-				name := a.Name
-				if i == m.cursor {
-					name = lipgloss.NewStyle().Bold(true).Render(name)
-				}
-				desc := ""
-				if a.Description != "" {
-					desc = lipgloss.NewStyle().Foreground(m.styles.Muted).
-						Render(" — " + truncate(a.Description, contentW-len(a.Name)-6))
-				}
-				sb.WriteString(prefix + name + desc + "\n")
-			}
-			content = sb.String()
+			content = m.renderSelectTwoPane(contentW)
 		}
 		hintParts := "[enter] run  [↑/↓] select  [esc] close"
 		if len(m.availableUnits) > 1 {
@@ -325,7 +299,7 @@ func (m *Modal) Render(background string) string {
 	case phaseParams:
 		selected := m.actions[m.cursor]
 		title = fmt.Sprintf(" %s · Parameters ", selected.Name)
-		content = m.renderParams(contentW)
+		content = m.renderParamsTwoPane(contentW)
 
 	case phaseRunning:
 		title = fmt.Sprintf(" Running · %s ", m.actions[m.cursor].Name)
@@ -379,11 +353,87 @@ func (m *Modal) Render(background string) string {
 	return lipgloss.NewCompositor(bgLayer, overlayLayer).Render()
 }
 
-func (m *Modal) renderParams(contentW int) string {
-	var sb strings.Builder
+// renderSelectTwoPane renders the action selection phase as a two-pane layout:
+// action list on the left, description of the selected action on the right.
+func (m *Modal) renderSelectTwoPane(contentW int) string {
 	mutedStyle := lipgloss.NewStyle().Foreground(m.styles.Muted)
 	boldStyle := lipgloss.NewStyle().Bold(true)
 
+	leftW := contentW * 40 / 100
+	if leftW < 20 {
+		leftW = 20
+	}
+	rightW := contentW - leftW - 3 // 3 for " │ " separator
+
+	// Build left pane: action list.
+	var left strings.Builder
+	if len(m.availableUnits) > 1 {
+		unitLabel := lipgloss.NewStyle().Foreground(m.styles.Secondary).
+			Render("Target: ")
+		unitValue := boldStyle.Render(m.unitName)
+		unitHint := mutedStyle.Render(fmt.Sprintf(" [tab] %d/%d", m.unitIndex+1, len(m.availableUnits)))
+		left.WriteString(unitLabel + unitValue + unitHint + "\n\n")
+	}
+	for i, a := range m.actions {
+		prefix := "  "
+		if i == m.cursor {
+			prefix = color.ForegroundText(m.styles.HintKeyColor, "▸ ")
+		}
+		name := a.Name
+		if i == m.cursor {
+			name = boldStyle.Render(name)
+		}
+		left.WriteString(prefix + name + "\n")
+	}
+
+	// Build right pane: description of selected action.
+	var right strings.Builder
+	if m.cursor < len(m.actions) {
+		selected := m.actions[m.cursor]
+		right.WriteString(boldStyle.Render(selected.Name) + "\n\n")
+		if selected.Description != "" {
+			wrapped := lipgloss.NewStyle().Width(rightW).Render(selected.Description)
+			right.WriteString(wrapped + "\n")
+		} else {
+			right.WriteString(mutedStyle.Render("No description available.") + "\n")
+		}
+		if len(selected.Params) > 0 {
+			right.WriteString("\n" + mutedStyle.Render("Parameters:") + "\n")
+			pf := buildParamFields(selected.Params)
+			for _, f := range pf {
+				label := "  " + f.Name
+				if f.Type != "" {
+					label += mutedStyle.Render(" (" + f.Type + ")")
+				}
+				if f.Required {
+					label += mutedStyle.Render(" *")
+				}
+				right.WriteString(label + "\n")
+			}
+		}
+	}
+
+	leftRendered := lipgloss.NewStyle().Width(leftW).Render(left.String())
+	rightRendered := lipgloss.NewStyle().Width(rightW).Render(right.String())
+
+	sep := lipgloss.NewStyle().Foreground(m.styles.Muted).Render("│")
+	return joinHorizontal(leftRendered, sep, rightRendered)
+}
+
+// renderParamsTwoPane renders the parameter entry phase as a two-pane layout:
+// parameter list with inputs on the left, description of selected param on the right.
+func (m *Modal) renderParamsTwoPane(contentW int) string {
+	mutedStyle := lipgloss.NewStyle().Foreground(m.styles.Muted)
+	boldStyle := lipgloss.NewStyle().Bold(true)
+
+	leftW := contentW * 50 / 100
+	if leftW < 25 {
+		leftW = 25
+	}
+	rightW := contentW - leftW - 3
+
+	// Build left pane: parameter fields.
+	var left strings.Builder
 	for i, f := range m.paramFields {
 		prefix := "  "
 		if i == m.paramCursor {
@@ -394,7 +444,6 @@ func (m *Modal) renderParams(contentW int) string {
 			label = boldStyle.Render(label)
 		}
 
-		// Build metadata tags: (type) (required) (default: ...)
 		var tags []string
 		if f.Type != "" {
 			tags = append(tags, f.Type)
@@ -402,21 +451,12 @@ func (m *Modal) renderParams(contentW int) string {
 		if f.Required {
 			tags = append(tags, "required")
 		}
-		if f.Default != "" {
-			tags = append(tags, "default: "+f.Default)
-		}
 		tagStr := ""
 		if len(tags) > 0 {
 			tagStr = mutedStyle.Render(" (" + strings.Join(tags, ", ") + ")")
 		}
-		sb.WriteString(prefix + label + tagStr + "\n")
+		left.WriteString(prefix + label + tagStr + "\n")
 
-		// Show description on its own line if present.
-		if f.Description != "" {
-			sb.WriteString("    " + mutedStyle.Render(f.Description) + "\n")
-		}
-
-		// Show current value or input prompt.
 		val := f.Value
 		if i == m.paramCursor && m.paramEdit {
 			val += "█"
@@ -426,26 +466,83 @@ func (m *Modal) renderParams(contentW int) string {
 			if f.Default != "" {
 				placeholder = fmt.Sprintf("(default: %s)", f.Default)
 			}
-			sb.WriteString("    " + mutedStyle.Render(placeholder) + "\n")
+			left.WriteString("    " + mutedStyle.Render(placeholder) + "\n")
 		} else {
-			sb.WriteString("    " + val + "\n")
+			left.WriteString("    " + val + "\n")
 		}
-		sb.WriteString("\n")
+		left.WriteString("\n")
 	}
 
-	// "Run" button.
-	sb.WriteString("\n")
+	left.WriteString("\n")
 	runLabel := "  [Run Action]"
 	if m.paramCursor >= len(m.paramFields) {
 		runLabel = color.ForegroundText(m.styles.HintKeyColor, "▸ ") + boldStyle.Render("[Run Action]")
 	}
-	sb.WriteString(runLabel + "\n")
+	left.WriteString(runLabel + "\n")
+
+	// Build right pane: description of selected parameter.
+	var right strings.Builder
+	if m.paramCursor < len(m.paramFields) {
+		f := m.paramFields[m.paramCursor]
+		right.WriteString(boldStyle.Render(f.Name) + "\n\n")
+		if f.Description != "" {
+			wrapped := lipgloss.NewStyle().Width(rightW).Render(f.Description)
+			right.WriteString(wrapped + "\n")
+		} else {
+			right.WriteString(mutedStyle.Render("No description.") + "\n")
+		}
+		if f.Default != "" {
+			right.WriteString("\n" + mutedStyle.Render("Default: "+f.Default) + "\n")
+		}
+	} else {
+		right.WriteString(mutedStyle.Render("Press enter to execute the action.") + "\n")
+	}
+
+	leftRendered := lipgloss.NewStyle().Width(leftW).Render(left.String())
+	rightRendered := lipgloss.NewStyle().Width(rightW).Render(right.String())
+
+	sep := lipgloss.NewStyle().Foreground(m.styles.Muted).Render("│")
+	result := joinHorizontal(leftRendered, sep, rightRendered)
 
 	hint := lipgloss.NewStyle().Foreground(m.styles.Muted).Width(contentW).
 		AlignHorizontal(lipgloss.Center).Render("[enter] edit/run  [↑/↓] navigate  [esc] back")
-	sb.WriteString("\n" + hint)
+	return result + "\n" + hint
+}
 
-	return sb.String()
+// joinHorizontal places left, separator, and right side by side line-by-line.
+func joinHorizontal(left, sep, right string) string {
+	leftLines := strings.Split(left, "\n")
+	rightLines := strings.Split(right, "\n")
+
+	maxLines := len(leftLines)
+	if len(rightLines) > maxLines {
+		maxLines = len(rightLines)
+	}
+
+	leftW := 0
+	for _, l := range leftLines {
+		if w := lipgloss.Width(l); w > leftW {
+			leftW = w
+		}
+	}
+
+	var sb strings.Builder
+	for i := 0; i < maxLines; i++ {
+		l := ""
+		if i < len(leftLines) {
+			l = leftLines[i]
+		}
+		r := ""
+		if i < len(rightLines) {
+			r = rightLines[i]
+		}
+		pad := leftW - lipgloss.Width(l)
+		if pad < 0 {
+			pad = 0
+		}
+		sb.WriteString(l + strings.Repeat(" ", pad) + " " + sep + " " + r + "\n")
+	}
+	return strings.TrimRight(sb.String(), "\n")
 }
 
 // buildParamFields extracts parameter names from a JSON-Schema style params map.
@@ -498,17 +595,4 @@ func buildParamFields(params map[string]interface{}) []paramField {
 		return fields[i].Name < fields[j].Name
 	})
 	return fields
-}
-
-func truncate(s string, max int) string {
-	if max <= 0 {
-		return ""
-	}
-	if len(s) <= max {
-		return s
-	}
-	if max <= 3 {
-		return s[:max]
-	}
-	return s[:max-3] + "..."
 }
