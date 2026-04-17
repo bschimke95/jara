@@ -2,6 +2,8 @@
 package storage
 
 import (
+	"fmt"
+
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
 
@@ -32,7 +34,9 @@ func (v *View) SetSize(width, height int) {
 
 // KeyHints returns the view-specific key hints for the header.
 func (v *View) KeyHints() []view.KeyHint {
-	return nil
+	return []view.KeyHint{
+		{Key: view.BindingKey(v.keys.Inspect), Desc: "info"},
+	}
 }
 
 func (v *View) Init() tea.Cmd { return nil }
@@ -83,4 +87,25 @@ func (v *View) SetFilter(filter string) {
 func (v *View) rebuildRows() {
 	allRows := Rows(v.instances, v.styles)
 	v.table.SetRows(view.FilterRows(allRows, 0, v.filterStr, v.styles.SearchHighlight))
+}
+
+// InspectSelection implements view.Inspectable.
+func (v *View) InspectSelection() *view.InspectData {
+	idx := v.table.Cursor()
+	if idx < 0 || idx >= len(v.instances) {
+		return nil
+	}
+	si := v.instances[idx]
+	return &view.InspectData{
+		Title: si.ID,
+		Fields: []view.InspectField{
+			{Label: "ID", Value: si.ID},
+			{Label: "Kind", Value: si.Kind},
+			{Label: "Owner", Value: si.Owner},
+			{Label: "Status", Value: si.Status},
+			{Label: "Persistent", Value: fmt.Sprintf("%v", si.Persistent)},
+			{Label: "Life", Value: si.Life},
+			{Label: "Pool", Value: si.Pool},
+		},
+	}
 }

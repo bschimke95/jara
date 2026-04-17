@@ -69,6 +69,7 @@ func (r *View) SetRelationData(data *model.RelationData) {
 // KeyHints returns the view-specific key hints for the header.
 func (r *View) KeyHints() []view.KeyHint {
 	return []view.KeyHint{
+		{Key: view.BindingKey(r.keys.Inspect), Desc: "info"},
 		{Key: view.BindingKey(r.keys.DeleteRelation), Desc: "delete"},
 		{Key: view.BindingKey(r.keys.LogsJump), Desc: "logs"},
 	}
@@ -283,5 +284,28 @@ func (r *View) requestRelationData() tea.Cmd {
 	id := sel.ID
 	return func() tea.Msg {
 		return FetchRelationDataMsg{RelationID: id}
+	}
+}
+
+// InspectSelection implements view.Inspectable.
+func (r *View) InspectSelection() *view.InspectData {
+	rel := r.selectedRelation()
+	if rel == nil {
+		return nil
+	}
+	var eps []string
+	for _, ep := range rel.Endpoints {
+		eps = append(eps, fmt.Sprintf("%s:%s (%s)", ep.ApplicationName, ep.Name, ep.Role))
+	}
+	return &view.InspectData{
+		Title: fmt.Sprintf("Relation %d", rel.ID),
+		Fields: []view.InspectField{
+			{Label: "ID", Value: fmt.Sprintf("%d", rel.ID)},
+			{Label: "Key", Value: rel.Key},
+			{Label: "Interface", Value: rel.Interface},
+			{Label: "Status", Value: rel.Status},
+			{Label: "Scope", Value: rel.Scope},
+			{Label: "Endpoints", Value: strings.Join(eps, "\n")},
+		},
 	}
 }

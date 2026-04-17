@@ -2,6 +2,9 @@
 package applications
 
 import (
+	"fmt"
+	"strings"
+
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
@@ -65,6 +68,7 @@ func (a *View) SetCharmSuggestions(names []string) {
 func (a *View) KeyHints() []view.KeyHint {
 	return []view.KeyHint{
 		{Key: view.BindingKey(a.keys.Enter), Desc: "units"},
+		{Key: view.BindingKey(a.keys.Inspect), Desc: "info"},
 		{Key: view.BindingKey(a.keys.RunAction), Desc: "action"},
 		{Key: view.BindingKey(a.keys.ConfigNav), Desc: "config"},
 		{Key: view.BindingKey(a.keys.Deploy), Desc: "deploy"},
@@ -225,3 +229,41 @@ func (a *View) applicationSuggestions() []string {
 
 func (a *View) Enter(_ view.NavigateContext) (tea.Cmd, error) { return nil, nil }
 func (a *View) Leave() tea.Cmd                                { return nil }
+
+// InspectSelection implements view.Inspectable.
+func (a *View) InspectSelection() *view.InspectData {
+	row := a.table.SelectedRow()
+	if row == nil || a.status == nil {
+		return nil
+	}
+	name := ansi.Strip(row[0])
+	app, ok := a.status.Applications[name]
+	if !ok {
+		return nil
+	}
+	unitNames := make([]string, 0, len(app.Units))
+	for _, u := range app.Units {
+		unitNames = append(unitNames, u.Name)
+	}
+	since := ""
+	if app.Since != nil {
+		since = app.Since.Format("2006-01-02 15:04:05")
+	}
+	return &view.InspectData{
+		Title: name,
+		Fields: []view.InspectField{
+			{Label: "Name", Value: app.Name},
+			{Label: "Status", Value: app.Status},
+			{Label: "Status Message", Value: app.StatusMessage},
+			{Label: "Charm", Value: app.Charm},
+			{Label: "Channel", Value: app.CharmChannel},
+			{Label: "Revision", Value: fmt.Sprintf("%d", app.CharmRev)},
+			{Label: "Scale", Value: fmt.Sprintf("%d", app.Scale)},
+			{Label: "Exposed", Value: fmt.Sprintf("%v", app.Exposed)},
+			{Label: "Workload Version", Value: app.WorkloadVersion},
+			{Label: "Base", Value: app.Base},
+			{Label: "Since", Value: since},
+			{Label: "Units", Value: strings.Join(unitNames, ", ")},
+		},
+	}
+}

@@ -2,6 +2,8 @@
 package models
 
 import (
+	"fmt"
+
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
@@ -55,6 +57,7 @@ func (m *View) rebuildRows() {
 func (m *View) KeyHints() []view.KeyHint {
 	return []view.KeyHint{
 		{Key: view.BindingKey(m.keys.Enter), Desc: "open model"},
+		{Key: view.BindingKey(m.keys.Inspect), Desc: "info"},
 	}
 }
 
@@ -124,3 +127,23 @@ func (m *View) Enter(ctx view.NavigateContext) (tea.Cmd, error) {
 }
 
 func (m *View) Leave() tea.Cmd { return nil }
+
+// InspectSelection implements view.Inspectable.
+func (m *View) InspectSelection() *view.InspectData {
+	idx := m.table.Cursor()
+	if idx < 0 || idx >= len(m.models) {
+		return nil
+	}
+	ms := m.models[idx]
+	return &view.InspectData{
+		Title: ms.ShortName,
+		Fields: []view.InspectField{
+			{Label: "Name", Value: ms.Name},
+			{Label: "Short Name", Value: ms.ShortName},
+			{Label: "Owner", Value: ms.Owner},
+			{Label: "Type", Value: ms.Type},
+			{Label: "UUID", Value: ms.UUID},
+			{Label: "Current", Value: fmt.Sprintf("%v", ms.Current)},
+		},
+	}
+}

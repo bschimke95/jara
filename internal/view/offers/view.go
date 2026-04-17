@@ -2,6 +2,9 @@
 package offers
 
 import (
+	"fmt"
+	"strings"
+
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
 
@@ -32,7 +35,9 @@ func (v *View) SetSize(width, height int) {
 
 // KeyHints returns the view-specific key hints for the header.
 func (v *View) KeyHints() []view.KeyHint {
-	return nil
+	return []view.KeyHint{
+		{Key: view.BindingKey(v.keys.Inspect), Desc: "info"},
+	}
 }
 
 func (v *View) Init() tea.Cmd { return nil }
@@ -83,4 +88,25 @@ func (v *View) SetFilter(filter string) {
 func (v *View) rebuildRows() {
 	allRows := Rows(v.offers)
 	v.table.SetRows(view.FilterRows(allRows, 0, v.filterStr, v.styles.SearchHighlight))
+}
+
+// InspectSelection implements view.Inspectable.
+func (v *View) InspectSelection() *view.InspectData {
+	idx := v.table.Cursor()
+	if idx < 0 || idx >= len(v.offers) {
+		return nil
+	}
+	o := v.offers[idx]
+	return &view.InspectData{
+		Title: o.Name,
+		Fields: []view.InspectField{
+			{Label: "Name", Value: o.Name},
+			{Label: "Application", Value: o.ApplicationName},
+			{Label: "Offer URL", Value: o.OfferURL},
+			{Label: "Charm URL", Value: o.CharmURL},
+			{Label: "Endpoints", Value: strings.Join(o.Endpoints, ", ")},
+			{Label: "Active Connections", Value: fmt.Sprintf("%d", o.ActiveConnCount)},
+			{Label: "Total Connections", Value: fmt.Sprintf("%d", o.TotalConnCount)},
+		},
+	}
 }

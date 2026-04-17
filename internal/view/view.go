@@ -16,6 +16,7 @@ import (
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/ui"
+	"github.com/bschimke95/jara/internal/view/infomodal"
 )
 
 // StatusUpdatedMsg is sent when fresh status data arrives from the API.
@@ -183,6 +184,18 @@ type Copyable interface {
 // the user types in the filter bar.
 type Filterable interface {
 	SetFilter(filter string)
+}
+
+// InspectField is a re-export of infomodal.Field for use by view packages.
+type InspectField = infomodal.Field
+
+// InspectData is a re-export of infomodal.Data for use by view packages.
+type InspectData = infomodal.Data
+
+// Inspectable is an optional interface for views that support showing a detail
+// modal for the currently selected row. Returns nil when nothing is selected.
+type Inspectable interface {
+	InspectSelection() *InspectData
 }
 
 // ClipboardMsg is sent when text has been copied to the clipboard.

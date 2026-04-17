@@ -2,6 +2,7 @@
 package units
 
 import (
+	"fmt"
 	"strings"
 
 	"charm.land/bubbles/v2/key"
@@ -66,6 +67,7 @@ func (u *View) SetStatus(status *model.FullStatus) {
 // KeyHints returns the view-specific key hints for the header.
 func (u *View) KeyHints() []view.KeyHint {
 	return []view.KeyHint{
+		{Key: view.BindingKey(u.keys.Inspect), Desc: "info"},
 		{Key: view.BindingKey(u.keys.RunAction), Desc: "action"},
 		{Key: view.BindingKey(u.keys.ScaleUp) + "/" + view.BindingKey(u.keys.ScaleDown), Desc: "scale"},
 		{Key: view.BindingKey(u.keys.LogsJump), Desc: "logs (unit)"},
@@ -292,3 +294,48 @@ func (u *View) Enter(ctx view.NavigateContext) (tea.Cmd, error) {
 }
 
 func (u *View) Leave() tea.Cmd { return nil }
+
+// InspectSelection implements view.Inspectable.
+func (u *View) InspectSelection() *view.InspectData {
+	row := u.table.SelectedRow()
+	if row == nil || u.status == nil {
+		return nil
+	}
+	unitName := ansi.Strip(row[0])
+	// Find the unit in the status.
+	for _, app := range u.status.Applications {
+		for _, unit := range app.Units {
+			if unit.Name == unitName {
+				return unitInspectData(unit)
+			}
+			for _, sub := range unit.Subordinates {
+				if sub.Name == unitName {
+					return unitInspectData(sub)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func unitInspectData(unit model.Unit) *view.InspectData {
+	since := ""
+	if unit.Since != nil {
+		since = unit.Since.Format("2006-01-02 15:04:05")
+	}
+	return &view.InspectData{
+		Title: unit.Name,
+		Fields: []view.InspectField{
+			{Label: "Name", Value: unit.Name},
+			{Label: "Workload Status", Value: unit.WorkloadStatus},
+			{Label: "Workload Message", Value: unit.WorkloadMessage},
+			{Label: "Agent Status", Value: unit.AgentStatus},
+			{Label: "Agent Message", Value: unit.AgentMessage},
+			{Label: "Machine", Value: unit.Machine},
+			{Label: "Public Address", Value: unit.PublicAddress},
+			{Label: "Ports", Value: strings.Join(unit.Ports, ", ")},
+			{Label: "Leader", Value: fmt.Sprintf("%v", unit.Leader)},
+			{Label: "Since", Value: since},
+		},
+	}
+}

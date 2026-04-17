@@ -22,6 +22,7 @@ import (
 	"github.com/bschimke95/jara/internal/view/controllers"
 	"github.com/bschimke95/jara/internal/view/debuglog"
 	"github.com/bschimke95/jara/internal/view/helpmodal"
+	"github.com/bschimke95/jara/internal/view/infomodal"
 	"github.com/bschimke95/jara/internal/view/machines"
 	"github.com/bschimke95/jara/internal/view/models"
 	"github.com/bschimke95/jara/internal/view/modelview"
@@ -57,6 +58,8 @@ type Model struct {
 	height        int
 	helpModalOpen bool
 	helpModal     helpmodal.Modal
+	infoModalOpen bool
+	infoModal     *infomodal.Modal
 
 	statusCancel context.CancelFunc      // cancels the status stream
 	statusCh     <-chan api.StatusUpdate // receives status snapshots
@@ -367,6 +370,23 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 	}
 
+	// ── Info modal: owns all keys when open ──
+	if m.infoModalOpen {
+		if _, ok := msg.(infomodal.ClosedMsg); ok {
+			m.infoModalOpen = false
+			m.infoModal = nil
+			return m, nil
+		}
+		if _, ok := msg.(tea.KeyPressMsg); ok {
+			updated, cmd := m.infoModal.Update(msg)
+			if im, ok := updated.(*infomodal.Modal); ok {
+				m.infoModal = im
+			}
+			return m, cmd
+		}
+		return m, nil
+	}
+
 	// ── Delegate to the active view ──
 	// Views get priority so they can override global key bindings
 	// (e.g. the debug-log view handles '/' for in-buffer search).
@@ -599,6 +619,11 @@ func (m Model) View() tea.View {
 	sections = append(sections, crumbLine)
 
 	body := lipgloss.JoinVertical(lipgloss.Left, sections...)
+
+	// ── Info modal overlay ──
+	if m.infoModalOpen && m.infoModal != nil {
+		return tea.NewView(m.infoModal.Render(body))
+	}
 
 	// ── Help modal overlay ──
 	if m.helpModalOpen {

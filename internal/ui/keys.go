@@ -46,6 +46,7 @@ type KeyMap struct {
 	RunAction       key.Binding // a: run action on unit
 	ConfigNav       key.Binding // C: view application config
 	Yank            key.Binding // y: copy selected row to clipboard
+	Inspect         key.Binding // i: show detail info for selected row
 }
 
 // DefaultKeyMap returns the default vim-style keybindings.
@@ -210,6 +211,10 @@ func DefaultKeyMap() KeyMap {
 		Yank: key.NewBinding(
 			key.WithKeys("y"),
 			key.WithHelp("y", "copy"),
+		),
+		Inspect: key.NewBinding(
+			key.WithKeys("i"),
+			key.WithHelp("i", "info"),
 		),
 	}
 }

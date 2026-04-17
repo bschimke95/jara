@@ -2,6 +2,8 @@
 package secrets
 
 import (
+	"fmt"
+
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
@@ -57,6 +59,7 @@ func (s *View) rebuildRows() {
 func (s *View) KeyHints() []view.KeyHint {
 	return []view.KeyHint{
 		{Key: view.BindingKey(s.keys.Enter), Desc: "detail"},
+		{Key: view.BindingKey(s.keys.Inspect), Desc: "info"},
 		{Key: view.BindingKey(s.keys.LogsView), Desc: "logs"},
 	}
 }
@@ -98,3 +101,35 @@ func (s *View) View() tea.View {
 
 func (s *View) Enter(_ view.NavigateContext) (tea.Cmd, error) { return nil, nil }
 func (s *View) Leave() tea.Cmd                                { return nil }
+
+// InspectSelection implements view.Inspectable.
+func (s *View) InspectSelection() *view.InspectData {
+	if s.status == nil || len(s.status.Secrets) == 0 {
+		return nil
+	}
+	idx := s.table.Cursor()
+	if idx < 0 || idx >= len(s.status.Secrets) {
+		return nil
+	}
+	sec := s.status.Secrets[idx]
+	expire := ""
+	if sec.ExpireTime != nil {
+		expire = sec.ExpireTime.Format("2006-01-02 15:04:05")
+	}
+	return &view.InspectData{
+		Title: sec.Label,
+		Fields: []view.InspectField{
+			{Label: "URI", Value: sec.URI},
+			{Label: "Label", Value: sec.Label},
+			{Label: "Description", Value: sec.Description},
+			{Label: "Owner", Value: sec.Owner},
+			{Label: "Rotate Policy", Value: sec.RotatePolicy},
+			{Label: "Revision", Value: fmt.Sprintf("%d", sec.Revision)},
+			{Label: "Backend", Value: sec.Backend},
+			{Label: "Auto Prune", Value: fmt.Sprintf("%v", sec.AutoPrune)},
+			{Label: "Created", Value: sec.CreateTime.Format("2006-01-02 15:04:05")},
+			{Label: "Updated", Value: sec.UpdateTime.Format("2006-01-02 15:04:05")},
+			{Label: "Expires", Value: expire},
+		},
+	}
+}
