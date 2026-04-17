@@ -53,6 +53,10 @@ type Modal struct {
 	result   *model.ActionResult
 	err      error
 
+	// Unit selector: when multiple units are available the user can cycle.
+	availableUnits []string // sorted unit names (e.g. ["mysql/0", "mysql/1"])
+	unitIndex      int      // index into availableUnits
+
 	// Parameter entry state.
 	paramFields []paramField
 	paramCursor int
@@ -67,6 +71,24 @@ func New(unitName, appName string, keys ui.KeyMap, styles *color.Styles) *Modal 
 		unitName: unitName,
 		appName:  appName,
 		phase:    phaseLoading,
+	}
+}
+
+// NewWithUnits creates a new action modal with a list of available units.
+// The leader unit should be first in the list. The first unit is pre-selected.
+func NewWithUnits(appName string, unitNames []string, keys ui.KeyMap, styles *color.Styles) *Modal {
+	unitName := ""
+	if len(unitNames) > 0 {
+		unitName = unitNames[0]
+	}
+	return &Modal{
+		keys:           keys,
+		styles:         styles,
+		unitName:       unitName,
+		appName:        appName,
+		availableUnits: unitNames,
+		unitIndex:      0,
+		phase:          phaseLoading,
 	}
 }
 
@@ -117,6 +139,12 @@ func (m *Modal) handleKey(msg tea.KeyPressMsg) (tea.Model, tea.Cmd) {
 		switch {
 		case key.Matches(msg, m.keys.Back):
 			return m, func() tea.Msg { return CloseMsg{} }
+		case key.Matches(msg, m.keys.Tab):
+			// Cycle through available units.
+			if len(m.availableUnits) > 1 {
+				m.unitIndex = (m.unitIndex + 1) % len(m.availableUnits)
+				m.unitName = m.availableUnits[m.unitIndex]
+			}
 		case key.Matches(msg, m.keys.Enter):
 			if len(m.actions) > 0 {
 				selected := m.actions[m.cursor]
@@ -256,6 +284,15 @@ func (m *Modal) Render(background string) string {
 				Render("No actions available for this charm.")
 		} else {
 			var sb strings.Builder
+			// Show unit selector when multiple units are available.
+			if len(m.availableUnits) > 1 {
+				unitLabel := lipgloss.NewStyle().Foreground(m.styles.Secondary).
+					Render("Target: ")
+				unitValue := lipgloss.NewStyle().Bold(true).Render(m.unitName)
+				unitHint := lipgloss.NewStyle().Foreground(m.styles.Muted).
+					Render(fmt.Sprintf("  [tab] %d/%d", m.unitIndex+1, len(m.availableUnits)))
+				sb.WriteString(unitLabel + unitValue + unitHint + "\n\n")
+			}
 			for i, a := range m.actions {
 				prefix := "  "
 				if i == m.cursor {
@@ -274,8 +311,12 @@ func (m *Modal) Render(background string) string {
 			}
 			content = sb.String()
 		}
+		hintParts := "[enter] run  [↑/↓] select  [esc] close"
+		if len(m.availableUnits) > 1 {
+			hintParts = "[enter] run  [↑/↓] select  [tab] unit  [esc] close"
+		}
 		hint := lipgloss.NewStyle().Foreground(m.styles.Muted).Width(contentW).
-			AlignHorizontal(lipgloss.Center).Render("[enter] run  [↑/↓] select  [esc] close")
+			AlignHorizontal(lipgloss.Center).Render(hintParts)
 		content += "\n" + hint
 
 	case phaseParams:

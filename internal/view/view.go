@@ -4,6 +4,7 @@
 package view
 
 import (
+	"sort"
 	"strings"
 
 	"charm.land/bubbles/v2/key"
@@ -246,4 +247,27 @@ func PadToHeight(content string, height int) string {
 		lines = lines[:height]
 	}
 	return strings.Join(lines, "\n")
+}
+
+// UnitNamesLeaderFirst returns sorted unit names for the given application,
+// with the leader unit placed first. This is useful for the action modal's
+// unit selector.
+func UnitNamesLeaderFirst(app model.Application) []string {
+	if len(app.Units) == 0 {
+		return nil
+	}
+	names := make([]string, 0, len(app.Units))
+	leader := ""
+	for _, u := range app.Units {
+		if u.Leader {
+			leader = u.Name
+		} else {
+			names = append(names, u.Name)
+		}
+	}
+	sort.Strings(names)
+	if leader != "" {
+		names = append([]string{leader}, names...)
+	}
+	return names
 }

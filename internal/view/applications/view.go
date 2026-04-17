@@ -12,6 +12,7 @@ import (
 	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/ui"
 	"github.com/bschimke95/jara/internal/view"
+	"github.com/bschimke95/jara/internal/view/actionmodal"
 	"github.com/bschimke95/jara/internal/view/deploymodal"
 )
 
@@ -64,6 +65,7 @@ func (a *View) SetCharmSuggestions(names []string) {
 func (a *View) KeyHints() []view.KeyHint {
 	return []view.KeyHint{
 		{Key: view.BindingKey(a.keys.Enter), Desc: "units"},
+		{Key: view.BindingKey(a.keys.RunAction), Desc: "action"},
 		{Key: view.BindingKey(a.keys.ConfigNav), Desc: "config"},
 		{Key: view.BindingKey(a.keys.Deploy), Desc: "deploy"},
 		{Key: view.BindingKey(a.keys.LogsJump), Desc: "logs (app)"},
@@ -78,6 +80,21 @@ func (a *View) CopySelection() string {
 func (a *View) Init() tea.Cmd { return nil }
 
 func (a *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	// Action modal takes priority when open.
+	if a.actionModalOpen {
+		switch msg.(type) {
+		case actionmodal.CloseMsg:
+			a.actionModalOpen = false
+			a.actionModal = nil
+			return a, nil
+		default:
+			var cmd tea.Cmd
+			newModel, cmd := a.actionModal.Update(msg)
+			a.actionModal = newModel.(*actionmodal.Modal)
+			return a, cmd
+		}
+	}
+
 	if a.deployModalOpen {
 		switch msg := msg.(type) {
 		case deploymodal.AppliedMsg:
@@ -129,6 +146,21 @@ func (a *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 			}
 		}
+		if key.Matches(msg, a.keys.RunAction) {
+			if row := a.table.SelectedRow(); row != nil && a.status != nil {
+				appName := ansi.Strip(row[0])
+				if app, ok := a.status.Applications[appName]; ok {
+					unitNames := view.UnitNamesLeaderFirst(app)
+					if len(unitNames) > 0 {
+						m := actionmodal.NewWithUnits(appName, unitNames, a.keys, a.styles)
+						m.SetSize(a.width, a.height)
+						a.actionModal = m
+						a.actionModalOpen = true
+						return a, m.Init()
+					}
+				}
+			}
+		}
 	}
 	var cmd tea.Cmd
 	a.table, cmd = a.table.Update(msg)
@@ -137,6 +169,9 @@ func (a *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 func (a *View) View() tea.View {
 	background := a.tableView()
+	if a.actionModalOpen && a.actionModal != nil {
+		return tea.NewView(a.actionModal.Render(background))
+	}
 	if a.deployModalOpen {
 		return tea.NewView(a.deployModal.Render(background))
 	}
