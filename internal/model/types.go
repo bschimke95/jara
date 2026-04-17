@@ -26,7 +26,8 @@ type ModelSummary struct {
 	Owner     string
 	Type      string
 	UUID      string
-	Current   bool // true if this is the currently selected model
+	Status    string // model status (e.g. "available", "busy", "suspended")
+	Current   bool   // true if this is the currently selected model
 }
 
 // ModelInfo represents a Juju model within a controller.

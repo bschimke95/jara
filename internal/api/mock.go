@@ -98,6 +98,51 @@ func (c *MockClient) SelectModel(qualifiedName string) error {
 	return fmt.Errorf("model %q not found on controller %q", qualifiedName, c.controllerName)
 }
 
+// CreateModel adds a new synthetic model to the current controller.
+func (c *MockClient) CreateModel(_ context.Context, name string) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	if strings.TrimSpace(name) == "" {
+		return fmt.Errorf("model name cannot be empty")
+	}
+
+	qualifiedName := "admin/" + name
+	models := c.models[c.controllerName]
+	for _, m := range models {
+		if m.Name == qualifiedName {
+			return fmt.Errorf("model %q already exists", qualifiedName)
+		}
+	}
+
+	c.models[c.controllerName] = append(models, model.ModelSummary{
+		Name:      qualifiedName,
+		ShortName: name,
+		Owner:     "admin",
+		Type:      "iaas",
+		UUID:      fmt.Sprintf("uuid-mock-%s-%d", name, len(models)),
+	})
+	return nil
+}
+
+// DestroyModel removes a synthetic model from the current controller.
+func (c *MockClient) DestroyModel(_ context.Context, qualifiedName string, _ bool) error {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+
+	models, ok := c.models[c.controllerName]
+	if !ok {
+		return fmt.Errorf("no models for controller %q", c.controllerName)
+	}
+	for i, m := range models {
+		if m.Name == qualifiedName {
+			c.models[c.controllerName] = append(models[:i], models[i+1:]...)
+			return nil
+		}
+	}
+	return fmt.Errorf("model %q not found", qualifiedName)
+}
+
 // Controllers returns the synthetic controller list.
 func (c *MockClient) Controllers(_ context.Context) ([]model.Controller, error) {
 	c.mu.Lock()

@@ -11,6 +11,7 @@ func columns() []table.Column {
 		{Title: "NAME", Width: 30},
 		{Title: "OWNER", Width: 16},
 		{Title: "TYPE", Width: 8},
+		{Title: "STATUS", Width: 12},
 		{Title: "UUID", Width: 36},
 	}
 }
@@ -22,7 +23,7 @@ func modelRows(mdls []model.ModelSummary) []table.Row {
 		if m.Current {
 			name += " *"
 		}
-		rows = append(rows, table.Row{name, m.Owner, m.Type, m.UUID})
+		rows = append(rows, table.Row{name, m.Owner, m.Type, m.Status, m.UUID})
 	}
 	return rows
 }

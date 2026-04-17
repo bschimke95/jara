@@ -79,7 +79,7 @@ func (m Model) updateInput(msg tea.Msg) (Model, tea.Cmd) {
 			// Auto-complete: fill in the selected suggestion.
 			if m.mode == modeCommand && len(m.suggestions) > 0 {
 				m.input.SetValue(m.suggestions[m.selectedSuggestion].Command)
-				m.suggestions = nav.MatchCommands(m.input.Value())
+				m.suggestions = nav.MatchCommands(m.input.Value(), m.stack.Current().View)
 				m.selectedSuggestion = 0
 				return m, nil
 			}
@@ -103,7 +103,7 @@ func (m Model) updateInput(msg tea.Msg) (Model, tea.Cmd) {
 
 	// Update suggestions after every keystroke in command mode.
 	if m.mode == modeCommand {
-		m.suggestions = nav.MatchCommands(m.input.Value())
+		m.suggestions = nav.MatchCommands(m.input.Value(), m.stack.Current().View)
 		if m.selectedSuggestion >= len(m.suggestions) {
 			m.selectedSuggestion = 0
 		}

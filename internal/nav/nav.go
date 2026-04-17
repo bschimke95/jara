@@ -107,13 +107,17 @@ type CommandMatch struct {
 
 // MatchCommands returns all commands that start with the given prefix,
 // deduplicated by target view and sorted alphabetically. Built-in commands
-// like "quit" are included.
-func MatchCommands(prefix string) []CommandMatch {
+// like "quit" are included. When current is non-zero, the view matching
+// that ID is excluded from the results.
+func MatchCommands(prefix string, current ViewID) []CommandMatch {
 	if prefix == "" {
 		return nil
 	}
 	prefix = strings.ToLower(prefix)
 	seen := make(map[ViewID]bool)
+	if current != 0 {
+		seen[current] = true
+	}
 	var matches []CommandMatch
 	// Collect unique matches by target.
 	// Use a sorted list of keys for deterministic output.

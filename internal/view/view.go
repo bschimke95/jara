@@ -68,6 +68,17 @@ type DestroyRelationRequestMsg struct {
 	EndpointB string
 }
 
+// CreateModelRequestMsg requests creating a new model on the current controller.
+type CreateModelRequestMsg struct {
+	Name string
+}
+
+// DestroyModelRequestMsg requests destroying a model by qualified name.
+type DestroyModelRequestMsg struct {
+	QualifiedName string
+	Force         bool
+}
+
 // RevealSecretRequestMsg requests decoding a secret's content via the API.
 // When Revision is 0 the latest revision is revealed.
 type RevealSecretRequestMsg struct {
