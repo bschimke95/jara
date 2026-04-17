@@ -233,6 +233,12 @@ func (m Model) handleGlobalKeys(msg tea.KeyPressMsg) (Model, tea.Cmd, bool) {
 		m2, cmd := m.quit()
 		return m2, cmd, true
 	case key.Matches(msg, m.keys.Back):
+		// If a filter is active, clear it instead of navigating back.
+		if m.filterStr != "" {
+			m.filterStr = ""
+			m.applyFilterToActiveView()
+			return m, nil, true
+		}
 		m2, cmd := m.handleBack()
 		return m2, cmd, true
 	case key.Matches(msg, m.keys.Command):
