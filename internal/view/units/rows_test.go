@@ -97,7 +97,7 @@ func TestPendingCompactRows(t *testing.T) {
 		wantRows int
 	}{
 		{name: "scale up by 2", units: nil, delta: 2, wantRows: 2},
-		{name: "scale down by 1", units: []model.Unit{{Name: "app/0"}, {Name: "app/1"}}, delta: -1, wantRows: 1},
+		{name: "scale down by 1", units: []model.Unit{{Name: "app/0"}, {Name: "app/1"}}, delta: -1, wantRows: 0},
 		{name: "no change", units: nil, delta: 0, wantRows: 0},
 	}
 	for _, tt := range tests {
@@ -118,7 +118,7 @@ func TestPendingDetailRows(t *testing.T) {
 		wantRows int
 	}{
 		{name: "scale up by 3", units: nil, delta: 3, wantRows: 3},
-		{name: "scale down by 2", units: []model.Unit{{Name: "app/0"}, {Name: "app/1"}, {Name: "app/2"}}, delta: -2, wantRows: 2},
+		{name: "scale down by 2", units: []model.Unit{{Name: "app/0"}, {Name: "app/1"}, {Name: "app/2"}}, delta: -2, wantRows: 0},
 		{name: "no change", units: nil, delta: 0, wantRows: 0},
 	}
 	for _, tt := range tests {

@@ -415,6 +415,9 @@ func (m Model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case view.ScaleRequestMsg:
 		return m, m.scaleApplication(msg.AppName, msg.Delta)
 
+	case view.RemoveUnitRequestMsg:
+		return m, m.removeUnit(msg.UnitName, msg.Force)
+
 	case view.DeployRequestMsg:
 		return m, m.deployApplication(msg.ModelName, msg.Options)
 

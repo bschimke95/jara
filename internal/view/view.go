@@ -43,6 +43,12 @@ type ScaleRequestMsg struct {
 	Delta   int
 }
 
+// RemoveUnitRequestMsg requests removal of a specific unit.
+type RemoveUnitRequestMsg struct {
+	UnitName string
+	Force    bool
+}
+
 // DeployRequestMsg requests deploying a charm with the provided options.
 // ModelName is optional; when set, deployment should target that model.
 type DeployRequestMsg struct {

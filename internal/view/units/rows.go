@@ -116,49 +116,36 @@ func DetailRowsForApp(app model.Application, s *color.Styles) []table.Row {
 }
 
 // PendingCompactRows returns compact placeholder rows for the model-overview units pane.
+// Only scale-up (delta > 0) generates pseudo rows; scale-down is handled by
+// real status updates from Juju as units transition to dying/terminating.
 func PendingCompactRows(appName string, currentUnits []model.Unit, delta int, s *color.Styles) []table.Row {
-	var rows []table.Row
-	if delta > 0 {
-		nextIdx := len(currentUnits)
-		for range delta {
-			name := s.Pending.Render(fmt.Sprintf("  %s/%d", appName, nextIdx))
-			rows = append(rows, table.Row{name, s.Pending.Render("allocating"), s.Pending.Render("allocating"), s.Pending.Render("installing agent")})
-			nextIdx++
-		}
-	} else if delta < 0 {
-		n := -delta
-		start := len(currentUnits) - n
-		if start < 0 {
-			start = 0
-		}
-		for _, u := range currentUnits[start:] {
-			name := s.Pending.Render("  " + u.Name + " (removing)")
-			rows = append(rows, table.Row{name, s.Pending.Render("terminating"), s.Pending.Render("terminating"), ""})
-		}
+	if delta <= 0 {
+		return nil
+	}
+	rows := make([]table.Row, 0, delta)
+	nextIdx := len(currentUnits)
+	for range delta {
+		name := s.Pending.Render(fmt.Sprintf("  %s/%d", appName, nextIdx))
+		rows = append(rows, table.Row{name, s.Pending.Render("allocating"), s.Pending.Render("allocating"), s.Pending.Render("installing agent")})
+		nextIdx++
 	}
 	return rows
 }
 
 // PendingDetailRows returns full-column placeholder rows for the standalone units view.
+// PendingDetailRows returns full-column placeholder rows for the standalone units view.
+// Only scale-up (delta > 0) generates pseudo rows; scale-down is handled by
+// real status updates from Juju as units transition to dying/terminating.
 func PendingDetailRows(appName string, currentUnits []model.Unit, delta int, s *color.Styles) []table.Row {
-	var rows []table.Row
-	if delta > 0 {
-		nextIdx := len(currentUnits)
-		for range delta {
-			name := s.Pending.Render(fmt.Sprintf("  %s/%d", appName, nextIdx))
-			rows = append(rows, table.Row{name, s.Pending.Render("allocating"), s.Pending.Render("allocating"), "", "", "", s.Pending.Render("waiting for unit…")})
-			nextIdx++
-		}
-	} else if delta < 0 {
-		n := -delta
-		start := len(currentUnits) - n
-		if start < 0 {
-			start = 0
-		}
-		for _, u := range currentUnits[start:] {
-			name := s.Pending.Render("  " + u.Name + " (removing)")
-			rows = append(rows, table.Row{name, s.Pending.Render("terminating"), s.Pending.Render("terminating"), u.Machine, u.PublicAddress, "", s.Pending.Render("waiting for removal…")})
-		}
+	if delta <= 0 {
+		return nil
+	}
+	rows := make([]table.Row, 0, delta)
+	nextIdx := len(currentUnits)
+	for range delta {
+		name := s.Pending.Render(fmt.Sprintf("  %s/%d", appName, nextIdx))
+		rows = append(rows, table.Row{name, s.Pending.Render("allocating"), s.Pending.Render("allocating"), "", "", "", s.Pending.Render("waiting for unit…")})
+		nextIdx++
 	}
 	return rows
 }

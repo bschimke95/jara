@@ -16,6 +16,7 @@ import (
 	"github.com/bschimke95/jara/internal/ui"
 	"github.com/bschimke95/jara/internal/view"
 	"github.com/bschimke95/jara/internal/view/actionmodal"
+	"github.com/bschimke95/jara/internal/view/confirmodal"
 )
 
 // New creates a new units view. If appName is non-empty, only that app's units are shown.
@@ -52,18 +53,10 @@ func (u *View) SetStatus(status *model.FullStatus) {
 			continue
 		}
 		remaining := app.Scale - len(app.Units)
-		if delta > 0 {
-			if remaining <= 0 {
-				delete(u.pendingScale, appName)
-			} else if remaining < delta {
-				u.pendingScale[appName] = remaining
-			}
+		if remaining <= 0 || remaining >= delta {
+			delete(u.pendingScale, appName)
 		} else {
-			if remaining >= 0 {
-				delete(u.pendingScale, appName)
-			} else if remaining > delta {
-				u.pendingScale[appName] = remaining
-			}
+			u.pendingScale[appName] = remaining
 		}
 	}
 	u.rebuildRows()
@@ -74,6 +67,7 @@ func (u *View) KeyHints() []view.KeyHint {
 	return []view.KeyHint{
 		{Key: view.BindingKey(u.keys.Inspect), Desc: "info"},
 		{Key: view.BindingKey(u.keys.RunAction), Desc: "action"},
+		{Key: view.BindingKey(u.keys.RemoveUnit), Desc: "remove"},
 		{Key: view.BindingKey(u.keys.ScaleUp) + "/" + view.BindingKey(u.keys.ScaleDown), Desc: "scale"},
 		{Key: view.BindingKey(u.keys.LogsJump), Desc: "logs (unit)"},
 	}
@@ -93,45 +87,20 @@ func (u *View) rebuildRows() {
 	if u.appName != "" {
 		if app, ok := u.status.Applications[u.appName]; ok {
 			rows = DetailRowsForApp(app, u.styles)
-			if delta := u.pendingScale[u.appName]; delta != 0 {
+			if delta := u.pendingScale[u.appName]; delta > 0 {
 				pending := PendingDetailRows(u.appName, app.Units, delta, u.styles)
-				if delta < 0 {
-					tail := len(rows) - len(pending)
-					if tail < 0 {
-						tail = 0
-					}
-					rows = append(rows[:tail], pending...)
-				} else {
-					rows = append(rows, pending...)
-				}
+				rows = append(rows, pending...)
 			}
 		}
 	} else {
 		rows = DetailRows(u.status.Applications, u.styles)
 		for appName, delta := range u.pendingScale {
-			if delta == 0 {
+			if delta <= 0 {
 				continue
 			}
 			app := u.status.Applications[appName]
 			pending := PendingDetailRows(appName, app.Units, delta, u.styles)
-			if delta < 0 {
-				prefix := "  " + appName + "/"
-				end := -1
-				for i, r := range rows {
-					if strings.Contains(r[0], prefix) {
-						end = i + 1
-					}
-				}
-				if end >= 0 {
-					start := end - len(pending)
-					if start < 0 {
-						start = 0
-					}
-					rows = append(rows[:start], append(pending, rows[end:]...)...)
-				}
-			} else {
-				rows = append(rows, pending...)
-			}
+			rows = append(rows, pending...)
 		}
 	}
 	u.table.SetRows(view.FilterRows(rows, 0, u.filterStr, u.styles.SearchHighlight))
@@ -146,6 +115,36 @@ func (u *View) SetFilter(filter string) {
 func (u *View) Init() tea.Cmd { return nil }
 
 func (u *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	// ── Confirm modal takes priority ──
+	if u.confirmOpen {
+		switch msg := msg.(type) {
+		case confirmodal.ConfirmedMsg:
+			u.confirmOpen = false
+			name, force := u.removingUnit, u.removeForce
+			u.removingUnit = ""
+			u.removeForce = false
+			return u, func() tea.Msg {
+				return view.RemoveUnitRequestMsg{UnitName: name, Force: force}
+			}
+		case confirmodal.CancelledMsg:
+			u.confirmOpen = false
+			u.removingUnit = ""
+			u.removeForce = false
+			return u, nil
+		default:
+			if kp, ok := msg.(tea.KeyPressMsg); ok && kp.String() == "f" {
+				u.removeForce = !u.removeForce
+				u.confirmModal = u.buildRemoveConfirmModal()
+				return u, nil
+			}
+			updated, cmd := u.confirmModal.Update(msg)
+			if cm, ok := updated.(*confirmodal.Modal); ok {
+				u.confirmModal = *cm
+			}
+			return u, cmd
+		}
+	}
+
 	// When the action modal is open, delegate all messages to it.
 	if u.actionModalOpen {
 		switch msg := msg.(type) {
@@ -173,8 +172,6 @@ func (u *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case key.Matches(msg, u.keys.ScaleDown):
 			appName := u.selectedAppName()
 			if appName != "" {
-				u.pendingScale[appName]--
-				u.rebuildRows()
 				return u, func() tea.Msg { return view.ScaleRequestMsg{AppName: appName, Delta: -1} }
 			}
 		case key.Matches(msg, u.keys.LogsJump):
@@ -205,6 +202,15 @@ func (u *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				u.actionModal = m
 				u.actionModalOpen = true
 				return u, m.Init()
+			}
+		case key.Matches(msg, u.keys.RemoveUnit):
+			unitName := u.selectedUnitName()
+			if unitName != "" {
+				u.removingUnit = unitName
+				u.removeForce = false
+				u.confirmModal = u.buildRemoveConfirmModal()
+				u.confirmOpen = true
+				return u, nil
 			}
 		}
 	}
@@ -271,10 +277,25 @@ func (u *View) View() tea.View {
 		}()
 	}
 	tableView := u.table.View()
+	if u.confirmOpen {
+		return tea.NewView(u.confirmModal.Render(tableView))
+	}
 	if u.actionModalOpen && u.actionModal != nil {
 		return tea.NewView(u.actionModal.Render(tableView))
 	}
 	return tea.NewView(tableView)
+}
+
+// buildRemoveConfirmModal creates the confirmation modal for unit removal.
+func (u *View) buildRemoveConfirmModal() confirmodal.Modal {
+	forceLabel := "off"
+	if u.removeForce {
+		forceLabel = "ON"
+	}
+	msg := fmt.Sprintf("Remove unit %s?\n\n[f] force: %s", u.removingUnit, forceLabel)
+	m := confirmodal.New(u.keys, u.styles, "Remove Unit", msg)
+	m.SetSize(u.width, u.height)
+	return m
 }
 
 func (u *View) Enter(ctx view.NavigateContext) (tea.Cmd, error) {

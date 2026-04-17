@@ -41,6 +41,9 @@ type ApplicationClient interface {
 	ApplicationActions(ctx context.Context, appName string) ([]model.ActionSpec, error)
 	// RunAction executes a named action on a unit and waits for the result.
 	RunAction(ctx context.Context, unitName, actionName string, params map[string]string) (*model.ActionResult, error)
+	// RemoveUnit removes a specific unit by name. When force is true the unit
+	// is removed even if it is in an error state.
+	RemoveUnit(ctx context.Context, unitName string, force bool) error
 }
 
 // RelationClient groups operations for managing relations between applications.
