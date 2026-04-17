@@ -41,11 +41,11 @@
 
 ────────────────────────────────────────────────────────────────────────────────
 > ./jara --demo --readonly
-│Controller: prod-aws                                                                                               │
-│Model:      production              <enter> select  <R>     relations                   ██╗ █████╗ ██████╗  █████╗ │
-│Cloud:      aws/us-east-1           <a>     action  <+/->   scale                       ██║██╔══██╗██╔══██╗██╔══██╗│
-│SLA:        iaas                    <d>     deploy  <L>     logs (app)                  ██║███████║██████╔╝███████║│
-│Timestamp:                          <r>     relate  <:>     cmd                    ██   ██║██╔══██║██╔══██╗██╔══██║│
+│                                                                                                                   │
+│                                    <enter> select  <R>     relations                   ██╗ █████╗ ██████╗  █████╗ │
+│Controller: prod-aws                <a>     action  <+/->   scale                       ██║██╔══██╗██╔══██╗██╔══██╗│
+│Model:      production              <d>     deploy  <L>     logs (app)                  ██║███████║██████╔╝███████║│
+│Cloud:      aws/us-east-1           <r>     relate  <:>     cmd                    ██   ██║██╔══██║██╔══██╗██╔══██║│
 │Juju:       3.6.1                   <A>     apps    <q>     quit                   ╚█████╔╝██║  ██║██║  ██║██║  ██║│
 │Jara:       test                    <U>     units   <?>     help                    ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
 ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
@@ -83,11 +83,11 @@
   ⚠ write operations are disabled in read-only mode
 ────────────────────────────────────────────────────────────────────────────────
 > ./jara --demo --readonly
-│Controller: prod-aws                                                                                               │
-│Model:      production              <enter> select  <R>     relations                   ██╗ █████╗ ██████╗  █████╗ │
-│Cloud:      aws/us-east-1           <a>     action  <+/->   scale                       ██║██╔══██╗██╔══██╗██╔══██╗│
-│SLA:        iaas                    <d>     deploy  <L>     logs (app)                  ██║███████║██████╔╝███████║│
-│Timestamp:                          <r>     relate  <:>     cmd                    ██   ██║██╔══██║██╔══██╗██╔══██║│
+│                                                                                                                   │
+│                                    <enter> select  <R>     relations                   ██╗ █████╗ ██████╗  █████╗ │
+│Controller: prod-aws                <a>     action  <+/->   scale                       ██║██╔══██╗██╔══██╗██╔══██╗│
+│Model:      production              <d>     deploy  <L>     logs (app)                  ██║███████║██████╔╝███████║│
+│Cloud:      aws/us-east-1           <r>     relate  <:>     cmd                    ██   ██║██╔══██║██╔══██╗██╔══██║│
 │Juju:       3.6.1                   <A>     apps    <q>     quit                   ╚█████╔╝██║  ██║██║  ██║██║  ██║│
 │Jara:       test                    <U>     units   <?>     help                    ╚════╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝│
 ╰───────────────────────────────────────────────────────────────────────────────────────────────────────────────────╯
