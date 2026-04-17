@@ -22,7 +22,6 @@ const (
 	OffersView
 	AppConfigView
 	StorageView
-	ChatView
 )
 
 // String returns the human-readable name of the view.
@@ -54,8 +53,6 @@ func (v ViewID) String() string {
 		return "Config"
 	case StorageView:
 		return "Storage"
-	case ChatView:
-		return "Chat"
 	default:
 		return "Unknown"
 	}
@@ -93,9 +90,6 @@ var CommandAliases = map[string]ViewID{
 	"off":          OffersView,
 	"storage":      StorageView,
 	"stor":         StorageView,
-	"chat":         ChatView,
-	"ai":           ChatView,
-	"analyze":      ChatView,
 }
 
 // ResolveCommand looks up a command string and returns the matching ViewID.

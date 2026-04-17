@@ -33,7 +33,6 @@ func ResolveStyles(skin SkinConfig) *color.Styles {
 	applyColorOverride(&s.ErrorColor, skin.Error)
 	applyColorOverride(&s.CheckGreenColor, skin.CheckGreen)
 	applyColorOverride(&s.CheckRedColor, skin.CheckRed)
-	applyColorOverride(&s.AssistantLabelColor, skin.AssistantLabel)
 	applyColorOverride(&s.InfoLabelColor, skin.InfoLabel)
 	applyColorOverride(&s.InfoValueColor, skin.InfoValue)
 	applyColorOverride(&s.BorderColor, skin.Border)

@@ -129,15 +129,6 @@ Wait+Screen /Applications/
 Wait+Screen /Relations/
 Sleep 2s
 
-# ── AI chat ────────────────────────────────────────────────────────────────────
-
-Type "c"
-Wait+Screen /Chat/
-Sleep 2s
-
-Escape
-Wait+Screen /Applications/
-Sleep 800ms
 
 # ── Help modal ─────────────────────────────────────────────────────────────────
 
