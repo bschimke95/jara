@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: write
+  pull-requests: write
 
 jobs:
   demo:
@@ -38,14 +39,21 @@ jobs:
       - name: Generate demo GIF
         run: JARA_ROOT="${{ github.workspace }}" vhs tests/vhs/demo.tape
 
-      - name: Commit and push updated GIF
+      - name: Create PR with updated GIF
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
           git add doc/demo.gif
           if git diff --cached --quiet; then
             echo "No changes to demo GIF"
-          else
-            git commit -m "doc: update demo GIF [skip ci]"
-            git push
+            exit 0
           fi
+          BRANCH="auto/update-demo-gif"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b "$BRANCH"
+          git commit -m "doc: update demo GIF [skip ci]"
+          git push -f origin "$BRANCH"
+          if ! gh pr list --head "$BRANCH" --state open | grep -q .; then
+            gh pr create --title "doc: update demo GIF" --body "Auto-generated from demo.tape changes." --head "$BRANCH" --base main
+          fi
+        env:
+          GH_TOKEN: ${{ github.token }}
