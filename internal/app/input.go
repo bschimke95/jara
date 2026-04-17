@@ -10,6 +10,7 @@ import (
 	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/ui"
 	"github.com/bschimke95/jara/internal/view"
+	"github.com/bschimke95/jara/internal/view/infomodal"
 )
 
 type inputMode int
@@ -269,6 +270,17 @@ func (m Model) handleGlobalKeys(msg tea.KeyPressMsg) (Model, tea.Cmd, bool) {
 		if c, ok := currentView.(view.Copyable); ok {
 			if text := c.CopySelection(); text != "" {
 				return m, tea.SetClipboard(text), true
+			}
+		}
+		return m, nil, true
+	case key.Matches(msg, m.keys.Inspect):
+		currentView := m.views[m.stack.Current().View]
+		if ins, ok := currentView.(view.Inspectable); ok {
+			if data := ins.InspectSelection(); data != nil {
+				m.infoModal = infomodal.New(*data, m.keys, m.styles)
+				m.infoModal.SetSize(m.width, m.height)
+				m.infoModalOpen = true
+				return m, nil, true
 			}
 		}
 		return m, nil, true

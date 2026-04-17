@@ -2,6 +2,8 @@
 package controllers
 
 import (
+	"fmt"
+
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
@@ -55,6 +57,7 @@ func (c *View) rebuildRows() {
 func (c *View) KeyHints() []view.KeyHint {
 	return []view.KeyHint{
 		{Key: view.BindingKey(c.keys.Enter), Desc: "models"},
+		{Key: view.BindingKey(c.keys.Inspect), Desc: "info"},
 	}
 }
 
@@ -91,3 +94,32 @@ func (c *View) View() tea.View {
 
 func (c *View) Enter(_ view.NavigateContext) (tea.Cmd, error) { return c.pollFn(), nil }
 func (c *View) Leave() tea.Cmd                                { return nil }
+
+// InspectSelection implements view.Inspectable.
+func (c *View) InspectSelection() *view.InspectData {
+	row := c.table.SelectedRow()
+	if row == nil {
+		return nil
+	}
+	name := row[0]
+	for _, ctrl := range c.controllers {
+		if ctrl.Name == name {
+			return &view.InspectData{
+				Title: ctrl.Name,
+				Fields: []view.InspectField{
+					{Label: "Name", Value: ctrl.Name},
+					{Label: "Cloud", Value: ctrl.Cloud},
+					{Label: "Region", Value: ctrl.Region},
+					{Label: "Address", Value: ctrl.Addr},
+					{Label: "Version", Value: ctrl.Version},
+					{Label: "Status", Value: ctrl.Status},
+					{Label: "Models", Value: fmt.Sprintf("%d", ctrl.Models)},
+					{Label: "Machines", Value: fmt.Sprintf("%d", ctrl.Machines)},
+					{Label: "HA", Value: ctrl.HA},
+					{Label: "Access", Value: ctrl.Access},
+				},
+			}
+		}
+	}
+	return nil
+}
