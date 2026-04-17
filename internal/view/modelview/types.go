@@ -6,6 +6,7 @@ import (
 	"github.com/bschimke95/jara/internal/color"
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/ui"
+	"github.com/bschimke95/jara/internal/view/actionmodal"
 	"github.com/bschimke95/jara/internal/view/deploymodal"
 	"github.com/bschimke95/jara/internal/view/relatemodal"
 )
@@ -31,6 +32,9 @@ type View struct {
 
 	relateModalOpen bool
 	relateModal     relatemodal.Modal
+
+	actionModalOpen bool
+	actionModal     *actionmodal.Modal
 
 	charmhubSuggestions []string
 	charmEndpoints      map[string]map[string]model.CharmEndpoint
