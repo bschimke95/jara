@@ -325,7 +325,7 @@ func (m Model) fetchOffers() tea.Cmd {
 		defer cancel()
 		offerList, err := client.ListOffers(ctx)
 		if err != nil {
-			return errMsg{fmt.Errorf("fetching offers: %w", err)}
+			return offers.OffersDataMsg{Err: fmt.Errorf("fetching offers: %w", err)}
 		}
 		return offers.OffersDataMsg{Offers: offerList}
 	}

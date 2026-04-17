@@ -29,7 +29,7 @@ const (
 	DefaultCharmhubURL = "https://api.charmhub.io"
 
 	// DefaultToastDuration is the default duration for error toast messages.
-	DefaultToastDuration = 4 * time.Second
+	DefaultToastDuration = 7 * time.Second
 )
 
 // Config is the top-level configuration for jara.

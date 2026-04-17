@@ -36,6 +36,9 @@ type CloseMsg struct{}
 type paramField struct {
 	Name        string
 	Description string
+	Type        string // e.g. "string", "integer", "boolean"
+	Default     string
+	Required    bool
 	Value       string
 }
 
@@ -390,11 +393,28 @@ func (m *Modal) renderParams(contentW int) string {
 		if i == m.paramCursor {
 			label = boldStyle.Render(label)
 		}
-		sb.WriteString(prefix + label)
-		if f.Description != "" {
-			sb.WriteString(mutedStyle.Render(" — " + truncate(f.Description, contentW-len(f.Name)-6)))
+
+		// Build metadata tags: (type) (required) (default: ...)
+		var tags []string
+		if f.Type != "" {
+			tags = append(tags, f.Type)
 		}
-		sb.WriteString("\n")
+		if f.Required {
+			tags = append(tags, "required")
+		}
+		if f.Default != "" {
+			tags = append(tags, "default: "+f.Default)
+		}
+		tagStr := ""
+		if len(tags) > 0 {
+			tagStr = mutedStyle.Render(" (" + strings.Join(tags, ", ") + ")")
+		}
+		sb.WriteString(prefix + label + tagStr + "\n")
+
+		// Show description on its own line if present.
+		if f.Description != "" {
+			sb.WriteString("    " + mutedStyle.Render(f.Description) + "\n")
+		}
 
 		// Show current value or input prompt.
 		val := f.Value
@@ -402,10 +422,15 @@ func (m *Modal) renderParams(contentW int) string {
 			val += "█"
 		}
 		if val == "" && (i != m.paramCursor || !m.paramEdit) {
-			sb.WriteString("    " + mutedStyle.Render("(empty)") + "\n")
+			placeholder := "(empty)"
+			if f.Default != "" {
+				placeholder = fmt.Sprintf("(default: %s)", f.Default)
+			}
+			sb.WriteString("    " + mutedStyle.Render(placeholder) + "\n")
 		} else {
 			sb.WriteString("    " + val + "\n")
 		}
+		sb.WriteString("\n")
 	}
 
 	// "Run" button.
@@ -424,19 +449,50 @@ func (m *Modal) renderParams(contentW int) string {
 }
 
 // buildParamFields extracts parameter names from a JSON-Schema style params map.
+// Juju action params follow JSON-Schema: the actual parameters live under the
+// "properties" key while top-level keys like "type", "title", "required" etc.
+// are schema metadata.
 func buildParamFields(params map[string]interface{}) []paramField {
-	fields := make([]paramField, 0, len(params))
-	for name, spec := range params {
-		desc := ""
-		if m, ok := spec.(map[string]interface{}); ok {
-			if d, ok := m["description"].(string); ok {
-				desc = d
+	props, hasProperties := params["properties"].(map[string]interface{})
+	if !hasProperties {
+		props = params
+	}
+
+	// Collect the set of required parameter names.
+	requiredSet := make(map[string]bool)
+	if reqList, ok := params["required"].([]interface{}); ok {
+		for _, r := range reqList {
+			if s, ok := r.(string); ok {
+				requiredSet[s] = true
 			}
 		}
-		fields = append(fields, paramField{
-			Name:        name,
-			Description: desc,
-		})
+	}
+
+	fields := make([]paramField, 0, len(props))
+	for name, spec := range props {
+		// Skip JSON-Schema meta keys that leaked into props when there
+		// was no "properties" wrapper.
+		switch name {
+		case "type", "title", "description", "required", "properties",
+			"additionalProperties", "$schema", "definitions":
+			if !hasProperties {
+				continue
+			}
+		}
+
+		f := paramField{Name: name, Required: requiredSet[name]}
+		if m, ok := spec.(map[string]interface{}); ok {
+			if d, ok := m["description"].(string); ok {
+				f.Description = d
+			}
+			if t, ok := m["type"].(string); ok {
+				f.Type = t
+			}
+			if d, ok := m["default"]; ok {
+				f.Default = fmt.Sprintf("%v", d)
+			}
+		}
+		fields = append(fields, f)
 	}
 	sort.Slice(fields, func(i, j int) bool {
 		return fields[i].Name < fields[j].Name
