@@ -18,6 +18,8 @@ type View struct {
 	height int
 	status *model.FullStatus
 
+	filterStr string
+
 	deployModalOpen bool
 	deployModal     deploymodal.Modal
 

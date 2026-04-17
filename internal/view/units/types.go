@@ -19,6 +19,7 @@ type View struct {
 	status       *model.FullStatus
 	appName      string
 	pendingScale map[string]int // net pending unit delta per app
+	filterStr    string
 
 	actionModal     *actionmodal.Modal
 	actionModalOpen bool

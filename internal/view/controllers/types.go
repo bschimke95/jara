@@ -23,4 +23,5 @@ type View struct {
 	height      int
 	controllers []model.Controller
 	pollFn      func() tea.Cmd
+	filterStr   string
 }

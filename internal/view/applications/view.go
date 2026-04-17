@@ -38,9 +38,21 @@ func (a *View) SetSize(width, height int) {
 // SetStatus implements view.StatusReceiver.
 func (a *View) SetStatus(status *model.FullStatus) {
 	a.status = status
-	if status != nil {
-		a.table.SetRows(rows(status.Applications, a.styles))
+	a.rebuildRows()
+}
+
+// SetFilter implements view.Filterable.
+func (a *View) SetFilter(filter string) {
+	a.filterStr = filter
+	a.rebuildRows()
+}
+
+func (a *View) rebuildRows() {
+	if a.status == nil {
+		return
 	}
+	allRows := rows(a.status.Applications, a.styles)
+	a.table.SetRows(view.FilterRows(allRows, 0, a.filterStr, a.styles.SearchHighlight))
 }
 
 // SetCharmSuggestions stores external charm suggestions for deploy modal.

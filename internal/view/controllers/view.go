@@ -37,7 +37,18 @@ func (c *View) SetSize(width, height int) {
 // SetControllers updates the controller list.
 func (c *View) SetControllers(ctrls []model.Controller) {
 	c.controllers = ctrls
-	c.table.SetRows(controllerRows(ctrls))
+	c.rebuildRows()
+}
+
+// SetFilter implements view.Filterable.
+func (c *View) SetFilter(filter string) {
+	c.filterStr = filter
+	c.rebuildRows()
+}
+
+func (c *View) rebuildRows() {
+	allRows := controllerRows(c.controllers)
+	c.table.SetRows(view.FilterRows(allRows, 0, c.filterStr, c.styles.SearchHighlight))
 }
 
 // KeyHints returns the view-specific key hints for the header.
