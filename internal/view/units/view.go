@@ -297,12 +297,10 @@ func (u *View) Leave() tea.Cmd { return nil }
 
 // InspectSelection implements view.Inspectable.
 func (u *View) InspectSelection() *view.InspectData {
-	row := u.table.SelectedRow()
-	if row == nil || u.status == nil {
+	unitName := u.selectedUnitName()
+	if unitName == "" || u.status == nil {
 		return nil
 	}
-	unitName := ansi.Strip(row[0])
-	// Find the unit in the status.
 	for _, app := range u.status.Applications {
 		for _, unit := range app.Units {
 			if unit.Name == unitName {
