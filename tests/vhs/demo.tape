@@ -58,10 +58,7 @@ Sleep 800ms
 
 # ── Machines view ──────────────────────────────────────────────────────────────
 
-Type ":"
-Sleep 200ms
-Type "machines"
-Enter
+Type "M"
 Wait+Screen /INSTANCE/
 Sleep 2s
 
@@ -72,7 +69,7 @@ Sleep 800ms
 # ── Secrets view ───────────────────────────────────────────────────────────────
 
 Type "S"
-Wait+Screen /SECRET/
+Wait+Screen /Secrets/
 Sleep 2s
 
 # Drill into a secret.
@@ -87,7 +84,7 @@ Sleep 800ms
 
 # ── Debug log ──────────────────────────────────────────────────────────────────
 
-Type "l"
+Type "L"
 Wait+Screen /Waiting for log/
 Sleep 500ms
 Wait+Screen /juju.worker/
