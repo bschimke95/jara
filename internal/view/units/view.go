@@ -127,7 +127,13 @@ func (u *View) rebuildRows() {
 			}
 		}
 	}
-	u.table.SetRows(rows)
+	u.table.SetRows(view.FilterRows(rows, 0, u.filterStr, u.styles.SearchHighlight))
+}
+
+// SetFilter implements view.Filterable.
+func (u *View) SetFilter(filter string) {
+	u.filterStr = filter
+	u.rebuildRows()
 }
 
 func (u *View) Init() tea.Cmd { return nil }

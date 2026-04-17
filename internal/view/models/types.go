@@ -25,4 +25,5 @@ type View struct {
 	pollFn             func(controller string) tea.Cmd
 	selectControllerFn func(name string) error
 	controllerNameFn   func() string
+	filterStr          string
 }

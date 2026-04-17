@@ -10,10 +10,11 @@ import (
 
 // View is the Bubble Tea model for the secrets table view.
 type View struct {
-	table  table.Model
-	keys   ui.KeyMap
-	styles *color.Styles
-	width  int
-	height int
-	status *model.FullStatus
+	table     table.Model
+	keys      ui.KeyMap
+	styles    *color.Styles
+	width     int
+	height    int
+	status    *model.FullStatus
+	filterStr string
 }

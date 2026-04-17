@@ -107,6 +107,12 @@ func (m Model) updateInput(msg tea.Msg) (Model, tea.Cmd) {
 		}
 	}
 
+	// Apply filter live while typing.
+	if m.mode == modeFilter {
+		m.filterStr = m.input.Value()
+		m.applyFilterToActiveView()
+	}
+
 	return m, cmd
 }
 

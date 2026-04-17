@@ -37,7 +37,18 @@ func (m *View) SetSize(width, height int) {
 // SetModels updates the displayed model list.
 func (m *View) SetModels(mdls []model.ModelSummary) {
 	m.models = mdls
-	m.table.SetRows(modelRows(mdls))
+	m.rebuildRows()
+}
+
+// SetFilter implements view.Filterable.
+func (m *View) SetFilter(filter string) {
+	m.filterStr = filter
+	m.rebuildRows()
+}
+
+func (m *View) rebuildRows() {
+	allRows := modelRows(m.models)
+	m.table.SetRows(view.FilterRows(allRows, 0, m.filterStr, m.styles.SearchHighlight))
 }
 
 // KeyHints returns the view-specific key hints for the header.

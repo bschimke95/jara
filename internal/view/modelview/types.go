@@ -24,6 +24,7 @@ type View struct {
 	height       int
 	selectedApp  string
 	pendingScale map[string]int
+	filterStr    string
 
 	deployModalOpen bool
 	deployModal     deploymodal.Modal

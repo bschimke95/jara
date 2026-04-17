@@ -9,6 +9,9 @@ import (
 	"charm.land/bubbles/v2/key"
 	"charm.land/bubbles/v2/table"
 	tea "charm.land/bubbletea/v2"
+	"charm.land/lipgloss/v2"
+	"github.com/charmbracelet/x/ansi"
+
 	"github.com/bschimke95/jara/internal/model"
 	"github.com/bschimke95/jara/internal/nav"
 	"github.com/bschimke95/jara/internal/ui"
@@ -200,6 +203,36 @@ func CopySelectedRow(t table.Model) string {
 		return strings.Join(row, "\t")
 	}
 	return ""
+}
+
+// FilterRows filters rows whose column at filterCol contains the filter string
+// (case-insensitive) and highlights the match in that column using the provided
+// highlight style. If filter is empty, all rows are returned unmodified.
+func FilterRows(allRows []table.Row, filterCol int, filter string, highlight lipgloss.Style) []table.Row {
+	if filter == "" {
+		return allRows
+	}
+	lower := strings.ToLower(filter)
+	var out []table.Row
+	for _, row := range allRows {
+		if filterCol >= len(row) {
+			continue
+		}
+		cell := row[filterCol]
+		plain := ansi.Strip(cell)
+		idx := strings.Index(strings.ToLower(plain), lower)
+		if idx < 0 {
+			continue
+		}
+		// Build a new row with highlight applied to the matched substring.
+		newRow := make(table.Row, len(row))
+		copy(newRow, row)
+		newRow[filterCol] = plain[:idx] +
+			highlight.Render(plain[idx:idx+len(filter)]) +
+			plain[idx+len(filter):]
+		out = append(out, newRow)
+	}
+	return out
 }
 
 // PadToHeight pads or truncates a rendered string so it has exactly the

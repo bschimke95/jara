@@ -15,6 +15,10 @@ func (m Model) handleNavigate(msg view.NavigateMsg) (Model, tea.Cmd) {
 		return m, m.showToast(fmt.Sprintf("unknown view: %v", msg.Target))
 	}
 
+	// Clear any leftover filter from the previous view.
+	m.filterStr = ""
+	m.applyFilterToActiveView()
+
 	// Snapshot the stack before mutating so we can roll back if Enter fails.
 	snap := m.stack.Snapshot()
 
@@ -58,6 +62,7 @@ func (m Model) handleBack() (Model, tea.Cmd) {
 
 		// Clear any leftover filter from the child view.
 		m.filterStr = ""
+		m.applyFilterToActiveView()
 
 		current := m.stack.Current()
 		// Re-size the view we are returning to so it uses the correct contentHeight.

@@ -67,7 +67,7 @@ func (v *View) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	if cfgMsg, ok := msg.(AppConfigMsg); ok {
 		if cfgMsg.AppName == v.appName {
 			v.entries = cfgMsg.Entries
-			v.table.SetRows(rows(v.entries))
+			v.rebuildRows()
 		}
 		return v, nil
 	}
@@ -102,3 +102,14 @@ func (v *View) Enter(ctx view.NavigateContext) (tea.Cmd, error) {
 }
 
 func (v *View) Leave() tea.Cmd { return nil }
+
+// SetFilter implements view.Filterable.
+func (v *View) SetFilter(filter string) {
+	v.filterStr = filter
+	v.rebuildRows()
+}
+
+func (v *View) rebuildRows() {
+	allRows := rows(v.entries)
+	v.table.SetRows(view.FilterRows(allRows, 0, v.filterStr, v.styles.SearchHighlight))
+}

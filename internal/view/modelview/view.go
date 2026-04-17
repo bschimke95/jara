@@ -69,7 +69,7 @@ func (m *View) SetStatus(status *model.FullStatus) {
 	if status == nil {
 		return
 	}
-	m.appTable.SetRows(applicationRows(status.Applications, m.styles))
+	m.rebuildAppRows()
 	for appName, delta := range m.pendingScale {
 		app, ok := status.Applications[appName]
 		if !ok {
@@ -87,6 +87,21 @@ func (m *View) SetStatus(status *model.FullStatus) {
 		}
 	}
 	m.refreshRightPane()
+}
+
+// SetFilter implements view.Filterable.
+func (m *View) SetFilter(filter string) {
+	m.filterStr = filter
+	m.rebuildAppRows()
+	m.refreshRightPane()
+}
+
+func (m *View) rebuildAppRows() {
+	if m.status == nil {
+		return
+	}
+	allRows := applicationRows(m.status.Applications, m.styles)
+	m.appTable.SetRows(view.FilterRows(allRows, 0, m.filterStr, m.styles.SearchHighlight))
 }
 
 // SetCharmSuggestions stores external charm suggestions for deploy modal.

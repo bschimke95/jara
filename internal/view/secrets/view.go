@@ -36,9 +36,21 @@ func (s *View) SetSize(width, height int) {
 // SetStatus implements view.StatusReceiver.
 func (s *View) SetStatus(status *model.FullStatus) {
 	s.status = status
-	if status != nil {
-		s.table.SetRows(Rows(status.Secrets))
+	s.rebuildRows()
+}
+
+// SetFilter implements view.Filterable.
+func (s *View) SetFilter(filter string) {
+	s.filterStr = filter
+	s.rebuildRows()
+}
+
+func (s *View) rebuildRows() {
+	if s.status == nil {
+		return
 	}
+	allRows := Rows(s.status.Secrets)
+	s.table.SetRows(view.FilterRows(allRows, 0, s.filterStr, s.styles.SearchHighlight))
 }
 
 // KeyHints returns the view-specific key hints for the header.
