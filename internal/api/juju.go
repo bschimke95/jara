@@ -363,7 +363,7 @@ func (c *JujuClient) CreateModel(ctx context.Context, name string) error {
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	c.mu.RLock()
 	controllerName := c.controllerName
@@ -420,7 +420,7 @@ func (c *JujuClient) DestroyModel(ctx context.Context, qualifiedName string, for
 	if err != nil {
 		return err
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	modelTag := names.NewModelTag(details.ModelUUID)
 	destroyStorage := true
@@ -608,7 +608,7 @@ func (c *JujuClient) Models(ctx context.Context, controllerName string) ([]model
 	if err != nil {
 		return nil, fmt.Errorf("connecting to controller %q: %w", controllerName, err)
 	}
-	defer conn.Close()
+	defer func() { _ = conn.Close() }()
 
 	c.mu.RLock()
 	ctrlName := c.controllerName
