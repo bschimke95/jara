@@ -1,6 +1,6 @@
 name: jara
 base: core24
-version: git
+adopt-info: jara
 summary: Terminal UI for observing and interacting with Juju clusters
 description: |
   Jara is a terminal user interface (TUI) to observe and interact with Juju
@@ -47,7 +47,8 @@ parts:
     build-snaps:
       - go/latest/stable
     override-build: |
-      VERSION=$(git describe --tags --always --dirty 2>/dev/null || echo "dev")
+      VERSION=$(git describe --tags --always --dirty 2>/dev/null | sed 's/^v//' || echo "dev")
+      craftctl set version="${VERSION}"
       COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "none")
       DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
       go build \
