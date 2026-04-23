@@ -8,6 +8,7 @@ description: |
   controllers, models, applications, units, machines, and relations without
   leaving the terminal.
 
+license: AGPL-3.0
 grade: stable
 confinement: strict
 
