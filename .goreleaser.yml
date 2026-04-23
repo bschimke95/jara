@@ -1,0 +1,57 @@
+version: 2
+
+project_name: jara
+
+builds:
+  - main: ./cmd/jara
+    binary: jara
+    env:
+      - CGO_ENABLED=0
+    ldflags:
+      - -w -s
+      - -X github.com/bschimke95/jara/internal/cmd.version={{ .Version }}
+      - -X github.com/bschimke95/jara/internal/cmd.commit={{ .ShortCommit }}
+      - -X github.com/bschimke95/jara/internal/cmd.date={{ .Date }}
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - formats:
+      - tar.gz
+    name_template: "{{ .ProjectName }}_{{ .Version }}_{{ .Os }}_{{ .Arch }}"
+
+checksum:
+  name_template: checksums.txt
+
+changelog:
+  sort: asc
+  use: github
+  groups:
+    - title: Features
+      regexp: '^.*?feat(\(.+\))?!?:.+$'
+      order: 0
+    - title: Bug Fixes
+      regexp: '^.*?fix(\(.+\))?!?:.+$'
+      order: 1
+    - title: Refactoring
+      regexp: '^.*?refactor(\(.+\))?!?:.+$'
+      order: 2
+    - title: Other
+      order: 999
+  filters:
+    exclude:
+      - "^doc:"
+      - "^ci:"
+      - "^chore\\(deps\\):"
+      - "\\[skip ci\\]"
+
+release:
+  github:
+    owner: bschimke95
+    name: jara
+  prerelease: auto
+  name_template: "{{ .Tag }}"
