@@ -48,7 +48,11 @@ parts:
     build-snaps:
       - go/latest/stable
     override-build: |
-      VERSION=$(git describe --tags --always --dirty 2>/dev/null | sed 's/^v//' || echo "dev")
+      if [ -f .version ]; then
+        VERSION=$(cat .version)
+      else
+        VERSION=$(git describe --tags --always --dirty 2>/dev/null | sed 's/^v//' || echo "dev")
+      fi
       craftctl set version="${VERSION}"
       COMMIT=$(git rev-parse --short HEAD 2>/dev/null || echo "none")
       DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
