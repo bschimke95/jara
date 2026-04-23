@@ -4,6 +4,9 @@
 # Snap
 jara*.snap
 
+# GoReleaser
+dist/
+
 # IDE
 .idea/
 .vscode/
