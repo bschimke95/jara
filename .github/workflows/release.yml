@@ -36,6 +36,9 @@ jobs:
         with:
           fetch-depth: 0
 
+      - name: Set version file
+        run: git describe --tags --always --dirty | sed 's/^v//' > .version
+
       - name: Build snap
         uses: snapcore/action-build@v1
         id: build
