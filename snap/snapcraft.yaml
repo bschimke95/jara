@@ -8,7 +8,7 @@ description: |
   controllers, models, applications, units, machines, and relations without
   leaving the terminal.
 
-grade: devel
+grade: stable
 confinement: strict
 
 platforms:
